@@ -10,7 +10,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   patientName: '',
   patientSex: '',
   patientAge: '',
-  backupFrequency: 'weekly',
+  backupFrequency: 'disabled', // Por defecto DESACTIVADAS según preferencia del usuario
   backupFolder: 'Descargas/Copias_Tension_Arterial',
   lastBackupTimestamp: undefined,
 };
