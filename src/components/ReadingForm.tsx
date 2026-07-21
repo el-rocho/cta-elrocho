@@ -31,6 +31,11 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings
   const liveDiastolic = typeof diastolic === 'number' ? diastolic : 80;
   const category = getHealthCategory(liveSystolic, liveDiastolic);
 
+  // Auto-seleccionar todo el texto al tocar/enfocar un campo numérico
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -104,6 +109,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings
                 max={260}
                 value={systolic}
                 onChange={(e) => setSystolic(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                onFocus={handleFocus}
                 className="input-number input-sys"
                 required
               />
@@ -125,6 +131,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings
                 max={160}
                 value={diastolic}
                 onChange={(e) => setDiastolic(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                onFocus={handleFocus}
                 className="input-number input-dia"
                 required
               />
@@ -146,6 +153,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings
                 max={220}
                 value={heartRate}
                 onChange={(e) => setHeartRate(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                onFocus={handleFocus}
                 className="input-number input-pulse"
                 required
               />
