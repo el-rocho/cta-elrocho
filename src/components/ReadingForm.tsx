@@ -114,7 +114,33 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
           <h2>Nueva Medición</h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Selector Discreto de Brazo */}
+          <div className="arm-selector-container">
+            <label className="arm-label">
+              <Armchair size={14} />
+              <span>Brazo:</span>
+            </label>
+            <div className="arm-chips">
+              <button
+                type="button"
+                className={`arm-chip ${arm === 'left' ? 'active' : ''}`}
+                onClick={() => setArm('left')}
+                title="Medición tomada en brazo izquierdo"
+              >
+                Izquierdo
+              </button>
+              <button
+                type="button"
+                className={`arm-chip ${arm === 'right' ? 'active' : ''}`}
+                onClick={() => setArm('right')}
+                title="Medición tomada en brazo derecho"
+              >
+                Derecho
+              </button>
+            </div>
+          </div>
+
           {/* Conmutador discreto Modo Teclado vs Modo Ruleta Rápida */}
           <div className="input-mode-toggle">
             <button
@@ -232,44 +258,17 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
           </div>
         )}
 
-        {/* Zona discreta para selector de brazo y notas */}
-        <div className="form-secondary-row">
-          <div className="arm-selector-container">
-            <label className="arm-label">
-              <Armchair size={14} />
-              <span>Brazo:</span>
-            </label>
-            <div className="arm-chips">
-              <button
-                type="button"
-                className={`arm-chip ${arm === 'left' ? 'active' : ''}`}
-                onClick={() => setArm('left')}
-                title="Medición tomada en brazo izquierdo"
-              >
-                Izquierdo
-              </button>
-              <button
-                type="button"
-                className={`arm-chip ${arm === 'right' ? 'active' : ''}`}
-                onClick={() => setArm('right')}
-                title="Medición tomada en brazo derecho"
-              >
-                Derecho
-              </button>
-            </div>
-          </div>
-
-          <div className="notes-container">
-            <div className="input-wrapper-notes">
-              <FileText size={16} className="notes-icon" />
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Añadir nota opcional (ej. en ayunas, reposo, sensaciones...)"
-                className="input-notes"
-              />
-            </div>
+        {/* Campo de Nota Opcional a todo el ancho disponible */}
+        <div className="form-notes-fullwidth" style={{ marginBottom: '20px' }}>
+          <div className="input-wrapper-notes">
+            <FileText size={16} className="notes-icon" />
+            <input
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Añadir nota opcional (ej. en ayunas, reposo, sensaciones...)"
+              className="input-notes"
+            />
           </div>
         </div>
 
