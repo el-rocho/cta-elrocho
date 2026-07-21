@@ -1,13 +1,32 @@
-# Control de Tensión Arterial - GrapheneOS / Android Offline
+# React + TypeScript + Vite
 
-Aplicación móvil orientada a la privacidad para el seguimiento y registro de datos de presión arterial (sistólica, diastólica y pulsaciones), libre de servicios de Google (100% compatible con GrapheneOS y AOSP).
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-## Características Principales
-- **100% Privado y Offline**: Tus datos médicos permanecen guardados únicamente en tu dispositivo. Sin telemetría ni conexión a la nube.
-- **Interfaz Moderna e Intuitiva**: Registro rápido de Sistólica, Diastólica y Pulsaciones con categorización visual.
-- **Filtros por Rango de Fechas**: Consulta de historial por periodos personalizados.
-- **Exportación CSV**: Exporta tus registros para análisis externo o copia de seguridad.
-- **Informes en PDF e Impresión**: Genera informes formateados para entregar a tu médico o imprimir directamente.
+Currently, two official plugins are available:
 
-## Estado del Repositorio
-Repositorio Git local inicializado listo para conectar a GitHub.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the Oxlint configuration
+
+If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  }
+}
+```
+
+See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
