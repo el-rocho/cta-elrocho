@@ -20,6 +20,7 @@ import { TrendChart } from './components/TrendChart';
 import { ReadingList } from './components/ReadingList';
 import { ExportModal } from './components/ExportModal';
 import { SettingsModal } from './components/SettingsModal';
+import { LegalNoticeModal } from './components/LegalNoticeModal';
 
 export function App() {
   const [readings, setReadings] = useState<BloodPressureReading[]>([]);
@@ -27,6 +28,7 @@ export function App() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
+  const [isLegalNoticeOpen, setIsLegalNoticeOpen] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<DateRange>({ preset: '30days' });
   const [notificationMsg, setNotificationMsg] = useState<string | null>(null);
 
@@ -179,7 +181,20 @@ export function App() {
         onDateRangeChange={setDateRange}
       />
 
-      {/* Modal de Exportación CSV, Importación e Impresión PDF */}
+      {/* Pie de página discreto con enlace de aviso legal y privacidad */}
+      <footer className="app-footer">
+        <span>Control Tensión Arterial &copy; {new Date().getFullYear()}</span>
+        <span> &bull; </span>
+        <button
+          type="button"
+          className="btn-footer-link"
+          onClick={() => setIsLegalNoticeOpen(true)}
+        >
+          Aviso Legal &amp; Privacidad (RGPD)
+        </button>
+      </footer>
+
+      {/* Modales */}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
@@ -188,7 +203,6 @@ export function App() {
         onImportReadings={handleImportReadings}
       />
 
-      {/* Modal de Configuración */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
@@ -196,6 +210,11 @@ export function App() {
         onUpdateSettings={handleUpdateSettings}
         onResetDemoData={handleResetDemoData}
         onTriggerManualBackup={handleTriggerManualBackup}
+      />
+
+      <LegalNoticeModal
+        isOpen={isLegalNoticeOpen}
+        onClose={() => setIsLegalNoticeOpen(false)}
       />
     </div>
   );
