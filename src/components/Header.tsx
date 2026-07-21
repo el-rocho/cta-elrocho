@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="brand-title">Control Tensión Arterial</h1>
           <div className="brand-badge">
             <ShieldCheck size={13} className="shield-icon" />
-            <span>Privado & Offline</span>
+            <span>Privado &amp; Offline &bull; v1.0.0</span>
           </div>
         </div>
       </div>
