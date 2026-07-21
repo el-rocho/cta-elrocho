@@ -7,6 +7,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   enableWhiteCoatFilter: true,
   whiteCoatIntervalMinutes: 3,
   defaultArm: 'left',
+  backupFrequency: 'weekly',
+  backupFolder: 'Descargas/Copias_Tension_Arterial',
+  lastBackupTimestamp: undefined,
 };
 
 // Datos iniciales de demostración
@@ -146,4 +149,39 @@ export function deleteSessionFromStorage(readingsInSession: BloodPressureReading
   const updated = current.filter((r) => !idsToDelete.has(r.id));
   saveStoredReadings(updated);
   return updated;
+}
+
+/**
+ * Combina lecturas importadas con las existentes sin duplicar registros con igual fecha/hora y valores
+ */
+export function importReadingsIntoStorage(imported: Omit<BloodPressureReading, 'id'>[]): {
+  updated: BloodPressureReading[];
+  addedCount: number;
+} {
+  const current = getStoredReadings();
+
+  // Crear un set de firmas de lecturas existentes para evitar duplicar
+  const existingSignatures = new Set(
+    current.map((r) => `${new Date(r.timestamp).toISOString().slice(0, 16)}_${r.systolic}_${r.diastolic}_${r.heartRate}`)
+  );
+
+  let addedCount = 0;
+  const newItems: BloodPressureReading[] = [];
+
+  imported.forEach((item) => {
+    const sig = `${new Date(item.timestamp).toISOString().slice(0, 16)}_${item.systolic}_${item.diastolic}_${item.heartRate}`;
+    if (!existingSignatures.has(sig)) {
+      existingSignatures.add(sig);
+      addedCount++;
+      newItems.push({
+        ...item,
+        id: `imp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      });
+    }
+  });
+
+  const updated = [...newItems, ...current];
+  saveStoredReadings(updated);
+
+  return { updated, addedCount };
 }

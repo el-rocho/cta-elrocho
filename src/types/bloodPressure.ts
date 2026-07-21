@@ -27,10 +27,17 @@ export interface BloodPressureSession {
   notes?: string;
 }
 
+export type BackupFrequency = 'disabled' | 'daily' | 'weekly' | 'monthly';
+
 export interface AppSettings {
   enableWhiteCoatFilter: boolean; // Activar/desactivar filtro de bata blanca
   whiteCoatIntervalMinutes: number; // Intervalo de tiempo máximo entre tomas (ej. 2 o 3 min)
   defaultArm: ArmPosition; // Brazo predeterminado ('left' / 'right')
+  
+  // Copias de seguridad automáticas CSV
+  backupFrequency: BackupFrequency; // Frecuencia de copias ('disabled' | 'daily' | 'weekly' | 'monthly')
+  backupFolder: string; // Carpeta o ruta preferida para copias (ej. "Descargas/Copias_Tension")
+  lastBackupTimestamp?: string; // Fecha y hora de la última copia realizada
 }
 
 export type HealthSeverity = 'optimal' | 'normal' | 'elevated' | 'stage1' | 'stage2' | 'crisis';

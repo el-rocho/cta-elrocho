@@ -1,6 +1,6 @@
 import React from 'react';
-import type { AppSettings } from '../types/bloodPressure';
-import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw } from 'lucide-react';
+import type { AppSettings, BackupFrequency } from '../types/bloodPressure';
+import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -8,6 +8,7 @@ interface SettingsModalProps {
   settings: AppSettings;
   onUpdateSettings: (newSettings: AppSettings) => void;
   onResetDemoData: () => void;
+  onTriggerManualBackup: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -16,6 +17,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onUpdateSettings,
   onResetDemoData,
+  onTriggerManualBackup,
 }) => {
   if (!isOpen) return null;
 
@@ -40,6 +42,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
   };
 
+  const handleChangeBackupFrequency = (freq: BackupFrequency) => {
+    onUpdateSettings({
+      ...settings,
+      backupFrequency: freq,
+    });
+  };
+
+  const handleChangeBackupFolder = (folder: string) => {
+    onUpdateSettings({
+      ...settings,
+      backupFolder: folder,
+    });
+  };
+
+  const lastBackupStr = settings.lastBackupTimestamp
+    ? new Date(settings.lastBackupTimestamp).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : 'Ninguna copia realizada todavía';
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -54,8 +80,75 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <div className="modal-body">
-          {/* Opción 1: Filtro de Bata Blanca (On/Off) */}
+          {/* Opción 1: Copias de Seguridad Automáticas CSV */}
           <div className="settings-section">
+            <div className="field-label">
+              <Save size={16} className="text-blue" />
+              <span>Copias de Seguridad Automáticas (Formato CSV):</span>
+            </div>
+            <p className="settings-desc" style={{ marginBottom: '10px' }}>
+              Define la frecuencia para guardar de forma programada copias CSV en tu almacenamiento local.
+            </p>
+
+            <div className="chip-options-row" style={{ marginBottom: '12px' }}>
+              <button
+                type="button"
+                className={`chip-select ${settings.backupFrequency === 'daily' ? 'active' : ''}`}
+                onClick={() => handleChangeBackupFrequency('daily')}
+              >
+                Diarias (00:00)
+              </button>
+              <button
+                type="button"
+                className={`chip-select ${settings.backupFrequency === 'weekly' ? 'active' : ''}`}
+                onClick={() => handleChangeBackupFrequency('weekly')}
+              >
+                Semanales
+              </button>
+              <button
+                type="button"
+                className={`chip-select ${settings.backupFrequency === 'monthly' ? 'active' : ''}`}
+                onClick={() => handleChangeBackupFrequency('monthly')}
+              >
+                Mensuales
+              </button>
+              <button
+                type="button"
+                className={`chip-select ${settings.backupFrequency === 'disabled' ? 'active' : ''}`}
+                onClick={() => handleChangeBackupFrequency('disabled')}
+              >
+                Desactivadas
+              </button>
+            </div>
+
+            {/* Configuración de Carpeta de Destino */}
+            <div className="settings-subcard">
+              <div className="field-label" style={{ fontSize: '12px' }}>
+                <Folder size={14} />
+                <span>Carpeta o ruta de almacenamiento de la copia:</span>
+              </div>
+              <input
+                type="text"
+                value={settings.backupFolder || 'Descargas/Copias_Tension'}
+                onChange={(e) => handleChangeBackupFolder(e.target.value)}
+                placeholder="Ej. Descargas/Copias_Tension_Arterial"
+                className="modal-input"
+                style={{ fontSize: '13px', padding: '8px 10px' }}
+              />
+
+              <div className="backup-meta-row" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
+                <span>
+                  <CalendarCheck size={12} className="inline-icon" /> Última copia: <strong>{lastBackupStr}</strong>
+                </span>
+                <button type="button" className="btn-subtle-reset" onClick={onTriggerManualBackup}>
+                  Generar Copia Ahora
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Opción 2: Filtro de Bata Blanca (On/Off) */}
+          <div className="settings-section border-top">
             <div className="settings-row-header">
               <div className="settings-label-group">
                 <ShieldAlert size={18} className="text-blue" />
@@ -67,7 +160,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Switch ON/OFF */}
               <label className="toggle-switch">
                 <input
                   type="checkbox"
@@ -78,7 +170,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </label>
             </div>
 
-            {/* Ajustes avanzados del filtro si está activado */}
             {settings.enableWhiteCoatFilter && (
               <div className="settings-subcard">
                 <div className="field-label">
@@ -101,8 +192,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
           </div>
 
-          {/* Opción 2: Brazo por defecto */}
-          <div className="settings-section">
+          {/* Opción 3: Brazo por defecto */}
+          <div className="settings-section border-top">
             <div className="field-label">
               <Armchair size={16} />
               <span>Brazo utilizado por defecto en el formulario:</span>
@@ -125,7 +216,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Opción 3: Restaurar Datos Demo */}
+          {/* Opción 4: Restaurar Datos Demo */}
           <div className="settings-section border-top">
             <div className="settings-row-header">
               <div>

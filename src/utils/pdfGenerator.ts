@@ -5,7 +5,12 @@ import { getHealthCategory } from './healthClassification';
 export function printPDFReport(sessions: BloodPressureSession[], dateRange: DateRange, patientName = ''): void {
   const filtered = filterSessionsByDateRange(sessions, dateRange);
 
-  // Calcular estadísticas para el resumen
+  // Ordenar de más antiguo a más reciente para el gráfico
+  const chronological = [...filtered].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  // Estadísticas para el resumen
   const total = filtered.length;
   let sumSys = 0;
   let sumDia = 0;
@@ -20,10 +25,11 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
   const avgSys = total > 0 ? Math.round(sumSys / total) : 0;
   const avgDia = total > 0 ? Math.round(sumDia / total) : 0;
   const avgPulse = total > 0 ? Math.round(sumPulse / total) : 0;
-
   const avgCategory = getHealthCategory(avgSys, avgDia);
 
-  // Crear ventana o contenedor de impresión
+  // Generar SVG del gráfico para incluir en el PDF
+  const svgChartHtml = generateChartSVG(chronological);
+
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Por favor, permite las ventanas emergentes en tu navegador para generar el informe PDF.');
@@ -109,14 +115,40 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
           color: #94a3b8;
           font-weight: normal;
         }
+        .chart-pdf-container {
+          margin-bottom: 24px;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 16px;
+          background: #f8fafc;
+          page-break-inside: avoid;
+        }
+        .chart-pdf-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 12px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .chart-pdf-legend {
+          display: flex;
+          gap: 16px;
+          font-size: 11px;
+          color: #475569;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .dot-red { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; }
+        .dot-blue { width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block; }
         table {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 24px;
-          font-size: 13px;
+          font-size: 12px;
         }
         th, td {
-          padding: 8px 12px;
+          padding: 8px 10px;
           text-align: left;
           border-bottom: 1px solid #e2e8f0;
         }
@@ -128,9 +160,7 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
           font-size: 11px;
           letter-spacing: 0.5px;
         }
-        tr:nth-child(even) {
-          background-color: #f8fafc;
-        }
+        tr:nth-child(even) { background-color: #f8fafc; }
         .badge {
           display: inline-block;
           padding: 2px 8px;
@@ -183,6 +213,18 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
             ${avgCategory.name}
           </div>
         </div>
+      </div>
+
+      <!-- Gráfico antes de la lista de registros -->
+      <div class="chart-pdf-container">
+        <div class="chart-pdf-title">
+          <span>Evolución Temporal de Tensión Arterial</span>
+          <div class="chart-pdf-legend">
+            <span class="legend-item"><span class="dot-red"></span> Sistólica</span>
+            <span class="legend-item"><span class="dot-blue"></span> Diastólica</span>
+          </div>
+        </div>
+        ${svgChartHtml}
       </div>
 
       <h3 style="font-size:16px; color:#1e293b; margin-bottom:12px;">Historial de Mediciones (${total} registros)</h3>
@@ -247,4 +289,88 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
   printWindow.document.open();
   printWindow.document.write(html);
   printWindow.document.close();
+}
+
+/**
+ * Genera el código SVG vectorial del gráfico para el informe PDF
+ */
+function generateChartSVG(chronologicalSessions: BloodPressureSession[]): string {
+  if (chronologicalSessions.length === 0) {
+    return '<p style="text-align:center; color:#94a3b8; font-size:12px;">Sin datos para graficar en este periodo</p>';
+  }
+
+  const width = 700;
+  const height = 180;
+  const paddingLeft = 35;
+  const paddingRight = 20;
+  const paddingTop = 15;
+  const paddingBottom = 30;
+
+  const chartWidth = width - paddingLeft - paddingRight;
+  const chartHeight = height - paddingTop - paddingBottom;
+
+  const minVal = 40;
+  const maxVal = 200;
+
+  const getY = (val: number) => {
+    const clamped = Math.max(minVal, Math.min(maxVal, val));
+    const ratio = (clamped - minVal) / (maxVal - minVal);
+    return height - paddingBottom - ratio * chartHeight;
+  };
+
+  const getX = (index: number) => {
+    if (chronologicalSessions.length === 1) return paddingLeft + chartWidth / 2;
+    return paddingLeft + (index / (chronologicalSessions.length - 1)) * chartWidth;
+  };
+
+  const sysPoints = chronologicalSessions.map((s, i) => ({ x: getX(i), y: getY(s.averageSystolic) }));
+  const diaPoints = chronologicalSessions.map((s, i) => ({ x: getX(i), y: getY(s.averageDiastolic) }));
+
+  const sysPath = sysPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
+  const diaPath = diaPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
+
+  const idealSysY = getY(120);
+
+  return `
+    <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto;">
+      <!-- Guía de rango óptimo -->
+      <line x1="${paddingLeft}" y1="${idealSysY}" x2="${width - paddingRight}" y2="${idealSysY}" stroke="#10b981" stroke-dasharray="3 3" stroke-width="1" />
+      <text x="${width - paddingRight}" y="${idealSysY - 4}" text-anchor="end" fill="#10b981" font-size="9">Objetivo (<120 mmHg)</text>
+
+      <!-- Líneas de cuadrícula Y -->
+      ${[60, 90, 120, 150, 180]
+        .map((v) => {
+          const y = getY(v);
+          return `
+          <line x1="${paddingLeft}" y1="${y}" x2="${width - paddingRight}" y2="${y}" stroke="#e2e8f0" stroke-dasharray="2 2" />
+          <text x="${paddingLeft - 6}" y="${y + 3}" text-anchor="end" fill="#94a3b8" font-size="9">${v}</text>
+        `;
+        })
+        .join('')}
+
+      <!-- Trazo Sistólica (Rojo) y Diastólica (Azul) -->
+      <path d="${sysPath}" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" />
+      <path d="${diaPath}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+
+      <!-- Puntos Sistólica -->
+      ${sysPoints
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#ef4444" stroke="#ffffff" stroke-width="1.5" />`)
+        .join('')}
+
+      <!-- Puntos Diastólica -->
+      ${diaPoints
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5" />`)
+        .join('')}
+
+      <!-- Eje X (Fechas) -->
+      ${chronologicalSessions
+        .map((s, i) => {
+          if (chronologicalSessions.length > 10 && i % Math.ceil(chronologicalSessions.length / 8) !== 0) return '';
+          const x = getX(i);
+          const dateLabel = new Date(s.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+          return `<text x="${x}" y="${height - 8}" text-anchor="middle" fill="#64748b" font-size="9">${dateLabel}</text>`;
+        })
+        .join('')}
+    </svg>
+  `;
 }

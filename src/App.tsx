@@ -7,9 +7,12 @@ import {
   deleteReadingFromStorage,
   getStoredSettings,
   saveStoredSettings,
+  importReadingsIntoStorage,
   DEFAULT_SETTINGS,
 } from './services/storageService';
 import { processReadingsIntoSessions } from './utils/whiteCoatAlgorithm';
+import { checkAndExecuteAutoBackup } from './utils/backupScheduler';
+import { exportToCSV } from './utils/exportCsv';
 import { Header } from './components/Header';
 import { ReadingForm } from './components/ReadingForm';
 import { WhiteCoatBanner } from './components/WhiteCoatBanner';
@@ -25,6 +28,7 @@ export function App() {
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<DateRange>({ preset: '30days' });
+  const [notificationMsg, setNotificationMsg] = useState<string | null>(null);
 
   // Cargar lecturas y configuración al iniciar
   useEffect(() => {
@@ -34,10 +38,49 @@ export function App() {
     setSettings(loadedSettings);
   }, []);
 
+  // Procesar lecturas mediante el algoritmo de sesiones y atenuación de bata blanca
+  const { sessions } = processReadingsIntoSessions(readings, settings);
+
+  // Comprobar si corresponde ejecutar copia de seguridad automática programada
+  useEffect(() => {
+    if (sessions.length > 0) {
+      const result = checkAndExecuteAutoBackup(sessions, settings, handleUpdateSettings);
+      if (result.backupExecuted) {
+        setNotificationMsg(`✓ Copia de seguridad automática CSV guardada (${result.dateStr})`);
+        setTimeout(() => setNotificationMsg(null), 6000);
+      }
+    }
+  }, [readings.length, settings.backupFrequency]);
+
   // Actualizar ajustes y guardar
   const handleUpdateSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
     saveStoredSettings(newSettings);
+  };
+
+  // Importar lecturas desde CSV
+  const handleImportReadings = (imported: Omit<BloodPressureReading, 'id'>[]) => {
+    const result = importReadingsIntoStorage(imported);
+    setReadings(result.updated);
+    setNotificationMsg(`✓ Se han importado ${result.addedCount} registros nuevos desde el archivo CSV.`);
+    setTimeout(() => setNotificationMsg(null), 5000);
+  };
+
+  // Generar copia manual inmediata desde Ajustes
+  const handleTriggerManualBackup = () => {
+    if (sessions.length === 0) {
+      alert('No hay registros suficientes para exportar copia de seguridad.');
+      return;
+    }
+    const now = new Date();
+    exportToCSV(sessions, { preset: 'all' }, 'copia_seguridad_manual');
+    const updatedSettings = {
+      ...settings,
+      lastBackupTimestamp: now.toISOString(),
+    };
+    handleUpdateSettings(updatedSettings);
+    setNotificationMsg('✓ Copia de seguridad CSV generada y descargada.');
+    setTimeout(() => setNotificationMsg(null), 5000);
   };
 
   // Restaurar datos demo
@@ -50,7 +93,7 @@ export function App() {
     }
   };
 
-  // Control de tema claro / oscuro en el documento
+  // Control de tema claro / oscuro
   const handleToggleDarkMode = () => {
     const nextMode = !isDarkMode;
     setIsDarkMode(nextMode);
@@ -96,11 +139,16 @@ export function App() {
     }
   };
 
-  // Procesar lecturas mediante el algoritmo de sesiones y atenuación de bata blanca usando la configuración del usuario
-  const { sessions } = processReadingsIntoSessions(readings, settings);
-
   return (
     <div className="app-container">
+      {/* Banner de Notificación / Toast */}
+      {notificationMsg && (
+        <div className="toast-notification">
+          <span>{notificationMsg}</span>
+          <button onClick={() => setNotificationMsg(null)}>×</button>
+        </div>
+      )}
+
       {/* Encabezado Principal */}
       <Header
         onOpenExportModal={() => setIsExportModalOpen(true)}
@@ -127,20 +175,22 @@ export function App() {
         onDateRangeChange={setDateRange}
       />
 
-      {/* Modal de Exportación CSV e Impresión PDF */}
+      {/* Modal de Exportación CSV, Importación e Impresión PDF */}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         sessions={sessions}
+        onImportReadings={handleImportReadings}
       />
 
-      {/* Modal de Configuración (Filtro de bata blanca on/off, tiempos, brazo por defecto) */}
+      {/* Modal de Configuración (Filtro bata blanca, Copias de seguridad automáticas CSV) */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
         onResetDemoData={handleResetDemoData}
+        onTriggerManualBackup={handleTriggerManualBackup}
       />
     </div>
   );
