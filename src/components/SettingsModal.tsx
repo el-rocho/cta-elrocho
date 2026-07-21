@@ -23,6 +23,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const currentWhiteCoatInterval = [5, 10, 15].includes(settings.whiteCoatIntervalMinutes)
+    ? settings.whiteCoatIntervalMinutes
+    : 5;
+
   const handlePatientNameChange = (name: string) => {
     onUpdateSettings({ ...settings, patientName: name });
   };
@@ -40,6 +44,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onUpdateSettings({
       ...settings,
       enableWhiteCoatFilter: !settings.enableWhiteCoatFilter,
+      whiteCoatIntervalMinutes: currentWhiteCoatInterval,
     });
   };
 
@@ -255,7 +260,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <button
                       key={mins}
                       type="button"
-                      className={`chip-select ${settings.whiteCoatIntervalMinutes === mins ? 'active' : ''}`}
+                      className={`chip-select ${currentWhiteCoatInterval === mins ? 'active' : ''}`}
                       onClick={() => handleChangeInterval(mins)}
                     >
                       {mins} minutos

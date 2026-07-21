@@ -121,7 +121,11 @@ export function getStoredSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    if (![5, 10, 15].includes(parsed.whiteCoatIntervalMinutes)) {
+      parsed.whiteCoatIntervalMinutes = 5;
+    }
+    return parsed;
   } catch (error) {
     console.error('Error al leer ajustes:', error);
     return DEFAULT_SETTINGS;
