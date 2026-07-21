@@ -229,11 +229,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
               onChangeDiastolic={setDiastolic}
               onChangeHeartRate={setHeartRate}
             />
-            {lastReading && (
-              <div className="last-reading-hint">
-                ✓ Centrada automáticamente en la última medición ({lastReading.systolic}/{lastReading.diastolic} mmHg - {lastReading.heartRate} ppm)
-              </div>
-            )}
           </div>
         )}
 
