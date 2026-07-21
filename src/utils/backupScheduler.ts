@@ -17,45 +17,44 @@ export function checkAndExecuteAutoBackup(
   const now = new Date();
   const lastBackup = settings.lastBackupTimestamp ? new Date(settings.lastBackupTimestamp) : null;
 
-  let isDue = false;
-
+  // Si es el primer inicio y NUNCA se ha registrado una fecha de copia, fijamos el reloj desde hoy SIN disparar la descarga
   if (!lastBackup) {
-    isDue = true;
-  } else {
-    const diffMs = now.getTime() - lastBackup.getTime();
-    const diffHours = diffMs / (1000 * 3600);
-    const diffDays = diffMs / (1000 * 3600 * 24);
+    onUpdateSettings({
+      ...settings,
+      lastBackupTimestamp: now.toISOString(),
+    });
+    return { backupExecuted: false };
+  }
 
-    if (settings.backupFrequency === 'daily') {
-      // Diaria: si ha pasado más de 12 horas y ha cambiado el día calendario (pasan las 00:00)
-      const isDifferentDay = now.getDate() !== lastBackup.getDate() || now.getMonth() !== lastBackup.getMonth();
-      if (isDifferentDay && diffHours >= 12) {
-        isDue = true;
-      }
-    } else if (settings.backupFrequency === 'weekly') {
-      if (diffDays >= 7) {
-        isDue = true;
-      }
-    } else if (settings.backupFrequency === 'monthly') {
-      if (diffDays >= 30) {
-        isDue = true;
-      }
+  let isDue = false;
+  const diffMs = now.getTime() - lastBackup.getTime();
+  const diffHours = diffMs / (1000 * 3600);
+  const diffDays = diffMs / (1000 * 3600 * 24);
+
+  if (settings.backupFrequency === 'daily') {
+    // Diaria: si ha pasado al menos 12 horas y ha cambiado el día calendario
+    const isDifferentDay = now.getDate() !== lastBackup.getDate() || now.getMonth() !== lastBackup.getMonth();
+    if (isDifferentDay && diffHours >= 12) {
+      isDue = true;
+    }
+  } else if (settings.backupFrequency === 'weekly') {
+    if (diffDays >= 7) {
+      isDue = true;
+    }
+  } else if (settings.backupFrequency === 'monthly') {
+    if (diffDays >= 30) {
+      isDue = true;
     }
   }
 
   if (isDue) {
     const prefix = `copia_seguridad_${settings.backupFrequency}`;
-    
-    // Ejecutar la exportación CSV automática
     exportToCSV(sessions, { preset: 'all' }, prefix);
 
-    // Actualizar timestamp en la configuración
-    const updatedSettings: AppSettings = {
+    onUpdateSettings({
       ...settings,
       lastBackupTimestamp: now.toISOString(),
-    };
-
-    onUpdateSettings(updatedSettings);
+    });
 
     return {
       backupExecuted: true,
