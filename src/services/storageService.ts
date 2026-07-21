@@ -5,7 +5,7 @@ const SETTINGS_KEY = 'graphene_bp_settings_v1';
 
 export const DEFAULT_SETTINGS: AppSettings = {
   enableWhiteCoatFilter: true,
-  whiteCoatIntervalMinutes: 3,
+  whiteCoatIntervalMinutes: 5, // Por defecto 5 minutos (opciones: 5, 10, 15 min)
   defaultArm: 'left',
   patientName: '',
   patientSex: '',

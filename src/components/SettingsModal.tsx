@@ -228,8 +228,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <ShieldAlert size={18} className="text-blue" />
                 <div>
                   <h3>Filtro de Síndrome de Bata Blanca</h3>
-                  <p className="settings-desc">
-                    Descarta automáticamente tomas elevadas en mediciones continuas para evitar el sesgo de ansiedad inicial.
+                  <p className="settings-desc" style={{ marginTop: '4px', lineHeight: '1.4' }}>
+                    Al realizar mediciones continuadas dentro del intervalo definido, se descartan las tomas elevadas para evitar el sesgo de ansiedad inicial, con el resto de las mediciones se calcula la media y almacena una única medición
                   </p>
                 </div>
               </div>
@@ -251,14 +251,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <span>Intervalo máximo de tiempo entre tomas:</span>
                 </div>
                 <div className="chip-options-row">
-                  {[1, 2, 3, 5].map((mins) => (
+                  {[5, 10, 15].map((mins) => (
                     <button
                       key={mins}
                       type="button"
                       className={`chip-select ${settings.whiteCoatIntervalMinutes === mins ? 'active' : ''}`}
                       onClick={() => handleChangeInterval(mins)}
                     >
-                      {mins} {mins === 1 ? 'minuto' : 'minutos'}
+                      {mins} minutos
                     </button>
                   ))}
                 </div>
