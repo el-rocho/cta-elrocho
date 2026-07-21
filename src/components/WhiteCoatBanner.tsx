@@ -10,18 +10,19 @@ interface WhiteCoatBannerProps {
 export const WhiteCoatBanner: React.FC<WhiteCoatBannerProps> = ({ settings, onOpenSettings }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const isActive = settings.enableWhiteCoatFilter;
+  // Si el filtro de bata blanca está inactivo por configuración, no mostrar el banner en la interfaz
+  if (!settings.enableWhiteCoatFilter) {
+    return null;
+  }
 
   return (
-    <div className={`white-coat-banner ${!isActive ? 'banner-disabled' : ''}`}>
+    <div className="white-coat-banner">
       <div className="banner-header" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="banner-title">
-          <ShieldAlert className={`banner-icon ${!isActive ? 'icon-muted' : ''}`} size={18} />
+          <ShieldAlert className="banner-icon" size={18} />
           <span>
             Filtro de Síndrome de Bata Blanca:{' '}
-            <strong className={isActive ? 'text-green' : 'text-muted'}>
-              {isActive ? `Activo (${settings.whiteCoatIntervalMinutes} min)` : 'Inactivo'}
-            </strong>
+            <strong className="text-green">Activo ({settings.whiteCoatIntervalMinutes} min)</strong>
           </span>
         </div>
         <div className="banner-actions-group" onClick={(e) => e.stopPropagation()}>
@@ -31,7 +32,7 @@ export const WhiteCoatBanner: React.FC<WhiteCoatBannerProps> = ({ settings, onOp
             onClick={onOpenSettings}
             title="Configurar opciones de bata blanca"
           >
-            <Settings size={14} /> Configurar
+            <Settings size={14} /> Ajustes
           </button>
           <button
             type="button"
@@ -48,16 +49,8 @@ export const WhiteCoatBanner: React.FC<WhiteCoatBannerProps> = ({ settings, onOp
         <div className="banner-content">
           <p>
             <Info size={14} className="inline-icon" />
-            {isActive ? (
-              <>
-                El filtro está <strong>ACTIVADO</strong>. Si registras varias tomas en menos de {settings.whiteCoatIntervalMinutes} minutos,
-                se calculará la media descartando las lecturas iniciales más altas.
-              </>
-            ) : (
-              <>
-                El filtro está <strong>DESACTIVADO</strong>. Todas las lecturas se registrarán de forma individual sin promediar ni descartar tomas elevadas.
-              </>
-            )}
+            El filtro está <strong>ACTIVADO</strong>. Si registras varias tomas en menos de {settings.whiteCoatIntervalMinutes} minutos,
+            se calculará la media descartando las lecturas iniciales más altas.
           </p>
         </div>
       )}
