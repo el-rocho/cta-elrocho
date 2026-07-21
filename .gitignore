@@ -1,0 +1,25 @@
+# Archivos de sistema y editores
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Node / Web / Capacitor build artifacts
+node_modules/
+dist/
+build/
+.output/
+
+# Android build artifacts
+.gradle/
+build/
+app/build/
+*.apk
+*.aab
+*.keystore
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
