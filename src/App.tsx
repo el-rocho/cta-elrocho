@@ -8,6 +8,7 @@ import {
   getStoredSettings,
   saveStoredSettings,
   importReadingsIntoStorage,
+  clearAllStoredData,
   DEFAULT_SETTINGS,
 } from './services/storageService';
 import { processReadingsIntoSessions } from './utils/whiteCoatAlgorithm';
@@ -96,6 +97,19 @@ export function App() {
       const resetReadings = getStoredReadings();
       setReadings(resetReadings);
       setIsSettingsModalOpen(false);
+      setNotificationMsg('✓ Se han cargado los registros de demostración.');
+      setTimeout(() => setNotificationMsg(null), 4000);
+    }
+  };
+
+  // Eliminar absolutamente todos los datos guardados
+  const handleClearAllData = () => {
+    if (window.confirm('¿Seguro que deseas ELIMINAR TODOS los registros de tensión de este dispositivo? Esta acción borrará todo tu historial de forma permanente.')) {
+      clearAllStoredData();
+      setReadings([]);
+      setIsSettingsModalOpen(false);
+      setNotificationMsg('✓ Se han eliminado todos los registros guardados.');
+      setTimeout(() => setNotificationMsg(null), 4000);
     }
   };
 
@@ -209,6 +223,7 @@ export function App() {
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
         onResetDemoData={handleResetDemoData}
+        onClearAllData={handleClearAllData}
         onTriggerManualBackup={handleTriggerManualBackup}
       />
 

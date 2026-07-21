@@ -109,6 +109,14 @@ export function saveStoredReadings(readings: BloodPressureReading[]): void {
   }
 }
 
+export function clearAllStoredData(): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+  } catch (error) {
+    console.error('Error al eliminar datos de localStorage:', error);
+  }
+}
+
 export function getStoredSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);

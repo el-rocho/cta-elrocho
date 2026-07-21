@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppSettings, BackupFrequency, PatientSex } from '../types/bloodPressure';
-import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck, User } from 'lucide-react';
+import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck, User, Trash2 } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -8,6 +8,7 @@ interface SettingsModalProps {
   settings: AppSettings;
   onUpdateSettings: (newSettings: AppSettings) => void;
   onResetDemoData: () => void;
+  onClearAllData: () => void;
   onTriggerManualBackup: () => void;
 }
 
@@ -17,6 +18,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onUpdateSettings,
   onResetDemoData,
+  onClearAllData,
   onTriggerManualBackup,
 }) => {
   if (!isOpen) return null;
@@ -288,17 +290,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Opción 5: Restaurar Datos Demo */}
+          {/* Opción 5: Gestionar Registros (Demo y Eliminar Todos) */}
           <div className="settings-section border-top">
             <div className="settings-row-header">
               <div>
-                <h4 style={{ fontSize: '13px', margin: 0 }}>Restablecer Datos de Ejemplo</h4>
-                <p className="settings-desc">Vuelve a cargar los datos de demostración si los has borrado.</p>
+                <h4 style={{ fontSize: '13px', margin: 0 }}>Gestión de Datos Registrados</h4>
+                <p className="settings-desc">Restaura datos de demostración o vacía el historial por completo.</p>
               </div>
-              <button type="button" className="btn-subtle-reset" onClick={onResetDemoData}>
-                <RotateCcw size={14} />
-                <span>Restaurar Demo</span>
-              </button>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button type="button" className="btn-subtle-reset" onClick={onResetDemoData}>
+                  <RotateCcw size={14} />
+                  <span>Restaurar Demo</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-subtle-reset"
+                  onClick={onClearAllData}
+                  style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.08)' }}
+                >
+                  <Trash2 size={14} />
+                  <span>Eliminar Todos los Datos</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
