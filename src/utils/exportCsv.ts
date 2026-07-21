@@ -1,116 +1,126 @@
 import type { BloodPressureSession, DateRange, ExportReportOptions } from '../types/bloodPressure';
 import { getHealthCategory } from './healthClassification';
 
-export function filterSessionsByDateRange(sessions: BloodPressureSession[], dateRange: DateRange): BloodPressureSession[] {
+export function filterSessionsByDateRange(
+  sessions: BloodPressureSession[],
+  dateRange: DateRange
+): BloodPressureSession[] {
   if (dateRange.preset === 'all') return sessions;
 
   const now = new Date();
-  let minDate: Date | null = null;
 
-  if (dateRange.preset === '7days') {
-    minDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  } else if (dateRange.preset === '30days') {
-    minDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  } else if (dateRange.preset === '90days') {
-    minDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-  } else if (dateRange.preset === 'custom') {
-    const start = dateRange.startDate ? new Date(dateRange.startDate) : null;
-    const end = dateRange.endDate ? new Date(dateRange.endDate) : null;
-    if (end) end.setHours(23, 59, 59, 999);
+  return sessions.filter((s) => {
+    const sDate = new Date(s.timestamp);
 
-    return sessions.filter((s) => {
-      const sDate = new Date(s.timestamp);
-      if (start && sDate < start) return false;
-      if (end && sDate > end) return false;
+    if (dateRange.preset === '7days') {
+      const diffMs = now.getTime() - sDate.getTime();
+      return diffMs <= 7 * 24 * 60 * 60 * 1000;
+    }
+
+    if (dateRange.preset === '30days') {
+      const diffMs = now.getTime() - sDate.getTime();
+      return diffMs <= 30 * 24 * 60 * 60 * 1000;
+    }
+
+    if (dateRange.preset === '90days') {
+      const diffMs = now.getTime() - sDate.getTime();
+      return diffMs <= 90 * 24 * 60 * 60 * 1000;
+    }
+
+    if (dateRange.preset === 'custom') {
+      if (dateRange.startDate && sDate < new Date(dateRange.startDate)) return false;
+      if (dateRange.endDate) {
+        const end = new Date(dateRange.endDate);
+        end.setHours(23, 59, 59, 999);
+        if (sDate > end) return false;
+      }
       return true;
-    });
-  }
+    }
 
-  if (!minDate) return sessions;
-
-  return sessions.filter((s) => new Date(s.timestamp) >= minDate!);
+    return true;
+  });
 }
 
-/**
- * Genera y descarga el archivo CSV con las lecturas y metadatos del paciente
- */
 export function exportToCSV(
   sessions: BloodPressureSession[],
   dateRange: DateRange,
-  fileNamePrefix = 'tension_arterial',
+  filenamePrefix = 'tension_arterial',
   options: ExportReportOptions = {}
 ): void {
-  const filteredSessions = filterSessionsByDateRange(sessions, dateRange);
+  const filtered = filterSessionsByDateRange(sessions, dateRange);
 
-  const metaRows: string[] = [];
-
-  // Metadatos de encabezado de CSV si no están ocultos
-  if (!options.hidePatientData) {
-    if (options.patientName) metaRows.push(`# Paciente: ${options.patientName}`);
-    if (options.patientSex) metaRows.push(`# Sexo: ${options.patientSex.charAt(0).toUpperCase() + options.patientSex.slice(1)}`);
-    if (options.patientAge) metaRows.push(`# Edad: ${options.patientAge} años`);
-  } else {
-    metaRows.push(`# Datos de paciente: Anónimos / Ocultos`);
-  }
-
-  if (options.reportNotes) {
-    metaRows.push(`# Observaciones del informe: "${options.reportNotes.replace(/"/g, '""')}"`);
-  }
-  metaRows.push(`# Fecha de exportación: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}`);
-  metaRows.push(''); // Línea en blanco separadora
-
-  // Encabezados estándar en español
   const headers = [
     'Fecha',
     'Hora',
-    'Sistólica (mmHg)',
-    'Diastólica (mmHg)',
-    'Pulsaciones (ppm)',
+    'Sistolica_mmHg',
+    'Diastolica_mmHg',
+    'Pulsaciones_ppm',
     'Brazo',
-    'Clasificación OMS/AHA',
-    'Es Media de Sesión',
-    'Tomas en Sesión',
+    'Clasificacion_OMS',
+    'Tomas_En_Sesion',
+    'Tomas_Descartadas',
     'Notas',
   ];
 
-  const rows: string[][] = [];
+  let metadataHeader = '';
+  if (!options.hidePatientData) {
+    if (options.patientName) metadataHeader += `# Paciente: ${options.patientName}\n`;
+    if (options.patientSex) metadataHeader += `# Sexo: ${options.patientSex}\n`;
+    if (options.patientAge) metadataHeader += `# Edad: ${options.patientAge} años\n`;
+  }
+  if (options.reportNotes) {
+    metadataHeader += `# Observaciones: ${options.reportNotes}\n`;
+  }
 
-  filteredSessions.forEach((session) => {
-    const d = new Date(session.timestamp);
-    const dateStr = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const timeStr = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    const category = getHealthCategory(session.averageSystolic, session.averageDiastolic);
-    const armStr = session.arm === 'left' ? 'Izquierdo' : 'Derecho';
-    const isMultiReading = session.readings.length > 1 ? 'Sí' : 'No';
+  const rows = filtered.map((s) => {
+    const dateObj = new Date(s.timestamp);
+    const dateStr = dateObj.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const timeStr = dateObj.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
-    rows.push([
+    const category = getHealthCategory(s.averageSystolic, s.averageDiastolic);
+    const armStr = s.arm === 'left' ? 'Izquierdo' : 'Derecho';
+    const notesClean = s.notes ? `"${s.notes.replace(/"/g, '""')}"` : '';
+
+    return [
       dateStr,
       timeStr,
-      session.averageSystolic.toString(),
-      session.averageDiastolic.toString(),
-      session.averageHeartRate.toString(),
+      s.averageSystolic,
+      s.averageDiastolic,
+      s.averageHeartRate,
       armStr,
-      category.name,
-      isMultiReading,
-      session.readings.length.toString(),
-      `"${(session.notes || '').replace(/"/g, '""')}"`,
-    ]);
+      `"${category.name}"`,
+      s.readings.length,
+      s.discardedCount,
+      notesClean,
+    ].join(';');
   });
 
-  // Construir string CSV con delimitador punto y coma (estándar en español/Excel) y UTF-8 BOM
-  const csvContent =
-    '\uFEFF' +
-    [...metaRows, headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
+  const csvContent = '\uFEFF' + metadataHeader + headers.join(';') + '\n' + rows.join('\n');
 
-  // Descarga del archivo
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
+
+  // Formatear la fecha y hora exacta (AAAA-MM-DD_HH-MM-SS)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const dateTimeStr = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+
   link.setAttribute('href', url);
-  const dateStamp = new Date().toISOString().split('T')[0];
-  link.setAttribute('download', `${fileNamePrefix}_${dateRange.preset}_${dateStamp}.csv`);
+  link.setAttribute('download', `${filenamePrefix}_${dateTimeStr}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
