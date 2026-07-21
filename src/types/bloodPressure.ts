@@ -4,6 +4,7 @@
 
 export type ArmPosition = 'left' | 'right';
 export type PatientSex = 'masculino' | 'femenino' | 'otro' | '';
+export type InputMode = 'keyboard' | 'wheel';
 
 export interface BloodPressureReading {
   id: string;
@@ -32,8 +33,9 @@ export type BackupFrequency = 'disabled' | 'daily' | 'weekly' | 'monthly';
 
 export interface AppSettings {
   enableWhiteCoatFilter: boolean; // Activar/desactivar filtro de bata blanca
-  whiteCoatIntervalMinutes: number; // Intervalo de tiempo máximo entre tomas (ej. 2 o 3 min)
+  whiteCoatIntervalMinutes: number; // Intervalo de tiempo máximo entre tomas (ej. 5, 10, 15 min)
   defaultArm: ArmPosition; // Brazo predeterminado ('left' / 'right')
+  preferredInputMode: InputMode; // Modo de introducción de datos ('keyboard' / 'wheel')
   
   // Perfil del paciente
   patientName?: string;

@@ -259,6 +259,8 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .form-title-group {
@@ -276,6 +278,37 @@ body {
 
 .icon-pulse {
   color: var(--accent-sys);
+}
+
+/* Conmutador Modo Teclado vs Ruleta */
+.input-mode-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-input);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.btn-mode-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-mode-chip.active {
+  background: var(--bg-card-solid);
+  color: var(--border-focus);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .live-category-badge {
@@ -353,6 +386,115 @@ body {
   color: var(--text-muted);
   margin-top: 4px;
   font-weight: 500;
+}
+
+/* Ruleta Táctil de Selección Rápida (WheelPicker) */
+.wheel-mode-container {
+  margin-bottom: 20px;
+}
+
+.wheel-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.wheel-column-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.wheel-column-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.wheel-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.btn-wheel-step {
+  width: 100%;
+  padding: 4px;
+  border: none;
+  background: var(--bg-card-solid);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.btn-wheel-step:hover {
+  background: var(--border-focus);
+  color: #ffffff;
+}
+
+.wheel-tumbler-container {
+  width: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  margin: 6px 0;
+  position: relative;
+  scrollbar-width: none; /* Ocultar scrollbar estándar */
+}
+
+.wheel-tumbler-container::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-item {
+  scroll-snap-align: center;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.wheel-item.selected {
+  font-size: 26px;
+  font-weight: 800;
+  border-top: 2px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
+  background: var(--bg-card-solid);
+  border-radius: 6px;
+  box-shadow: var(--shadow-sm);
+}
+
+.wheel-item.selected.acc-sys { color: var(--accent-sys); border-color: rgba(239, 68, 68, 0.4); }
+.wheel-item.selected.acc-dia { color: var(--accent-dia); border-color: rgba(59, 130, 246, 0.4); }
+.wheel-item.selected.acc-pulse { color: var(--accent-pulse); border-color: rgba(236, 72, 153, 0.4); }
+
+.last-reading-hint {
+  text-align: center;
+  font-size: 12px;
+  color: #10b981;
+  margin-top: 10px;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.08);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
 }
 
 /* Fila Secundaria del Formulario (Brazo y Notas) */
@@ -1327,6 +1469,7 @@ input:checked + .toggle-slider:before {
   .header-actions { width: 100%; justify-content: space-between; }
 
   .metrics-inputs-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .wheel-picker-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .form-secondary-row { flex-direction: column; align-items: stretch; }
 
   .session-main-row {

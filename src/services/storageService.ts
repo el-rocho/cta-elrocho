@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   enableWhiteCoatFilter: true,
   whiteCoatIntervalMinutes: 5, // Por defecto 5 minutos (opciones: 5, 10, 15 min)
   defaultArm: 'left',
+  preferredInputMode: 'keyboard', // Por defecto teclado ('keyboard' / 'wheel')
   patientName: '',
   patientSex: '',
   patientAge: '',
@@ -124,6 +125,9 @@ export function getStoredSettings(): AppSettings {
     const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
     if (![5, 10, 15].includes(parsed.whiteCoatIntervalMinutes)) {
       parsed.whiteCoatIntervalMinutes = 5;
+    }
+    if (!['keyboard', 'wheel'].includes(parsed.preferredInputMode)) {
+      parsed.preferredInputMode = 'keyboard';
     }
     return parsed;
   } catch (error) {

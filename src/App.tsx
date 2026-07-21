@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { BloodPressureReading, ArmPosition, DateRange, AppSettings } from './types/bloodPressure';
+import type { BloodPressureReading, ArmPosition, DateRange, AppSettings, InputMode } from './types/bloodPressure';
 import {
   getStoredReadings,
   addReadingToStorage,
@@ -59,6 +59,11 @@ export function App() {
   const handleUpdateSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
     saveStoredSettings(newSettings);
+  };
+
+  const handleUpdateInputMode = (mode: InputMode) => {
+    const updated = { ...settings, preferredInputMode: mode };
+    handleUpdateSettings(updated);
   };
 
   // Importar lecturas desde CSV
@@ -159,6 +164,9 @@ export function App() {
     }
   };
 
+  // Obtener la última medición realizada (cronológicamente más reciente)
+  const lastReading = readings.length > 0 ? readings[0] : null;
+
   return (
     <div className="app-container">
       {/* Banner de Notificación / Toast */}
@@ -177,8 +185,13 @@ export function App() {
         onToggleDarkMode={handleToggleDarkMode}
       />
 
-      {/* Formulario de Entrada Rápida */}
-      <ReadingForm onAddReading={handleAddReading} settings={settings} />
+      {/* Formulario de Entrada Rápida (Teclado o Ruleta) */}
+      <ReadingForm
+        onAddReading={handleAddReading}
+        settings={settings}
+        onUpdateInputMode={handleUpdateInputMode}
+        lastReading={lastReading}
+      />
 
       {/* Banner Informativo de Bata Blanca */}
       <WhiteCoatBanner settings={settings} onOpenSettings={() => setIsSettingsModalOpen(true)} />

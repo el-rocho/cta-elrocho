@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Activity, Armchair, FileText } from 'lucide-react';
-import type { ArmPosition, AppSettings } from '../types/bloodPressure';
+import { PlusCircle, Activity, Armchair, FileText, Keyboard, Sliders } from 'lucide-react';
+import type { ArmPosition, AppSettings, BloodPressureReading, InputMode } from '../types/bloodPressure';
 import { getHealthCategory } from '../utils/healthClassification';
+import { WheelPicker } from './WheelPicker';
 
 interface ReadingFormProps {
   onAddReading: (reading: {
@@ -12,20 +13,46 @@ interface ReadingFormProps {
     notes?: string;
   }) => void;
   settings: AppSettings;
+  onUpdateInputMode?: (mode: InputMode) => void;
+  lastReading?: BloodPressureReading | null;
 }
 
-export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings }) => {
-  const [systolic, setSystolic] = useState<number | ''>(120);
-  const [diastolic, setDiastolic] = useState<number | ''>(80);
-  const [heartRate, setHeartRate] = useState<number | ''>(72);
+export const ReadingForm: React.FC<ReadingFormProps> = ({
+  onAddReading,
+  settings,
+  onUpdateInputMode,
+  lastReading,
+}) => {
+  const [inputMode, setInputMode] = useState<InputMode>(settings.preferredInputMode || 'keyboard');
+
+  // Inicializar los valores centrados en la última medición realizada o en valores medios por defecto (120 / 80 / 72)
+  const initialSys = lastReading ? lastReading.systolic : 120;
+  const initialDia = lastReading ? lastReading.diastolic : 80;
+  const initialPulse = lastReading ? lastReading.heartRate : 72;
+
+  const [systolic, setSystolic] = useState<number | ''>(initialSys);
+  const [diastolic, setDiastolic] = useState<number | ''>(initialDia);
+  const [heartRate, setHeartRate] = useState<number | ''>(initialPulse);
   const [arm, setArm] = useState<ArmPosition>(settings.defaultArm || 'left');
   const [notes, setNotes] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Sincronizar brazo predeterminado si cambia la configuración
+  // Sincronizar brazo y modo de entrada predeterminado si cambia la configuración
   useEffect(() => {
     setArm(settings.defaultArm || 'left');
-  }, [settings.defaultArm]);
+    if (settings.preferredInputMode) {
+      setInputMode(settings.preferredInputMode);
+    }
+  }, [settings.defaultArm, settings.preferredInputMode]);
+
+  // Actualizar valores iniciales cuando entra una nueva medición
+  useEffect(() => {
+    if (lastReading) {
+      setSystolic(lastReading.systolic);
+      setDiastolic(lastReading.diastolic);
+      setHeartRate(lastReading.heartRate);
+    }
+  }, [lastReading?.id]);
 
   const liveSystolic = typeof systolic === 'number' ? systolic : 120;
   const liveDiastolic = typeof diastolic === 'number' ? diastolic : 80;
@@ -34,6 +61,13 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings
   // Auto-seleccionar todo el texto al tocar/enfocar un campo numérico
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     e.target.select();
+  };
+
+  const handleToggleInputMode = (newMode: InputMode) => {
+    setInputMode(newMode);
+    if (onUpdateInputMode) {
+      onUpdateInputMode(newMode);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -80,91 +114,131 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings
           <h2>Nueva Medición</h2>
         </div>
 
-        {/* Badge de clasificación en tiempo real */}
-        <div
-          className="live-category-badge"
-          style={{ backgroundColor: category.badgeBg, color: category.badgeText }}
-          title={category.description}
-        >
-          <span className="dot" style={{ backgroundColor: category.colorHex }}></span>
-          {category.name}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Conmutador discreto Modo Teclado vs Modo Ruleta Rápida */}
+          <div className="input-mode-toggle">
+            <button
+              type="button"
+              className={`btn-mode-chip ${inputMode === 'keyboard' ? 'active' : ''}`}
+              onClick={() => handleToggleInputMode('keyboard')}
+              title="Introducir mediante teclado numérico"
+            >
+              <Keyboard size={14} />
+              <span>Teclado</span>
+            </button>
+            <button
+              type="button"
+              className={`btn-mode-chip ${inputMode === 'wheel' ? 'active' : ''}`}
+              onClick={() => handleToggleInputMode('wheel')}
+              title="Introducir mediante ruleta táctil de selección rápida"
+            >
+              <Sliders size={14} />
+              <span>Ruleta</span>
+            </button>
+          </div>
+
+          {/* Badge de clasificación en tiempo real */}
+          <div
+            className="live-category-badge"
+            style={{ backgroundColor: category.badgeBg, color: category.badgeText }}
+            title={category.description}
+          >
+            <span className="dot" style={{ backgroundColor: category.colorHex }}></span>
+            {category.name}
+          </div>
         </div>
       </div>
 
       {errorMsg && <div className="alert-danger">{errorMsg}</div>}
 
       <form onSubmit={handleSubmit} className="bp-form">
-        <div className="metrics-inputs-grid">
-          {/* Campo Sistólica */}
-          <div className="input-group">
-            <label htmlFor="systolic-input">
-              <span>Sistólica</span>
-              <span className="unit">(mmHg)</span>
-            </label>
-            <div className="input-wrapper">
-              <input
-                id="systolic-input"
-                type="number"
-                min={50}
-                max={260}
-                value={systolic}
-                onChange={(e) => setSystolic(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                onFocus={handleFocus}
-                className="input-number input-sys"
-                required
-              />
-              <span className="input-sublabel">Máxima</span>
+        {inputMode === 'keyboard' ? (
+          /* Modo 1: Introducción mediante Teclado Numérico */
+          <div className="metrics-inputs-grid">
+            <div className="input-group">
+              <label htmlFor="systolic-input">
+                <span>Sistólica</span>
+                <span className="unit">(mmHg)</span>
+              </label>
+              <div className="input-wrapper">
+                <input
+                  id="systolic-input"
+                  type="number"
+                  min={50}
+                  max={260}
+                  value={systolic}
+                  onChange={(e) => setSystolic(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  onFocus={handleFocus}
+                  className="input-number input-sys"
+                  required
+                />
+                <span className="input-sublabel">Máxima</span>
+              </div>
             </div>
-          </div>
 
-          {/* Campo Diastólica */}
-          <div className="input-group">
-            <label htmlFor="diastolic-input">
-              <span>Diastólica</span>
-              <span className="unit">(mmHg)</span>
-            </label>
-            <div className="input-wrapper">
-              <input
-                id="diastolic-input"
-                type="number"
-                min={30}
-                max={160}
-                value={diastolic}
-                onChange={(e) => setDiastolic(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                onFocus={handleFocus}
-                className="input-number input-dia"
-                required
-              />
-              <span className="input-sublabel">Mínima</span>
+            <div className="input-group">
+              <label htmlFor="diastolic-input">
+                <span>Diastólica</span>
+                <span className="unit">(mmHg)</span>
+              </label>
+              <div className="input-wrapper">
+                <input
+                  id="diastolic-input"
+                  type="number"
+                  min={30}
+                  max={160}
+                  value={diastolic}
+                  onChange={(e) => setDiastolic(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  onFocus={handleFocus}
+                  className="input-number input-dia"
+                  required
+                />
+                <span className="input-sublabel">Mínima</span>
+              </div>
             </div>
-          </div>
 
-          {/* Campo Pulsaciones */}
-          <div className="input-group">
-            <label htmlFor="pulse-input">
-              <span>Pulsaciones</span>
-              <span className="unit">(ppm)</span>
-            </label>
-            <div className="input-wrapper">
-              <input
-                id="pulse-input"
-                type="number"
-                min={30}
-                max={220}
-                value={heartRate}
-                onChange={(e) => setHeartRate(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                onFocus={handleFocus}
-                className="input-number input-pulse"
-                required
-              />
-              <span className="input-sublabel">Ritmo cardíaco</span>
+            <div className="input-group">
+              <label htmlFor="pulse-input">
+                <span>Pulsaciones</span>
+                <span className="unit">(ppm)</span>
+              </label>
+              <div className="input-wrapper">
+                <input
+                  id="pulse-input"
+                  type="number"
+                  min={30}
+                  max={220}
+                  value={heartRate}
+                  onChange={(e) => setHeartRate(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  onFocus={handleFocus}
+                  className="input-number input-pulse"
+                  required
+                />
+                <span className="input-sublabel">Ritmo cardíaco</span>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Modo 2: Ruleta Táctil de Selección Rápida */
+          <div className="wheel-mode-container">
+            <WheelPicker
+              systolic={typeof systolic === 'number' ? systolic : 120}
+              diastolic={typeof diastolic === 'number' ? diastolic : 80}
+              heartRate={typeof heartRate === 'number' ? heartRate : 72}
+              onChangeSystolic={setSystolic}
+              onChangeDiastolic={setDiastolic}
+              onChangeHeartRate={setHeartRate}
+            />
+            {lastReading && (
+              <div className="last-reading-hint">
+                ✓ Centrada automáticamente en la última medición ({lastReading.systolic}/{lastReading.diastolic} mmHg - {lastReading.heartRate} ppm)
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Zona discreta para selector de brazo y notas */}
         <div className="form-secondary-row">
-          {/* Selector Discreto de Brazo */}
           <div className="arm-selector-container">
             <label className="arm-label">
               <Armchair size={14} />
@@ -190,7 +264,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings
             </div>
           </div>
 
-          {/* Campo de Notas Libre */}
           <div className="notes-container">
             <div className="input-wrapper-notes">
               <FileText size={16} className="notes-icon" />
