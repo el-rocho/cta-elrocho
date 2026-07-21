@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { BloodPressureReading, ArmPosition, DateRange, AppSettings, InputMode } from './types/bloodPressure';
 import {
   getStoredReadings,
+  saveStoredReadings,
   addReadingToStorage,
   deleteSessionFromStorage,
   deleteReadingFromStorage,
@@ -9,7 +10,6 @@ import {
   saveStoredSettings,
   importReadingsIntoStorage,
   clearAllStoredData,
-  DEFAULT_SETTINGS,
 } from './services/storageService';
 import { processReadingsIntoSessions } from './utils/whiteCoatAlgorithm';
 import { checkAndExecuteAutoBackup } from './utils/backupScheduler';
@@ -24,8 +24,8 @@ import { SettingsModal } from './components/SettingsModal';
 import { LegalNoticeModal } from './components/LegalNoticeModal';
 
 export function App() {
-  const [readings, setReadings] = useState<BloodPressureReading[]>([]);
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [readings, setReadings] = useState<BloodPressureReading[]>(() => getStoredReadings());
+  const [settings, setSettings] = useState<AppSettings>(() => getStoredSettings());
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -33,18 +33,16 @@ export function App() {
   const [dateRange, setDateRange] = useState<DateRange>({ preset: '30days' });
   const [notificationMsg, setNotificationMsg] = useState<string | null>(null);
 
-  // Cargar lecturas y configuración al iniciar
-  useEffect(() => {
-    const loadedReadings = getStoredReadings();
-    const loadedSettings = getStoredSettings();
-    setReadings(loadedReadings);
-    setSettings(loadedSettings);
-  }, []);
-
-  // Procesar lecturas mediante el algoritmo de sesiones y atenuación de bata blanca
   const { sessions } = processReadingsIntoSessions(readings, settings);
 
-  // Comprobar si corresponde ejecutar copia de seguridad automática programada
+  useEffect(() => {
+    saveStoredReadings(readings);
+  }, [readings]);
+
+  useEffect(() => {
+    saveStoredSettings(settings);
+  }, [settings]);
+
   useEffect(() => {
     if (sessions.length > 0) {
       const result = checkAndExecuteAutoBackup(sessions, settings, handleUpdateSettings);
@@ -55,10 +53,8 @@ export function App() {
     }
   }, [readings.length, settings.backupFrequency]);
 
-  // Actualizar ajustes y guardar
   const handleUpdateSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
-    saveStoredSettings(newSettings);
   };
 
   const handleUpdateInputMode = (mode: InputMode) => {
@@ -66,22 +62,20 @@ export function App() {
     handleUpdateSettings(updated);
   };
 
-  // Importar lecturas desde CSV
   const handleImportReadings = (imported: Omit<BloodPressureReading, 'id'>[]) => {
     const result = importReadingsIntoStorage(imported);
     setReadings(result.updated);
-    setNotificationMsg(`✓ Se han importado ${result.addedCount} registros nuevos desde el archivo CSV.`);
+    setNotificationMsg(`✓ Se han importado ${result.addedCount} registros nuevos.`);
     setTimeout(() => setNotificationMsg(null), 5000);
   };
 
-  // Generar copia manual inmediata desde Ajustes
   const handleTriggerManualBackup = () => {
     if (sessions.length === 0) {
       alert('No hay registros suficientes para exportar copia de seguridad.');
       return;
     }
     const now = new Date();
-    exportToCSV(sessions, { preset: 'all' }, 'copia_seguridad_manual', {
+    exportToCSV(sessions, { preset: 'all' }, 'tension_arterial', {
       patientName: settings.patientName,
       patientSex: settings.patientSex,
       patientAge: settings.patientAge,
@@ -95,30 +89,27 @@ export function App() {
     setTimeout(() => setNotificationMsg(null), 5000);
   };
 
-  // Restaurar datos demo
   const handleResetDemoData = () => {
-    if (window.confirm('¿Deseas restaurar los registros de demostración iniciales?')) {
+    if (window.confirm('¿Deseas restaurar los datos de ejemplo predeterminados?')) {
       localStorage.removeItem('graphene_bp_readings_v1');
-      const resetReadings = getStoredReadings();
-      setReadings(resetReadings);
+      const freshReadings = getStoredReadings();
+      setReadings(freshReadings);
       setIsSettingsModalOpen(false);
-      setNotificationMsg('✓ Se han cargado los registros de demostración.');
+      setNotificationMsg('✓ Se han restaurado los datos de ejemplo.');
       setTimeout(() => setNotificationMsg(null), 4000);
     }
   };
 
-  // Eliminar absolutamente todos los datos guardados
   const handleClearAllData = () => {
-    if (window.confirm('¿Seguro que deseas ELIMINAR TODOS los registros de tensión de este dispositivo? Esta acción borrará todo tu historial de forma permanente.')) {
+    if (window.confirm('¿Seguro que deseas ELIMINAR TODOS los datos? Esta acción borrará permanentemente todo tu historial.')) {
       clearAllStoredData();
       setReadings([]);
       setIsSettingsModalOpen(false);
-      setNotificationMsg('✓ Se han eliminado todos los registros guardados.');
+      setNotificationMsg('✓ Se han eliminado todos los datos de la aplicación.');
       setTimeout(() => setNotificationMsg(null), 4000);
     }
   };
 
-  // Control de tema claro / oscuro
   const handleToggleDarkMode = () => {
     const nextMode = !isDarkMode;
     setIsDarkMode(nextMode);
@@ -129,7 +120,6 @@ export function App() {
     }
   };
 
-  // Agregar nueva lectura
   const handleAddReading = (data: {
     systolic: number;
     diastolic: number;
@@ -137,7 +127,7 @@ export function App() {
     arm: ArmPosition;
     notes?: string;
   }) => {
-    const newReading = addReadingToStorage({
+    const created = addReadingToStorage({
       timestamp: new Date().toISOString(),
       systolic: data.systolic,
       diastolic: data.diastolic,
@@ -145,10 +135,9 @@ export function App() {
       arm: data.arm,
       notes: data.notes,
     });
-    setReadings((prev) => [newReading, ...prev]);
+    setReadings((prev) => [created, ...prev]);
   };
 
-  // Eliminar una sesión completa
   const handleDeleteSession = (sessionToDelete: any) => {
     if (window.confirm('¿Seguro que deseas eliminar esta sesión de medición?')) {
       const updated = deleteSessionFromStorage(sessionToDelete.readings);
@@ -156,7 +145,6 @@ export function App() {
     }
   };
 
-  // Eliminar una toma individual dentro de una sesión
   const handleDeleteSingleReading = (readingId: string) => {
     if (window.confirm('¿Seguro que deseas eliminar esta toma individual?')) {
       const updated = deleteReadingFromStorage(readingId);
@@ -164,12 +152,10 @@ export function App() {
     }
   };
 
-  // Obtener la última medición realizada (cronológicamente más reciente)
   const lastReading = readings.length > 0 ? readings[0] : null;
 
   return (
     <div className="app-container">
-      {/* Banner de Notificación / Toast */}
       {notificationMsg && (
         <div className="toast-notification">
           <span>{notificationMsg}</span>
@@ -177,7 +163,6 @@ export function App() {
         </div>
       )}
 
-      {/* Encabezado Principal */}
       <Header
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
@@ -185,7 +170,6 @@ export function App() {
         onToggleDarkMode={handleToggleDarkMode}
       />
 
-      {/* Formulario de Entrada Rápida (Teclado o Ruleta) */}
       <ReadingForm
         onAddReading={handleAddReading}
         settings={settings}
@@ -193,13 +177,10 @@ export function App() {
         lastReading={lastReading}
       />
 
-      {/* Banner Informativo de Bata Blanca */}
       <WhiteCoatBanner settings={settings} onOpenSettings={() => setIsSettingsModalOpen(true)} />
 
-      {/* Gráfico Interactivo de Tendencias */}
       <TrendChart sessions={sessions} />
 
-      {/* Historial de Mediciones */}
       <ReadingList
         sessions={sessions}
         onDeleteSession={handleDeleteSession}
@@ -208,7 +189,6 @@ export function App() {
         onDateRangeChange={setDateRange}
       />
 
-      {/* Pie de página discreto con enlace de aviso legal y privacidad */}
       <footer className="app-footer">
         <span>Control Tensión Arterial &copy; {new Date().getFullYear()}</span>
         <span> &bull; </span>
@@ -221,7 +201,6 @@ export function App() {
         </button>
       </footer>
 
-      {/* Modales */}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}

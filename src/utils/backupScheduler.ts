@@ -32,7 +32,6 @@ export function checkAndExecuteAutoBackup(
   const diffDays = diffMs / (1000 * 3600 * 24);
 
   if (settings.backupFrequency === 'daily') {
-    // Diaria: si ha pasado al menos 12 horas y ha cambiado el día calendario
     const isDifferentDay = now.getDate() !== lastBackup.getDate() || now.getMonth() !== lastBackup.getMonth();
     if (isDifferentDay && diffHours >= 12) {
       isDue = true;
@@ -48,7 +47,8 @@ export function checkAndExecuteAutoBackup(
   }
 
   if (isDue) {
-    const prefix = `copia_seguridad_${settings.backupFrequency}`;
+    // Unificar formato de nombre: tension_arterial_daily_AAAA-MM-DD_HH-MM-SS.csv
+    const prefix = `tension_arterial_${settings.backupFrequency}`;
     exportToCSV(sessions, { preset: 'all' }, prefix);
 
     onUpdateSettings({
