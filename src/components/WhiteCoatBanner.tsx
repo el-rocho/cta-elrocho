@@ -1,36 +1,64 @@
 import React, { useState } from 'react';
-import { ShieldAlert, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { ShieldAlert, ChevronDown, ChevronUp, Info, Settings } from 'lucide-react';
+import type { AppSettings } from '../types/bloodPressure';
 
-export const WhiteCoatBanner: React.FC = () => {
+interface WhiteCoatBannerProps {
+  settings: AppSettings;
+  onOpenSettings: () => void;
+}
+
+export const WhiteCoatBanner: React.FC<WhiteCoatBannerProps> = ({ settings, onOpenSettings }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const isActive = settings.enableWhiteCoatFilter;
+
   return (
-    <div className="white-coat-banner">
+    <div className={`white-coat-banner ${!isActive ? 'banner-disabled' : ''}`}>
       <div className="banner-header" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="banner-title">
-          <ShieldAlert className="banner-icon" size={18} />
-          <span>Filtro de Síndrome de Bata Blanca Activo</span>
+          <ShieldAlert className={`banner-icon ${!isActive ? 'icon-muted' : ''}`} size={18} />
+          <span>
+            Filtro de Síndrome de Bata Blanca:{' '}
+            <strong className={isActive ? 'text-green' : 'text-muted'}>
+              {isActive ? `Activo (${settings.whiteCoatIntervalMinutes} min)` : 'Inactivo'}
+            </strong>
+          </span>
         </div>
-        <button type="button" className="btn-banner-toggle" aria-label="Más detalles">
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
+        <div className="banner-actions-group" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="btn-subtle-settings"
+            onClick={onOpenSettings}
+            title="Configurar opciones de bata blanca"
+          >
+            <Settings size={14} /> Configurar
+          </button>
+          <button
+            type="button"
+            className="btn-banner-toggle"
+            onClick={() => setIsExpanded(!isExpanded)}
+            aria-label="Más detalles"
+          >
+            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+        </div>
       </div>
 
       {isExpanded && (
         <div className="banner-content">
           <p>
             <Info size={14} className="inline-icon" />
-            Muchas personas experimentan elevaciones temporales de tensión arterial en las primeras tomas por adaptación
-            o ligera ansiedad.
+            {isActive ? (
+              <>
+                El filtro está <strong>ACTIVADO</strong>. Si registras varias tomas en menos de {settings.whiteCoatIntervalMinutes} minutos,
+                se calculará la media descartando las lecturas iniciales más altas.
+              </>
+            ) : (
+              <>
+                El filtro está <strong>DESACTIVADO</strong>. Todas las lecturas se registrarán de forma individual sin promediar ni descartar tomas elevadas.
+              </>
+            )}
           </p>
-          <p>
-            <strong>¿Cómo funciona el algoritmo?</strong> Si registras varias mediciones en un intervalo inferior a 3 minutos:
-          </p>
-          <ul>
-            <li>La aplicación agrupa las tomas en una única <strong>Sesión de Medición</strong>.</li>
-            <li>Calcula la media de la sesión <strong>descartando la 1ª o 2ª lectura más elevada</strong>.</li>
-            <li>Obtendrás una estimación limpia y precisa de tu presión en reposo real.</li>
-          </ul>
         </div>
       )}
     </div>

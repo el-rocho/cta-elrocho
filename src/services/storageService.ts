@@ -1,13 +1,19 @@
-import type { BloodPressureReading } from '../types/bloodPressure';
+import type { BloodPressureReading, AppSettings } from '../types/bloodPressure';
 
 const STORAGE_KEY = 'graphene_bp_readings_v1';
+const SETTINGS_KEY = 'graphene_bp_settings_v1';
 
-// Datos iniciales de demostración para que el usuario aprecie inmediatamente los gráficos, clasificaciones y el filtro de bata blanca
+export const DEFAULT_SETTINGS: AppSettings = {
+  enableWhiteCoatFilter: true,
+  whiteCoatIntervalMinutes: 3,
+  defaultArm: 'left',
+};
+
+// Datos iniciales de demostración
 const INITIAL_DEMO_DATA: BloodPressureReading[] = [
-  // Sesión de hace 1 hora (Demostración de bata blanca: 3 tomas seguidas)
   {
     id: 'demo-103',
-    timestamp: new Date(Date.now() - 1000 * 60 * 50).toISOString(), // Hace 50 min
+    timestamp: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
     systolic: 142,
     diastolic: 91,
     heartRate: 88,
@@ -16,7 +22,7 @@ const INITIAL_DEMO_DATA: BloodPressureReading[] = [
   },
   {
     id: 'demo-102',
-    timestamp: new Date(Date.now() - 1000 * 60 * 48).toISOString(), // Hace 48 min
+    timestamp: new Date(Date.now() - 1000 * 60 * 48).toISOString(),
     systolic: 128,
     diastolic: 83,
     heartRate: 76,
@@ -24,17 +30,15 @@ const INITIAL_DEMO_DATA: BloodPressureReading[] = [
   },
   {
     id: 'demo-101',
-    timestamp: new Date(Date.now() - 1000 * 60 * 46).toISOString(), // Hace 46 min
+    timestamp: new Date(Date.now() - 1000 * 60 * 46).toISOString(),
     systolic: 121,
     diastolic: 79,
     heartRate: 72,
     arm: 'left',
   },
-
-  // Días anteriores
   {
     id: 'demo-5',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), // Ayer
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
     systolic: 124,
     diastolic: 81,
     heartRate: 70,
@@ -43,7 +47,7 @@ const INITIAL_DEMO_DATA: BloodPressureReading[] = [
   },
   {
     id: 'demo-4',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // Hace 2 días
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
     systolic: 132,
     diastolic: 86,
     heartRate: 75,
@@ -52,7 +56,7 @@ const INITIAL_DEMO_DATA: BloodPressureReading[] = [
   },
   {
     id: 'demo-3',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // Hace 3 días
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     systolic: 118,
     diastolic: 77,
     heartRate: 68,
@@ -60,7 +64,7 @@ const INITIAL_DEMO_DATA: BloodPressureReading[] = [
   },
   {
     id: 'demo-2',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // Hace 5 días
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
     systolic: 138,
     diastolic: 89,
     heartRate: 81,
@@ -69,7 +73,7 @@ const INITIAL_DEMO_DATA: BloodPressureReading[] = [
   },
   {
     id: 'demo-1',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), // Hace 7 días
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
     systolic: 122,
     diastolic: 80,
     heartRate: 71,
@@ -81,7 +85,6 @@ export function getStoredReadings(): BloodPressureReading[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      // Guardar datos demo iniciales
       saveStoredReadings(INITIAL_DEMO_DATA);
       return INITIAL_DEMO_DATA;
     }
@@ -97,6 +100,25 @@ export function saveStoredReadings(readings: BloodPressureReading[]): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(readings));
   } catch (error) {
     console.error('Error al guardar en localStorage:', error);
+  }
+}
+
+export function getStoredSettings(): AppSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch (error) {
+    console.error('Error al leer ajustes:', error);
+    return DEFAULT_SETTINGS;
+  }
+}
+
+export function saveStoredSettings(settings: AppSettings): void {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.error('Error al guardar ajustes:', error);
   }
 }
 

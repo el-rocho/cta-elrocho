@@ -413,6 +413,13 @@ body {
   border-radius: var(--radius-md);
   padding: 12px 16px;
   margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+
+.white-coat-banner.banner-disabled {
+  background: var(--bg-input);
+  border-color: var(--border-color);
+  opacity: 0.8;
 }
 
 .banner-header {
@@ -421,6 +428,37 @@ body {
   align-items: center;
   cursor: pointer;
 }
+
+.banner-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-subtle-settings {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-subtle-settings:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.text-green { color: #10b981; }
+.text-muted { color: var(--text-muted); }
+.text-blue { color: #3b82f6; }
+.icon-muted { color: var(--text-muted); }
 
 .banner-title {
   display: flex;
@@ -482,7 +520,6 @@ body {
 .filter-chips {
   display: flex;
   gap: 4px;
-
   background: var(--bg-input);
   padding: 4px;
   border-radius: var(--radius-sm);
@@ -835,7 +872,7 @@ body {
   text-decoration: underline;
 }
 
-/* Modal */
+/* Modal y Configuración */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -910,6 +947,141 @@ body {
   color: var(--text-primary);
   font-size: 14px;
   outline: none;
+}
+
+/* Secciones de Configuración */
+.settings-section {
+  margin-bottom: 20px;
+}
+
+.settings-section.border-top {
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+.settings-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.settings-label-group {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.settings-label-group h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+
+.settings-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Switch Estilo iOS / Material */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-muted);
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+  background-color: #ffffff;
+}
+
+.settings-subcard {
+  margin-top: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.chip-options-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip-select {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card-solid);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip-select.active {
+  background: var(--border-focus);
+  color: #ffffff;
+  border-color: var(--border-focus);
+}
+
+.btn-subtle-reset {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-subtle-reset:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .range-options-grid {

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle, Activity, Armchair, FileText } from 'lucide-react';
-import type { ArmPosition } from '../types/bloodPressure';
+import type { ArmPosition, AppSettings } from '../types/bloodPressure';
 import { getHealthCategory } from '../utils/healthClassification';
 
 interface ReadingFormProps {
@@ -11,17 +11,22 @@ interface ReadingFormProps {
     arm: ArmPosition;
     notes?: string;
   }) => void;
+  settings: AppSettings;
 }
 
-export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading }) => {
+export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading, settings }) => {
   const [systolic, setSystolic] = useState<number | ''>(120);
   const [diastolic, setDiastolic] = useState<number | ''>(80);
   const [heartRate, setHeartRate] = useState<number | ''>(72);
-  const [arm, setArm] = useState<ArmPosition>('left'); // Por defecto 'Izquierdo' según requerimiento del usuario
+  const [arm, setArm] = useState<ArmPosition>(settings.defaultArm || 'left');
   const [notes, setNotes] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Clasificación médica en vivo según los valores introducidos
+  // Sincronizar brazo predeterminado si cambia la configuración
+  useEffect(() => {
+    setArm(settings.defaultArm || 'left');
+  }, [settings.defaultArm]);
+
   const liveSystolic = typeof systolic === 'number' ? systolic : 120;
   const liveDiastolic = typeof diastolic === 'number' ? diastolic : 80;
   const category = getHealthCategory(liveSystolic, liveDiastolic);
@@ -59,7 +64,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ onAddReading }) => {
       notes: notes.trim() ? notes.trim() : undefined,
     });
 
-    // Limpiar notas y resetear a valores normales por omisión
     setNotes('');
   };
 

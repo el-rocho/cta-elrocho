@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import type { BloodPressureReading, ArmPosition, DateRange } from './types/bloodPressure';
+import type { BloodPressureReading, ArmPosition, DateRange, AppSettings } from './types/bloodPressure';
 import {
   getStoredReadings,
   addReadingToStorage,
   deleteSessionFromStorage,
   deleteReadingFromStorage,
+  getStoredSettings,
+  saveStoredSettings,
+  DEFAULT_SETTINGS,
 } from './services/storageService';
 import { processReadingsIntoSessions } from './utils/whiteCoatAlgorithm';
 import { Header } from './components/Header';
@@ -13,18 +16,39 @@ import { WhiteCoatBanner } from './components/WhiteCoatBanner';
 import { TrendChart } from './components/TrendChart';
 import { ReadingList } from './components/ReadingList';
 import { ExportModal } from './components/ExportModal';
+import { SettingsModal } from './components/SettingsModal';
 
 export function App() {
   const [readings, setReadings] = useState<BloodPressureReading[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<DateRange>({ preset: '30days' });
 
-  // Cargar lecturas desde almacenamiento local al iniciar
+  // Cargar lecturas y configuración al iniciar
   useEffect(() => {
-    const loaded = getStoredReadings();
-    setReadings(loaded);
+    const loadedReadings = getStoredReadings();
+    const loadedSettings = getStoredSettings();
+    setReadings(loadedReadings);
+    setSettings(loadedSettings);
   }, []);
+
+  // Actualizar ajustes y guardar
+  const handleUpdateSettings = (newSettings: AppSettings) => {
+    setSettings(newSettings);
+    saveStoredSettings(newSettings);
+  };
+
+  // Restaurar datos demo
+  const handleResetDemoData = () => {
+    if (window.confirm('¿Deseas restaurar los registros de demostración iniciales?')) {
+      localStorage.removeItem('graphene_bp_readings_v1');
+      const resetReadings = getStoredReadings();
+      setReadings(resetReadings);
+      setIsSettingsModalOpen(false);
+    }
+  };
 
   // Control de tema claro / oscuro en el documento
   const handleToggleDarkMode = () => {
@@ -72,23 +96,24 @@ export function App() {
     }
   };
 
-  // Procesar lecturas mediante el algoritmo de sesiones y atenuación de bata blanca
-  const { sessions } = processReadingsIntoSessions(readings);
+  // Procesar lecturas mediante el algoritmo de sesiones y atenuación de bata blanca usando la configuración del usuario
+  const { sessions } = processReadingsIntoSessions(readings, settings);
 
   return (
     <div className="app-container">
       {/* Encabezado Principal */}
       <Header
         onOpenExportModal={() => setIsExportModalOpen(true)}
+        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         isDarkMode={isDarkMode}
         onToggleDarkMode={handleToggleDarkMode}
       />
 
       {/* Formulario de Entrada Rápida */}
-      <ReadingForm onAddReading={handleAddReading} />
+      <ReadingForm onAddReading={handleAddReading} settings={settings} />
 
       {/* Banner Informativo de Bata Blanca */}
-      <WhiteCoatBanner />
+      <WhiteCoatBanner settings={settings} onOpenSettings={() => setIsSettingsModalOpen(true)} />
 
       {/* Gráfico Interactivo de Tendencias */}
       <TrendChart sessions={sessions} />
@@ -107,6 +132,15 @@ export function App() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         sessions={sessions}
+      />
+
+      {/* Modal de Configuración (Filtro de bata blanca on/off, tiempos, brazo por defecto) */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        settings={settings}
+        onUpdateSettings={handleUpdateSettings}
+        onResetDemoData={handleResetDemoData}
       />
     </div>
   );

@@ -27,6 +27,12 @@ export interface BloodPressureSession {
   notes?: string;
 }
 
+export interface AppSettings {
+  enableWhiteCoatFilter: boolean; // Activar/desactivar filtro de bata blanca
+  whiteCoatIntervalMinutes: number; // Intervalo de tiempo máximo entre tomas (ej. 2 o 3 min)
+  defaultArm: ArmPosition; // Brazo predeterminado ('left' / 'right')
+}
+
 export type HealthSeverity = 'optimal' | 'normal' | 'elevated' | 'stage1' | 'stage2' | 'crisis';
 
 export interface HealthCategoryInfo {

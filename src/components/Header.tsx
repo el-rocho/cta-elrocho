@@ -1,13 +1,19 @@
 import React from 'react';
-import { Activity, ShieldCheck, Download, Moon, Sun } from 'lucide-react';
+import { Activity, ShieldCheck, Download, Moon, Sun, Settings } from 'lucide-react';
 
 interface HeaderProps {
   onOpenExportModal: () => void;
+  onOpenSettingsModal: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenExportModal, isDarkMode, onToggleDarkMode }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onOpenExportModal,
+  onOpenSettingsModal,
+  isDarkMode,
+  onToggleDarkMode,
+}) => {
   return (
     <header className="app-header">
       <div className="header-brand">
@@ -30,6 +36,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenExportModal, isDarkMode, o
           title={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
         >
           {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
+        <button
+          onClick={onOpenSettingsModal}
+          className="btn-icon"
+          title="Configuración de la aplicación"
+        >
+          <Settings size={18} />
         </button>
 
         <button onClick={onOpenExportModal} className="btn-primary-gradient">
