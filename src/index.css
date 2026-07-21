@@ -19,7 +19,7 @@
 
   --accent-sys: #ef4444;
   --accent-dia: #3b82f6;
-  --accent-pulse: #ec4899;
+  --accent-pulse: var(--text-secondary);
 
   --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
@@ -484,7 +484,7 @@ body {
 
 .wheel-item.selected.acc-sys { color: var(--accent-sys); border-color: rgba(239, 68, 68, 0.4); }
 .wheel-item.selected.acc-dia { color: var(--accent-dia); border-color: rgba(59, 130, 246, 0.4); }
-.wheel-item.selected.acc-pulse { color: var(--accent-pulse); border-color: rgba(236, 72, 153, 0.4); }
+.wheel-item.selected.acc-pulse { color: var(--accent-pulse); border-color: rgba(148, 163, 184, 0.4); }
 
 .last-reading-hint {
   text-align: center;
@@ -771,9 +771,9 @@ body {
   height: 10px;
   border-radius: 50%;
 }
-.sys-dot { background: #ef4444; }
-.dia-dot { background: #3b82f6; }
-.pulse-dot-gray { background: var(--text-muted); }
+.sys-dot { background: var(--accent-sys); }
+.dia-dot { background: var(--accent-dia); }
+.pulse-dot { background: var(--accent-pulse); }
 .ideal-box {
   width: 12px;
   height: 12px;

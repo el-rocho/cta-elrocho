@@ -131,7 +131,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
           <span>Diastólica (Mínima)</span>
         </div>
         <div className="legend-item">
-          <span className="legend-dot pulse-dot-gray"></span>
+          <span className="legend-dot pulse-dot"></span>
           <span>Pulsaciones (ppm)</span>
         </div>
         <div className="legend-item">
@@ -185,7 +185,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
           <path
             d={pulsePathD}
             fill="none"
-            stroke="var(--text-muted)"
+            stroke="var(--accent-pulse)"
             strokeWidth="1.5"
             strokeDasharray="3 3"
             strokeLinecap="round"
@@ -216,12 +216,12 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
                   opacity={0.3}
                 />
 
-                {/* Punto Pulsaciones (Gris) */}
+                {/* Punto Pulsaciones */}
                 <circle
                   cx={pulseP.x}
                   cy={pulseP.y}
                   r="3.5"
-                  fill="var(--text-muted)"
+                  fill="var(--accent-pulse)"
                   opacity={0.8}
                   onMouseEnter={() => setActiveTooltip(s)}
                   onClick={() => setActiveTooltip(s)}
