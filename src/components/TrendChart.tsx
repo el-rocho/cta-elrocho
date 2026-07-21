@@ -53,9 +53,9 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  // Escalas
-  const minVal = 40; // mmHg mínimo
-  const maxVal = 200; // mmHg máximo
+  // Escalas (Tensión arterial 40 - 200 mmHg)
+  const minVal = 40;
+  const maxVal = 200;
 
   const getY = (val: number) => {
     const clamped = Math.max(minVal, Math.min(maxVal, val));
@@ -68,12 +68,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
     return paddingLeft + (index / (filteredSessions.length - 1)) * chartWidth;
   };
 
-  // Coordenadas de los puntos sistólica y diastólica
+  // Coordenadas de Sistólica, Diastólica y Pulsaciones
   const sysPoints = filteredSessions.map((s, i) => ({ x: getX(i), y: getY(s.averageSystolic), data: s }));
   const diaPoints = filteredSessions.map((s, i) => ({ x: getX(i), y: getY(s.averageDiastolic), data: s }));
+  const pulsePoints = filteredSessions.map((s, i) => ({ x: getX(i), y: getY(s.averageHeartRate), data: s }));
 
   const sysPathD = sysPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
   const diaPathD = diaPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
+  const pulsePathD = pulsePoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
 
   // Área objetivo ideal (Sistólica < 120, Diastólica < 80)
   const idealSysY = getY(120);
@@ -84,7 +86,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
       <div className="chart-header">
         <div className="chart-title">
           <TrendingUp size={20} className="icon-chart" />
-          <h2>Evolución de Tensión Arterial</h2>
+          <h2>Evolución de Tensión Arterial y Pulsaciones</h2>
         </div>
 
         <div className="filter-chips">
@@ -127,6 +129,10 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
         <div className="legend-item">
           <span className="legend-dot dia-dot"></span>
           <span>Diastólica (Mínima)</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-dot pulse-dot-gray"></span>
+          <span>Pulsaciones (ppm)</span>
         </div>
         <div className="legend-item">
           <span className="legend-box ideal-box"></span>
@@ -175,7 +181,18 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
             );
           })}
 
-          {/* Líneas de tendencia */}
+          {/* Línea gris fina punteada de Pulsaciones */}
+          <path
+            d={pulsePathD}
+            fill="none"
+            stroke="var(--text-muted)"
+            strokeWidth="1.5"
+            strokeDasharray="3 3"
+            strokeLinecap="round"
+            opacity={0.7}
+          />
+
+          {/* Líneas de tendencia principales */}
           <path d={sysPathD} fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           <path d={diaPathD} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
@@ -183,6 +200,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
           {filteredSessions.map((s, i) => {
             const sysP = sysPoints[i];
             const diaP = diaPoints[i];
+            const pulseP = pulsePoints[i];
             const dateStr = new Date(s.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
 
             return (
@@ -195,7 +213,19 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
                   y2={diaP.y}
                   stroke="var(--text-muted)"
                   strokeWidth="1.5"
-                  opacity={0.4}
+                  opacity={0.3}
+                />
+
+                {/* Punto Pulsaciones (Gris) */}
+                <circle
+                  cx={pulseP.x}
+                  cy={pulseP.y}
+                  r="3.5"
+                  fill="var(--text-muted)"
+                  opacity={0.8}
+                  onMouseEnter={() => setActiveTooltip(s)}
+                  onClick={() => setActiveTooltip(s)}
+                  className="point-interactive"
                 />
 
                 {/* Punto Sistólica */}
@@ -224,7 +254,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
                   className="point-interactive"
                 />
 
-                {/* Etiquetas fecha en eje X (mostrar solo algunas si son muchas) */}
+                {/* Etiquetas fecha en eje X */}
                 {(filteredSessions.length <= 10 || i % Math.ceil(filteredSessions.length / 8) === 0) && (
                   <text x={sysP.x} y={height - 12} textAnchor="middle" className="axis-text">
                     {dateStr}
@@ -261,7 +291,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
             </div>
             <div className="tooltip-metric">
               <span className="label">Pulsaciones:</span>
-              <span>{activeTooltip.averageHeartRate} ppm</span>
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{activeTooltip.averageHeartRate} ppm</span>
             </div>
             <div className="tooltip-metric">
               <span className="label">Brazo:</span>

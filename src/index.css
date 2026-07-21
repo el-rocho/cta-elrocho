@@ -596,6 +596,7 @@ body {
 }
 .sys-dot { background: #ef4444; }
 .dia-dot { background: #3b82f6; }
+.pulse-dot-gray { background: var(--text-muted); }
 .ideal-box {
   width: 12px;
   height: 12px;

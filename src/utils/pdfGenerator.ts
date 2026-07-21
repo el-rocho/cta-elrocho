@@ -31,7 +31,7 @@ export function printPDFReport(
   const avgPulse = total > 0 ? Math.round(sumPulse / total) : 0;
   const avgCategory = getHealthCategory(avgSys, avgDia);
 
-  // Generar SVG del gráfico con triple trazado (Sistólica, Diastólica y Pulsaciones con eje derecho)
+  // Generar SVG del gráfico
   const svgChartHtml = generateChartSVG(chronological);
 
   const printWindow = window.open('', '_blank');
@@ -51,7 +51,7 @@ export function printPDFReport(
       ? 'Últimos 90 días'
       : `Del ${dateRange.startDate || ''} al ${dateRange.endDate || ''}`;
 
-  // Formatear metadatos de paciente
+  // Formatear metadatos de paciente (Nombre, Sexo y EDAD)
   let patientInfoStr = '';
   if (!options.hidePatientData) {
     const parts: string[] = [];
@@ -60,7 +60,11 @@ export function printPDFReport(
       const sexCap = options.patientSex.charAt(0).toUpperCase() + options.patientSex.slice(1);
       parts.push(`<strong>Sexo:</strong> ${sexCap}`);
     }
-    if (options.patientAge) parts.push(`<strong>Edad:</strong> ${options.patientAge} años`);
+    if (options.patientAge) {
+      parts.push(`<strong>Edad:</strong> ${options.patientAge} años`);
+    } else {
+      parts.push(`<strong>Edad:</strong> No especificada`);
+    }
 
     patientInfoStr = parts.length > 0 ? parts.join(' | ') : '<strong>Paciente:</strong> No especificado';
   } else {
@@ -256,7 +260,7 @@ export function printPDFReport(
         </div>
       </div>
 
-      <!-- Gráfico con línea de pulsaciones y doble eje Y antes de la lista de registros -->
+      <!-- Gráfico antes de la lista de registros -->
       <div class="chart-pdf-container">
         <div class="chart-pdf-title">
           <span>Evolución Temporal de Tensión Arterial y Pulsaciones</span>
@@ -344,18 +348,15 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[]): string
   const width = 720;
   const height = 200;
   const paddingLeft = 40;
-  const paddingRight = 45; // Espacio para eje derecho (Pulsaciones)
+  const paddingRight = 45;
   const paddingTop = 15;
   const paddingBottom = 32;
 
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  // Escala Eje Izquierdo (Tensión Arterial: 40 - 200 mmHg)
   const minBP = 40;
   const maxBP = 200;
-
-  // Escala Eje Derecho (Pulsaciones: 40 - 140 ppm)
   const minPulse = 40;
   const maxPulse = 140;
 
