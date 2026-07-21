@@ -260,20 +260,34 @@ body {
   align-items: center;
   margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
 }
 
 .form-title-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  flex-wrap: wrap;
   color: var(--text-primary);
+}
+
+.form-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .form-title-group h2 {
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
+}
+
+.form-controls-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .icon-pulse {
@@ -1468,7 +1482,6 @@ input:checked + .toggle-slider:before {
   .app-header { flex-direction: column; align-items: flex-start; gap: 12px; }
   .header-actions { width: 100%; justify-content: space-between; }
 
-  .metrics-inputs-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
   .wheel-picker-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .form-secondary-row { flex-direction: column; align-items: stretch; }
 
@@ -1478,5 +1491,61 @@ input:checked + .toggle-slider:before {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .form-title-group {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .form-controls-wrapper {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .arm-selector-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .arm-chips {
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .arm-chip {
+    flex: 1;
+    text-align: center;
+  }
+
+  .input-mode-toggle {
+    width: 100%;
+  }
+
+  .btn-mode-chip {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .metrics-inputs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .metrics-inputs-grid .input-group:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: 70%;
+    max-width: 220px;
   }
 }
