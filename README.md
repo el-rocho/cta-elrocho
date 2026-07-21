@@ -1,32 +1,34 @@
-# React + TypeScript + Vite
+# Control Tensión Arterial & Pulsaciones 🩺
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+![Built with Vibe Coding](https://img.shields.io/badge/Built%20with-Vibe%20Coding%20%26%20AI-7c3aed?style=for-the-badge&logo=sparkles)
+![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge)
 
-Currently, two official plugins are available:
+Aplicación Web Progresiva (PWA) moderna para el registro, seguimiento y análisis de la tensión arterial (sistólica y diastólica) y ritmo cardíaco (pulsaciones). Diseñada para ofrecer máxima privacidad en el dispositivo y generar informes listos para revisión médica.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> ✨ **Metodología de Desarrollo**: Este proyecto ha sido conceptualizado, diseñado y guiado mediante **Vibe Coding**, utilizando asistencia avanzada de Inteligencia Artificial para la generación de código y arquitectura.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Características Principales
 
-## Expanding the Oxlint configuration
+- **Sistema Dual de Entrada**: Elige entre teclado numérico tradicional o **Ruleta Táctil de Selección Rápida** centrada en la última medición realizada.
+- **Filtro de Síndrome de Bata Blanca**: Algoritmo inteligente que descarta tomas iniciales elevadas producidas por la ansiedad del momento (intervalos de 5, 10 o 15 minutos).
+- **Informes PDF Médicos**: Gráfico temporal con doble eje Y (tensión arterial + línea de pulsaciones en el eje derecho) y tabla detallada de registros.
+- **Exportación e Importación CSV**: Copias de seguridad automáticas con nombre unificado (`tension_arterial_daily_AAAA-MM-DD_HH-MM-SS.csv`).
+- **Garantía de Privacidad (RGPD)**: 100% Offline / Standalone. Tus datos no salen de tu dispositivo.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+---
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## 🌐 Estructura de Ramas
+
+- **`main`**: Versión estable de producción.
+- **`dev`**: Rama de desarrollo activo para pruebas de características.
+
+---
+
+## 🛠️ Desarrollo Local
+
+```bash
+npm install
+npm run dev
 ```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
