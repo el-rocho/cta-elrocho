@@ -1,14 +1,15 @@
-import React, { useState, useRef } from 'react';
-import type { BloodPressureSession, DateFilterPreset, DateRange, BloodPressureReading } from '../types/bloodPressure';
+import React, { useState } from 'react';
+import type { BloodPressureSession, DateFilterPreset, DateRange, BloodPressureReading, AppSettings, ExportReportOptions } from '../types/bloodPressure';
 import { exportToCSV } from '../utils/exportCsv';
 import { printPDFReport } from '../utils/pdfGenerator';
 import { parseCSVData } from '../utils/importCsv';
-import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle } from 'lucide-react';
+import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle, FileText, EyeOff } from 'lucide-react';
 
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   sessions: BloodPressureSession[];
+  settings: AppSettings;
   onImportReadings: (readings: Omit<BloodPressureReading, 'id'>[]) => void;
 }
 
@@ -16,16 +17,18 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   isOpen,
   onClose,
   sessions,
+  settings,
   onImportReadings,
 }) => {
   const [preset, setPreset] = useState<DateFilterPreset>('30days');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  const [patientName, setPatientName] = useState<string>('');
+  const [reportNotes, setReportNotes] = useState<string>('');
+  const [hidePatientData, setHidePatientData] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
   const [importStatus, setImportStatus] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -35,13 +38,21 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     endDate: preset === 'custom' ? endDate : undefined,
   });
 
+  const getExportOptions = (): ExportReportOptions => ({
+    patientName: settings.patientName,
+    patientSex: settings.patientSex,
+    patientAge: settings.patientAge,
+    reportNotes: reportNotes.trim() ? reportNotes.trim() : undefined,
+    hidePatientData,
+  });
+
   const handleExportCSV = () => {
-    exportToCSV(sessions, getCurrentRange());
+    exportToCSV(sessions, getCurrentRange(), 'tension_arterial', getExportOptions());
     onClose();
   };
 
   const handlePrintPDF = () => {
-    printPDFReport(sessions, getCurrentRange(), patientName);
+    printPDFReport(sessions, getCurrentRange(), getExportOptions());
     onClose();
   };
 
@@ -78,7 +89,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </button>
         </div>
 
-        {/* Pestanas Exportar / Importar */}
+        {/* Pestañas Exportar / Importar */}
         <div className="modal-tabs">
           <button
             type="button"
@@ -99,19 +110,29 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="modal-body">
           {activeTab === 'export' ? (
             <>
-              {/* Nombre Paciente opcional para informe */}
-              <div className="modal-field">
-                <label className="field-label">
-                  <User size={15} />
-                  <span>Nombre del Paciente (Opcional para PDF):</span>
-                </label>
-                <input
-                  type="text"
-                  value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
-                  placeholder="Ej. Juan Pérez"
-                  className="modal-input"
-                />
+              {/* Resumen del perfil de paciente */}
+              <div className="modal-field" style={{ background: 'var(--bg-input)', padding: '10px 12px', borderRadius: 'var(--radius-sm)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="field-label" style={{ margin: 0 }}>
+                    <User size={15} />
+                    <span>
+                      {settings.patientName
+                        ? `Paciente: ${settings.patientName} (${settings.patientAge ? settings.patientAge + ' años' : ''})`
+                        : 'Paciente: Sin nombre asignado (Configurar en Ajustes)'}
+                    </span>
+                  </div>
+
+                  {/* Interruptor para Ocultar datos del paciente */}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={hidePatientData}
+                      onChange={(e) => setHidePatientData(e.target.checked)}
+                    />
+                    <EyeOff size={14} />
+                    <span>Ocultar datos en informe</span>
+                  </label>
+                </div>
               </div>
 
               {/* Rango de Fechas */}
@@ -184,6 +205,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </div>
               )}
 
+              {/* Campo opcional de Observaciones / Nota del informe */}
+              <div className="modal-field">
+                <label className="field-label">
+                  <FileText size={15} />
+                  <span>Nota del Informe / Observaciones Médico-Clínicas (Opcional):</span>
+                </label>
+                <textarea
+                  value={reportNotes}
+                  onChange={(e) => setReportNotes(e.target.value)}
+                  placeholder="Ej. Paciente en tratamiento con antihipertensivo. Síntomas de mareo leve por las mañanas..."
+                  className="modal-input"
+                  rows={2}
+                  style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: '13px' }}
+                />
+              </div>
+
               {/* Acciones de exportación */}
               <div className="export-actions-container">
                 <button type="button" className="btn-export-csv" onClick={handleExportCSV}>
@@ -193,7 +230,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
                 <button type="button" className="btn-export-pdf" onClick={handlePrintPDF}>
                   <Printer size={18} />
-                  <span>Generar Informe PDF (con Gráfico) e Imprimir</span>
+                  <span>Generar Informe PDF (con Gráfico y Pulsaciones) e Imprimir</span>
                 </button>
               </div>
             </>

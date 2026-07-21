@@ -1,8 +1,12 @@
-import type { BloodPressureSession, DateRange } from '../types/bloodPressure';
+import type { BloodPressureSession, DateRange, ExportReportOptions } from '../types/bloodPressure';
 import { filterSessionsByDateRange } from './exportCsv';
 import { getHealthCategory } from './healthClassification';
 
-export function printPDFReport(sessions: BloodPressureSession[], dateRange: DateRange, patientName = ''): void {
+export function printPDFReport(
+  sessions: BloodPressureSession[],
+  dateRange: DateRange,
+  options: ExportReportOptions = {}
+): void {
   const filtered = filterSessionsByDateRange(sessions, dateRange);
 
   // Ordenar de más antiguo a más reciente para el gráfico
@@ -27,7 +31,7 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
   const avgPulse = total > 0 ? Math.round(sumPulse / total) : 0;
   const avgCategory = getHealthCategory(avgSys, avgDia);
 
-  // Generar SVG del gráfico para incluir en el PDF
+  // Generar SVG del gráfico con triple trazado (Sistólica, Diastólica y Pulsaciones con eje derecho)
   const svgChartHtml = generateChartSVG(chronological);
 
   const printWindow = window.open('', '_blank');
@@ -46,6 +50,22 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
       : dateRange.preset === '90days'
       ? 'Últimos 90 días'
       : `Del ${dateRange.startDate || ''} al ${dateRange.endDate || ''}`;
+
+  // Formatear metadatos de paciente
+  let patientInfoStr = '';
+  if (!options.hidePatientData) {
+    const parts: string[] = [];
+    if (options.patientName) parts.push(`<strong>Paciente:</strong> ${options.patientName}`);
+    if (options.patientSex) {
+      const sexCap = options.patientSex.charAt(0).toUpperCase() + options.patientSex.slice(1);
+      parts.push(`<strong>Sexo:</strong> ${sexCap}`);
+    }
+    if (options.patientAge) parts.push(`<strong>Edad:</strong> ${options.patientAge} años`);
+
+    patientInfoStr = parts.length > 0 ? parts.join(' | ') : '<strong>Paciente:</strong> No especificado';
+  } else {
+    patientInfoStr = '<strong>Datos de Paciente:</strong> Ocultos / Anónimos';
+  }
 
   const html = `
     <!DOCTYPE html>
@@ -67,7 +87,7 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
           align-items: flex-start;
           border-bottom: 2px solid #e2e8f0;
           padding-bottom: 16px;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
         .header-title {
           margin: 0;
@@ -76,20 +96,29 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
           font-weight: 700;
         }
         .header-subtitle {
-          margin: 4px 0 0 0;
-          font-size: 14px;
-          color: #64748b;
+          margin: 6px 0 0 0;
+          font-size: 13px;
+          color: #475569;
         }
         .header-meta {
           text-align: right;
-          font-size: 13px;
+          font-size: 12px;
           color: #475569;
+        }
+        .report-notes-box {
+          background: #fffbe6;
+          border: 1px solid #ffe58f;
+          border-radius: 8px;
+          padding: 12px 16px;
+          margin-bottom: 20px;
+          font-size: 13px;
+          color: #873800;
         }
         .summary-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
           gap: 12px;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
         .summary-card {
           background: #f8fafc;
@@ -141,6 +170,7 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
         .legend-item { display: flex; align-items: center; gap: 4px; }
         .dot-red { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; }
         .dot-blue { width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block; }
+        .dot-pink { width: 8px; height: 8px; background: #ec4899; border-radius: 50%; display: inline-block; }
         table {
           width: 100%;
           border-collapse: collapse;
@@ -185,14 +215,25 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
     <body>
       <div class="header">
         <div>
-          <h1 class="header-title">Informe de Tensión Arterial</h1>
-          <p class="header-subtitle">${patientName ? 'Paciente: ' + patientName + ' | ' : ''}Periodo: ${dateRangeLabel}</p>
+          <h1 class="header-title">Informe de Tensión Arterial y Pulsaciones</h1>
+          <p class="header-subtitle">${patientInfoStr} | <strong>Periodo:</strong> ${dateRangeLabel}</p>
         </div>
         <div class="header-meta">
           <p style="margin:0;">Generado: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
           <p style="margin:4px 0 0 0; color:#10b981; font-weight:600;">✓ Documento Offline Privado</p>
         </div>
       </div>
+
+      ${
+        options.reportNotes
+          ? `
+        <div class="report-notes-box">
+          <strong>Observaciones Médico-Clínicas:</strong>
+          <p style="margin:4px 0 0 0; font-style:italic;">"${options.reportNotes}"</p>
+        </div>
+      `
+          : ''
+      }
 
       <div class="summary-grid">
         <div class="summary-card">
@@ -205,7 +246,7 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
         </div>
         <div class="summary-card">
           <div class="summary-card-title">Promedio Pulsaciones</div>
-          <div class="summary-card-value">${avgPulse} <span class="summary-card-unit">ppm</span></div>
+          <div class="summary-card-value" style="color:#ec4899">${avgPulse} <span class="summary-card-unit">ppm</span></div>
         </div>
         <div class="summary-card">
           <div class="summary-card-title">Estado Global</div>
@@ -215,13 +256,14 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
         </div>
       </div>
 
-      <!-- Gráfico antes de la lista de registros -->
+      <!-- Gráfico con línea de pulsaciones y doble eje Y antes de la lista de registros -->
       <div class="chart-pdf-container">
         <div class="chart-pdf-title">
-          <span>Evolución Temporal de Tensión Arterial</span>
+          <span>Evolución Temporal de Tensión Arterial y Pulsaciones</span>
           <div class="chart-pdf-legend">
-            <span class="legend-item"><span class="dot-red"></span> Sistólica</span>
-            <span class="legend-item"><span class="dot-blue"></span> Diastólica</span>
+            <span class="legend-item"><span class="dot-red"></span> Sistólica (Eje Izq.)</span>
+            <span class="legend-item"><span class="dot-blue"></span> Diastólica (Eje Izq.)</span>
+            <span class="legend-item"><span class="dot-pink"></span> Pulsaciones (Eje Der.)</span>
           </div>
         </div>
         ${svgChartHtml}
@@ -254,9 +296,9 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
               return `
               <tr>
                 <td><strong>${dateStr}</strong> ${timeStr}</td>
-                <td><strong style="font-size:14px;">${s.averageSystolic}</strong> mmHg</td>
-                <td><strong style="font-size:14px;">${s.averageDiastolic}</strong> mmHg</td>
-                <td>${s.averageHeartRate} ppm</td>
+                <td><strong style="font-size:14px; color:#ef4444;">${s.averageSystolic}</strong> mmHg</td>
+                <td><strong style="font-size:14px; color:#3b82f6;">${s.averageDiastolic}</strong> mmHg</td>
+                <td><strong style="font-size:13px; color:#ec4899;">${s.averageHeartRate}</strong> ppm</td>
                 <td>${armLabel}</td>
                 <td>
                   <span class="badge" style="background:${cat.badgeBg}; color:${cat.badgeText};">
@@ -292,29 +334,40 @@ export function printPDFReport(sessions: BloodPressureSession[], dateRange: Date
 }
 
 /**
- * Genera el código SVG vectorial del gráfico para el informe PDF
+ * Genera el código SVG vectorial del gráfico con doble eje Y (Tensión a la izq. y Pulsaciones a la der.)
  */
 function generateChartSVG(chronologicalSessions: BloodPressureSession[]): string {
   if (chronologicalSessions.length === 0) {
     return '<p style="text-align:center; color:#94a3b8; font-size:12px;">Sin datos para graficar en este periodo</p>';
   }
 
-  const width = 700;
-  const height = 180;
-  const paddingLeft = 35;
-  const paddingRight = 20;
+  const width = 720;
+  const height = 200;
+  const paddingLeft = 40;
+  const paddingRight = 45; // Espacio para eje derecho (Pulsaciones)
   const paddingTop = 15;
-  const paddingBottom = 30;
+  const paddingBottom = 32;
 
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  const minVal = 40;
-  const maxVal = 200;
+  // Escala Eje Izquierdo (Tensión Arterial: 40 - 200 mmHg)
+  const minBP = 40;
+  const maxBP = 200;
 
-  const getY = (val: number) => {
-    const clamped = Math.max(minVal, Math.min(maxVal, val));
-    const ratio = (clamped - minVal) / (maxVal - minVal);
+  // Escala Eje Derecho (Pulsaciones: 40 - 140 ppm)
+  const minPulse = 40;
+  const maxPulse = 140;
+
+  const getY_BP = (val: number) => {
+    const clamped = Math.max(minBP, Math.min(maxBP, val));
+    const ratio = (clamped - minBP) / (maxBP - minBP);
+    return height - paddingBottom - ratio * chartHeight;
+  };
+
+  const getY_Pulse = (val: number) => {
+    const clamped = Math.max(minPulse, Math.min(maxPulse, val));
+    const ratio = (clamped - minPulse) / (maxPulse - minPulse);
     return height - paddingBottom - ratio * chartHeight;
   };
 
@@ -323,34 +376,50 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[]): string
     return paddingLeft + (index / (chronologicalSessions.length - 1)) * chartWidth;
   };
 
-  const sysPoints = chronologicalSessions.map((s, i) => ({ x: getX(i), y: getY(s.averageSystolic) }));
-  const diaPoints = chronologicalSessions.map((s, i) => ({ x: getX(i), y: getY(s.averageDiastolic) }));
+  const sysPoints = chronologicalSessions.map((s, i) => ({ x: getX(i), y: getY_BP(s.averageSystolic) }));
+  const diaPoints = chronologicalSessions.map((s, i) => ({ x: getX(i), y: getY_BP(s.averageDiastolic) }));
+  const pulsePoints = chronologicalSessions.map((s, i) => ({ x: getX(i), y: getY_Pulse(s.averageHeartRate) }));
 
   const sysPath = sysPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
   const diaPath = diaPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
+  const pulsePath = pulsePoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
 
-  const idealSysY = getY(120);
+  const idealSysY = getY_BP(120);
 
   return `
     <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto;">
-      <!-- Guía de rango óptimo -->
+      <!-- Guía de rango óptimo tensión -->
       <line x1="${paddingLeft}" y1="${idealSysY}" x2="${width - paddingRight}" y2="${idealSysY}" stroke="#10b981" stroke-dasharray="3 3" stroke-width="1" />
-      <text x="${width - paddingRight}" y="${idealSysY - 4}" text-anchor="end" fill="#10b981" font-size="9">Objetivo (<120 mmHg)</text>
 
-      <!-- Líneas de cuadrícula Y -->
+      <!-- Cuadrícula Y y Eje Izquierdo (mmHg) -->
       ${[60, 90, 120, 150, 180]
         .map((v) => {
-          const y = getY(v);
+          const y = getY_BP(v);
           return `
           <line x1="${paddingLeft}" y1="${y}" x2="${width - paddingRight}" y2="${y}" stroke="#e2e8f0" stroke-dasharray="2 2" />
-          <text x="${paddingLeft - 6}" y="${y + 3}" text-anchor="end" fill="#94a3b8" font-size="9">${v}</text>
+          <text x="${paddingLeft - 6}" y="${y + 3}" text-anchor="end" fill="#64748b" font-size="9" font-weight="600">${v}</text>
         `;
         })
         .join('')}
 
-      <!-- Trazo Sistólica (Rojo) y Diastólica (Azul) -->
+      <!-- Eje Derecho (Pulsaciones ppm) -->
+      ${[40, 60, 80, 100, 120, 140]
+        .map((v) => {
+          const y = getY_Pulse(v);
+          return `
+          <text x="${width - paddingRight + 6}" y="${y + 3}" text-anchor="start" fill="#ec4899" font-size="9" font-weight="600">${v} ppm</text>
+        `;
+        })
+        .join('')}
+
+      <!-- Trazo Sistólica (Rojo) -->
       <path d="${sysPath}" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" />
+
+      <!-- Trazo Diastólica (Azul) -->
       <path d="${diaPath}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+
+      <!-- Trazo Pulsaciones (Rosa/Púrpura punteado) -->
+      <path d="${pulsePath}" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3" />
 
       <!-- Puntos Sistólica -->
       ${sysPoints
@@ -360,6 +429,11 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[]): string
       <!-- Puntos Diastólica -->
       ${diaPoints
         .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5" />`)
+        .join('')}
+
+      <!-- Puntos Pulsaciones -->
+      ${pulsePoints
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#ec4899" stroke="#ffffff" stroke-width="1.5" />`)
         .join('')}
 
       <!-- Eje X (Fechas) -->

@@ -7,6 +7,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   enableWhiteCoatFilter: true,
   whiteCoatIntervalMinutes: 3,
   defaultArm: 'left',
+  patientName: '',
+  patientSex: '',
+  patientAge: '',
   backupFrequency: 'weekly',
   backupFolder: 'Descargas/Copias_Tension_Arterial',
   lastBackupTimestamp: undefined,
@@ -151,16 +154,11 @@ export function deleteSessionFromStorage(readingsInSession: BloodPressureReading
   return updated;
 }
 
-/**
- * Combina lecturas importadas con las existentes sin duplicar registros con igual fecha/hora y valores
- */
 export function importReadingsIntoStorage(imported: Omit<BloodPressureReading, 'id'>[]): {
   updated: BloodPressureReading[];
   addedCount: number;
 } {
   const current = getStoredReadings();
-
-  // Crear un set de firmas de lecturas existentes para evitar duplicar
   const existingSignatures = new Set(
     current.map((r) => `${new Date(r.timestamp).toISOString().slice(0, 16)}_${r.systolic}_${r.diastolic}_${r.heartRate}`)
   );

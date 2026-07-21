@@ -73,7 +73,11 @@ export function App() {
       return;
     }
     const now = new Date();
-    exportToCSV(sessions, { preset: 'all' }, 'copia_seguridad_manual');
+    exportToCSV(sessions, { preset: 'all' }, 'copia_seguridad_manual', {
+      patientName: settings.patientName,
+      patientSex: settings.patientSex,
+      patientAge: settings.patientAge,
+    });
     const updatedSettings = {
       ...settings,
       lastBackupTimestamp: now.toISOString(),
@@ -180,10 +184,11 @@ export function App() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         sessions={sessions}
+        settings={settings}
         onImportReadings={handleImportReadings}
       />
 
-      {/* Modal de Configuración (Filtro bata blanca, Copias de seguridad automáticas CSV) */}
+      {/* Modal de Configuración */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}

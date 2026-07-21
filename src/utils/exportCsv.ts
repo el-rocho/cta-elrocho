@@ -1,4 +1,4 @@
-import type { BloodPressureSession, DateRange } from '../types/bloodPressure';
+import type { BloodPressureSession, DateRange, ExportReportOptions } from '../types/bloodPressure';
 import { getHealthCategory } from './healthClassification';
 
 export function filterSessionsByDateRange(sessions: BloodPressureSession[], dateRange: DateRange): BloodPressureSession[] {
@@ -32,12 +32,34 @@ export function filterSessionsByDateRange(sessions: BloodPressureSession[], date
 }
 
 /**
- * Genera y descarga el archivo CSV con las lecturas filtradas por rango de fecha
+ * Genera y descarga el archivo CSV con las lecturas y metadatos del paciente
  */
-export function exportToCSV(sessions: BloodPressureSession[], dateRange: DateRange, fileNamePrefix = 'tension_arterial'): void {
+export function exportToCSV(
+  sessions: BloodPressureSession[],
+  dateRange: DateRange,
+  fileNamePrefix = 'tension_arterial',
+  options: ExportReportOptions = {}
+): void {
   const filteredSessions = filterSessionsByDateRange(sessions, dateRange);
 
-  // Encabezados en español
+  const metaRows: string[] = [];
+
+  // Metadatos de encabezado de CSV si no están ocultos
+  if (!options.hidePatientData) {
+    if (options.patientName) metaRows.push(`# Paciente: ${options.patientName}`);
+    if (options.patientSex) metaRows.push(`# Sexo: ${options.patientSex.charAt(0).toUpperCase() + options.patientSex.slice(1)}`);
+    if (options.patientAge) metaRows.push(`# Edad: ${options.patientAge} años`);
+  } else {
+    metaRows.push(`# Datos de paciente: Anónimos / Ocultos`);
+  }
+
+  if (options.reportNotes) {
+    metaRows.push(`# Observaciones del informe: "${options.reportNotes.replace(/"/g, '""')}"`);
+  }
+  metaRows.push(`# Fecha de exportación: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}`);
+  metaRows.push(''); // Línea en blanco separadora
+
+  // Encabezados estándar en español
   const headers = [
     'Fecha',
     'Hora',
@@ -75,8 +97,10 @@ export function exportToCSV(sessions: BloodPressureSession[], dateRange: DateRan
     ]);
   });
 
-  // Construir string CSV con delimitador punto y coma (estándar en español/Excel)
-  const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
+  // Construir string CSV con delimitador punto y coma (estándar en español/Excel) y UTF-8 BOM
+  const csvContent =
+    '\uFEFF' +
+    [...metaRows, headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
 
   // Descarga del archivo
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

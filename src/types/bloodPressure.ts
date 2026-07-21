@@ -3,6 +3,7 @@
  */
 
 export type ArmPosition = 'left' | 'right';
+export type PatientSex = 'masculino' | 'femenino' | 'otro' | '';
 
 export interface BloodPressureReading {
   id: string;
@@ -34,10 +35,23 @@ export interface AppSettings {
   whiteCoatIntervalMinutes: number; // Intervalo de tiempo máximo entre tomas (ej. 2 o 3 min)
   defaultArm: ArmPosition; // Brazo predeterminado ('left' / 'right')
   
+  // Perfil del paciente
+  patientName?: string;
+  patientSex?: PatientSex;
+  patientAge?: number | '';
+
   // Copias de seguridad automáticas CSV
-  backupFrequency: BackupFrequency; // Frecuencia de copias ('disabled' | 'daily' | 'weekly' | 'monthly')
-  backupFolder: string; // Carpeta o ruta preferida para copias (ej. "Descargas/Copias_Tension")
-  lastBackupTimestamp?: string; // Fecha y hora de la última copia realizada
+  backupFrequency: BackupFrequency;
+  backupFolder: string;
+  lastBackupTimestamp?: string;
+}
+
+export interface ExportReportOptions {
+  patientName?: string;
+  patientSex?: PatientSex;
+  patientAge?: number | '';
+  reportNotes?: string;
+  hidePatientData?: boolean;
 }
 
 export type HealthSeverity = 'optimal' | 'normal' | 'elevated' | 'stage1' | 'stage2' | 'crisis';

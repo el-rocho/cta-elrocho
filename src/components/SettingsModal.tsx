@@ -1,6 +1,6 @@
 import React from 'react';
-import type { AppSettings, BackupFrequency } from '../types/bloodPressure';
-import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck } from 'lucide-react';
+import type { AppSettings, BackupFrequency, PatientSex } from '../types/bloodPressure';
+import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck, User } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,6 +20,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onTriggerManualBackup,
 }) => {
   if (!isOpen) return null;
+
+  const handlePatientNameChange = (name: string) => {
+    onUpdateSettings({ ...settings, patientName: name });
+  };
+
+  const handlePatientSexChange = (sex: PatientSex) => {
+    onUpdateSettings({ ...settings, patientSex: sex });
+  };
+
+  const handlePatientAgeChange = (ageStr: string) => {
+    const ageVal = ageStr === '' ? '' : parseInt(ageStr, 10);
+    onUpdateSettings({ ...settings, patientAge: isNaN(ageVal as number) ? '' : ageVal });
+  };
 
   const handleToggleWhiteCoat = () => {
     onUpdateSettings({
@@ -80,8 +93,68 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <div className="modal-body">
-          {/* Opción 1: Copias de Seguridad Automáticas CSV */}
+          {/* Opción 1: Datos del Paciente */}
           <div className="settings-section">
+            <div className="field-label">
+              <User size={16} className="text-blue" />
+              <span>Perfil del Paciente (Para informes y exportación):</span>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+              <div>
+                <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>Nombre completo:</label>
+                <input
+                  type="text"
+                  value={settings.patientName || ''}
+                  onChange={(e) => handlePatientNameChange(e.target.value)}
+                  placeholder="Ej. Juan Pérez"
+                  className="modal-input"
+                  style={{ padding: '8px 10px', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>Sexo:</label>
+                  <div className="chip-options-row">
+                    <button
+                      type="button"
+                      className={`chip-select ${settings.patientSex === 'masculino' ? 'active' : ''}`}
+                      onClick={() => handlePatientSexChange('masculino')}
+                      style={{ padding: '4px 10px', fontSize: '11px' }}
+                    >
+                      Masculino
+                    </button>
+                    <button
+                      type="button"
+                      className={`chip-select ${settings.patientSex === 'femenino' ? 'active' : ''}`}
+                      onClick={() => handlePatientSexChange('femenino')}
+                      style={{ padding: '4px 10px', fontSize: '11px' }}
+                    >
+                      Femenino
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>Edad (años):</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={settings.patientAge ?? ''}
+                    onChange={(e) => handlePatientAgeChange(e.target.value)}
+                    placeholder="Ej. 65"
+                    className="modal-input"
+                    style={{ padding: '6px 10px', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Opción 2: Copias de Seguridad Automáticas CSV */}
+          <div className="settings-section border-top">
             <div className="field-label">
               <Save size={16} className="text-blue" />
               <span>Copias de Seguridad Automáticas (Formato CSV):</span>
@@ -121,7 +194,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
             </div>
 
-            {/* Configuración de Carpeta de Destino */}
             <div className="settings-subcard">
               <div className="field-label" style={{ fontSize: '12px' }}>
                 <Folder size={14} />
@@ -147,7 +219,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Opción 2: Filtro de Bata Blanca (On/Off) */}
+          {/* Opción 3: Filtro de Bata Blanca (On/Off) */}
           <div className="settings-section border-top">
             <div className="settings-row-header">
               <div className="settings-label-group">
@@ -192,7 +264,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
           </div>
 
-          {/* Opción 3: Brazo por defecto */}
+          {/* Opción 4: Brazo por defecto */}
           <div className="settings-section border-top">
             <div className="field-label">
               <Armchair size={16} />
@@ -216,7 +288,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Opción 4: Restaurar Datos Demo */}
+          {/* Opción 5: Restaurar Datos Demo */}
           <div className="settings-section border-top">
             <div className="settings-row-header">
               <div>
