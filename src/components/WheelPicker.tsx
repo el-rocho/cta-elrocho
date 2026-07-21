@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
 interface WheelColumnProps {
@@ -21,15 +21,35 @@ const WheelColumn: React.FC<WheelColumnProps> = ({
   accentClass,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isProgrammaticScrollRef = useRef<boolean>(false);
   const ITEM_HEIGHT = 40; // Altura de cada ítem en píxeles
 
-  // Generar array de valores
+  // Generar array de valores válidos
   const values: number[] = [];
   for (let i = min; i <= max; i++) {
     values.push(i);
   }
 
+  // Centrar el scroll de la ruleta inicialmente y cuando cambie 'value' externamente (ej. 120/80/72)
+  useEffect(() => {
+    if (containerRef.current) {
+      const targetIndex = values.indexOf(value);
+      if (targetIndex !== -1) {
+        const targetScrollTop = targetIndex * ITEM_HEIGHT;
+        if (Math.abs(containerRef.current.scrollTop - targetScrollTop) > 2) {
+          isProgrammaticScrollRef.current = true;
+          containerRef.current.scrollTop = targetScrollTop;
+          setTimeout(() => {
+            isProgrammaticScrollRef.current = false;
+          }, 50);
+        }
+      }
+    }
+  }, [value, min, max]);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isProgrammaticScrollRef.current) return;
+
     const scrollTop = e.currentTarget.scrollTop;
     const selectedIndex = Math.round(scrollTop / ITEM_HEIGHT);
     const selectedVal = values[selectedIndex];
@@ -44,10 +64,14 @@ const WheelColumn: React.FC<WheelColumnProps> = ({
     if (containerRef.current) {
       const targetIndex = values.indexOf(nextVal);
       if (targetIndex !== -1) {
+        isProgrammaticScrollRef.current = true;
         containerRef.current.scrollTo({
           top: targetIndex * ITEM_HEIGHT,
           behavior: 'smooth',
         });
+        setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 150);
       }
     }
   };
