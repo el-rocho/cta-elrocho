@@ -1548,4 +1548,45 @@ input:checked + .toggle-slider:before {
     width: 70%;
     max-width: 220px;
   }
+
+  /* Ruleta Tactil Compacta en Moviles */
+  .card.form-card {
+    padding: 16px 10px;
+  }
+
+  .wheel-picker-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: 100%;
+  }
+
+  .wheel-column-card {
+    padding: 6px 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .wheel-column-header {
+    flex-direction: column;
+    gap: 1px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .wheel-unit {
+    font-size: 10px;
+  }
+
+  .wheel-item {
+    font-size: 16px;
+  }
+
+  .wheel-item.selected {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .btn-wheel-step {
+    padding: 2px 0;
+  }
 }
