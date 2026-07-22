@@ -40,11 +40,11 @@ jobs:
       - name: Sincronizar Capacitor con Android
         run: npx cap sync android
 
-      - name: Configurar JDK 17 (Java)
+      - name: Configurar JDK 21 (Java)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
