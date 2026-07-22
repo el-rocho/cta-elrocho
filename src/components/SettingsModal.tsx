@@ -197,10 +197,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="settings-subcard">
               <div className="field-label" style={{ fontSize: '12px' }}>
                 <Folder size={14} className="text-blue" />
-                <span>Ubicación de almacenamiento: <strong>Carpeta de Descargas del Navegador (Downloads)</strong></span>
+                <span>Almacenamiento en dispositivo: <strong>Carpeta de Descargas del Navegador (Downloads)</strong></span>
               </div>
               <p className="settings-desc" style={{ marginTop: '4px', fontSize: '11px', lineHeight: '1.4' }}>
-                Por seguridad del navegador, los archivos de respaldo CSV se guardan de forma privada en la carpeta predeterminada de Descargas de tu dispositivo.
+                Las copias de seguridad, automáticas y manuales, se guardan en la carpeta predeterminada de Descargas del dispositivo.
               </p>
 
               <div className="backup-meta-row" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -208,7 +208,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <CalendarCheck size={12} className="inline-icon" /> Última copia: <strong>{lastBackupStr}</strong>
                 </span>
                 <button type="button" className="btn-subtle-reset" onClick={onTriggerManualBackup}>
-                  Descargar Copia Ahora
+                  Descargar copia ahora
                 </button>
               </div>
             </div>
