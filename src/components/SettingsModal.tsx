@@ -304,7 +304,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.08)' }}
                 >
                   <Trash2 size={14} />
-                  <span>Eliminar Todos los Datos</span>
+                  <span>Eliminar datos</span>
                 </button>
               </div>
             </div>
