@@ -1,0 +1,6 @@
+{
+  "appId": "es.elrocho.tensionarterial",
+  "appName": "Control Tensión Arterial",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
