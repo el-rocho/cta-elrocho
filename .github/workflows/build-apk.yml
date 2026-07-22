@@ -67,11 +67,10 @@ jobs:
           retention-days: 14
 
       - name: Publicar APK en GitHub Releases (Compatible con Obtainium)
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          name: Release ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
+          name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.0.4' }}
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.0.4' }}
           files: control-tension-arterial.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
