@@ -40,17 +40,17 @@ jobs:
       - name: Sincronizar Capacitor con Android
         run: npx cap sync android
 
-      - name: Configurar JDK 21 (Java)
+      - name: Configurar JDK 17 (Java)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '21'
-
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
+          java-version: '17'
 
       - name: Dar permisos de ejecución a Gradle Wrapper
         run: chmod +x android/gradlew
+
+      - name: Aceptar licencias Android SDK
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Compilar APK con Gradle
         run: |
@@ -67,7 +67,7 @@ jobs:
       - name: Publicar APK en GitHub Releases (GitHub CLI)
         continue-on-error: true
         run: |
-          TAG="${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.0.5' }}"
+          TAG="${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.1.1' }}"
           gh release create "$TAG" android/app/build/outputs/apk/debug/app-debug.apk#control-tension-arterial.apk --title "$TAG" --notes "Release $TAG" || gh release upload "$TAG" android/app/build/outputs/apk/debug/app-debug.apk#control-tension-arterial.apk --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
