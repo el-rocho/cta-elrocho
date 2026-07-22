@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS } from '../services/storageService';
 
 /**
  * Agrupa una lista de lecturas en sesiones de medición continua respetando las opciones configuradas.
+ * Aplica el filtro médico de bata blanca para descartar picos de ansiedad iniciales (15-25 mmHg Sistólica / 5-10 mmHg Diastólica).
  */
 export function processReadingsIntoSessions(
   readings: BloodPressureReading[],
@@ -42,8 +43,8 @@ export function processReadingsIntoSessions(
     };
   }
 
-  // Umbral de tiempo dinámico según la configuración del usuario (en milisegundos)
-  const sessionThresholdMs = (settings.whiteCoatIntervalMinutes || 3) * 60 * 1000;
+  // Umbral de tiempo dinámico según la configuración del usuario (en milisegundos) entre tomas consecutivas
+  const sessionThresholdMs = (settings.whiteCoatIntervalMinutes || 5) * 60 * 1000;
 
   const sessionGroups: BloodPressureReading[][] = [];
   let currentGroup: BloodPressureReading[] = [sorted[0]];
@@ -52,6 +53,7 @@ export function processReadingsIntoSessions(
     const prevTime = new Date(sorted[i - 1].timestamp).getTime();
     const currTime = new Date(sorted[i].timestamp).getTime();
 
+    // Agrupar si la diferencia con la toma ANTERIOR es menor o igual al intervalo configurado
     if (currTime - prevTime <= sessionThresholdMs) {
       currentGroup.push(sorted[i]);
     } else {
@@ -63,7 +65,7 @@ export function processReadingsIntoSessions(
     sessionGroups.push(currentGroup);
   }
 
-  // Procesar cada grupo para crear la sesión con el filtro de bata blanca
+  // Procesar cada grupo de tomas consecutivas aplicando los criterios médicos del filtro de bata blanca
   const sessions: BloodPressureSession[] = sessionGroups.map((group, index) => {
     const sessionId = group[0].sessionId || `session-${index}-${group[0].id}`;
 
@@ -75,20 +77,27 @@ export function processReadingsIntoSessions(
     let discardedCount = 0;
 
     if (group.length === 2) {
-      // En 2 lecturas, si la primera es sensiblemente superior a la segunda, descartamos la primera
-      if (group[0].systolic > group[1].systolic + 4 || group[0].diastolic > group[1].diastolic + 3) {
+      // En 2 tomas: Si la 1ª está significativamente elevada respecto a la 2ª (efecto bata blanca inicial), se descarta la 1ª
+      if (group[0].systolic >= group[1].systolic + 8 || group[0].diastolic >= group[1].diastolic + 4) {
         validReadingsForAvg = [group[1]];
         discardedCount = 1;
       }
     } else if (group.length >= 3) {
-      // En 3 o más lecturas, descartamos la primera toma (típica de adaptación/ansiedad)
-      const sortedBySys = [...group].sort((a, b) => b.systolic - a.systolic);
+      // En 3 o más tomas consecutivas:
+      // 1. La 1ª toma se descarta SIEMPRE por su bajo valor diagnóstico (ansiedad/manguito inicial)
       validReadingsForAvg = group.slice(1);
       discardedCount = 1;
 
-      if (validReadingsForAvg.length >= 2 && group[1].id === sortedBySys[0].id) {
-        validReadingsForAvg = validReadingsForAvg.slice(1);
-        discardedCount = 2;
+      // 2. Si la 2ª toma aún mantiene un pico elevado significativo respecto a las tomas posteriores (3ª, 4ª...) por ansiedad prolongada (1-4 min)
+      if (validReadingsForAvg.length >= 2) {
+        const remainingAfterSecond = validReadingsForAvg.slice(1);
+        const avgSysRemaining = remainingAfterSecond.reduce((acc, r) => acc + r.systolic, 0) / remainingAfterSecond.length;
+        const avgDiaRemaining = remainingAfterSecond.reduce((acc, r) => acc + r.diastolic, 0) / remainingAfterSecond.length;
+
+        if (group[1].systolic >= avgSysRemaining + 8 || group[1].diastolic >= avgDiaRemaining + 4) {
+          validReadingsForAvg = remainingAfterSecond;
+          discardedCount = 2;
+        }
       }
     }
 
