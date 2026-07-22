@@ -9,6 +9,7 @@ on:
       - 'v*'
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -69,6 +70,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
           files: control-tension-arterial.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
