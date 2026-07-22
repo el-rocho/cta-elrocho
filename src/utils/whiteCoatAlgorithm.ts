@@ -82,21 +82,32 @@ export function processReadingsIntoSessions(
         validReadingsForAvg = [group[1]];
         discardedCount = 1;
       }
-    } else if (group.length >= 3) {
-      // En 3 o más tomas consecutivas:
-      // 1. La 1ª toma se descarta SIEMPRE por su bajo valor diagnóstico (ansiedad/manguito inicial)
+    } else if (group.length === 3) {
+      // En 3 tomas: La 1ª toma se descarta siempre, manteniendo 2 tomas válidas para la media
+      validReadingsForAvg = group.slice(1);
+      discardedCount = 1;
+    } else if (group.length >= 4) {
+      // En 4 o más tomas consecutivas:
+      // 1. La 1ª toma se descarta SIEMPRE
       validReadingsForAvg = group.slice(1);
       discardedCount = 1;
 
-      // 2. Si la 2ª toma aún mantiene un pico elevado significativo respecto a las tomas posteriores (3ª, 4ª...) por ansiedad prolongada (1-4 min)
-      if (validReadingsForAvg.length >= 2) {
-        const remainingAfterSecond = validReadingsForAvg.slice(1);
-        const avgSysRemaining = remainingAfterSecond.reduce((acc, r) => acc + r.systolic, 0) / remainingAfterSecond.length;
-        const avgDiaRemaining = remainingAfterSecond.reduce((acc, r) => acc + r.diastolic, 0) / remainingAfterSecond.length;
+      // 2. Evaluar progresivamente tomas iniciales elevadas (2ª, 3ª...) MIENTRAS sigan quedando al menos 3 tomas válidas para la media
+      for (let i = 1; i < group.length; i++) {
+        const remainingIfDiscarded = group.slice(i + 1);
+        if (remainingIfDiscarded.length < 3) {
+          // Garantizar que siempre queden 3 o más tomas para calcular la media definitiva
+          break;
+        }
 
-        if (group[1].systolic >= avgSysRemaining + 8 || group[1].diastolic >= avgDiaRemaining + 4) {
-          validReadingsForAvg = remainingAfterSecond;
-          discardedCount = 2;
+        const avgSysRemaining = remainingIfDiscarded.reduce((acc, r) => acc + r.systolic, 0) / remainingIfDiscarded.length;
+        const avgDiaRemaining = remainingIfDiscarded.reduce((acc, r) => acc + r.diastolic, 0) / remainingIfDiscarded.length;
+
+        if (group[i].systolic >= avgSysRemaining + 8 || group[i].diastolic >= avgDiaRemaining + 4) {
+          validReadingsForAvg = remainingIfDiscarded;
+          discardedCount = i + 1;
+        } else {
+          break;
         }
       }
     }
