@@ -197,7 +197,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="settings-subcard">
               <div className="field-label" style={{ fontSize: '12px' }}>
                 <Folder size={14} className="text-blue" />
-                <span>Almacenamiento en dispositivo: <strong>Carpeta de Descargas del Navegador (Downloads)</strong></span>
+                <span>Almacenamiento en dispositivo: <strong>Carpeta descargas del navegador</strong></span>
               </div>
               <p className="settings-desc" style={{ marginTop: '4px', fontSize: '11px', lineHeight: '1.4' }}>
                 Las copias de seguridad, automáticas y manuales, se guardan en la carpeta predeterminada de Descargas del dispositivo.
