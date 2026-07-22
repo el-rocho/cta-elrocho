@@ -1,17 +1,21 @@
-name: Compilar APK Debug de Android
+name: Compilar y Publicar APK Android (Obtainium & Releases)
 
 on:
   push:
     branches:
       - main
       - dev
-  pull_request:
-    branches:
-      - main
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
   build-apk:
-    name: Compilar APK Android (Debug)
+    name: Compilar APK Android
     runs-on: ubuntu-latest
 
     steps:
@@ -45,14 +49,26 @@ jobs:
       - name: Dar permisos de ejecución a Gradle Wrapper
         run: chmod +x android/gradlew
 
-      - name: Compilar APK Debug con Gradle
+      - name: Compilar APK con Gradle
         run: |
           cd android
           ./gradlew assembleDebug --stacktrace
 
-      - name: Subir APK Debug como Artefacto de Workflow
+      - name: Preparar nombre de paquete APK
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk control-tension-arterial.apk
+
+      - name: Subir APK como Artefacto de Workflow
         uses: actions/upload-artifact@v4
         with:
-          name: control-tension-arterial-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: control-tension-arterial-apk
+          path: control-tension-arterial.apk
           retention-days: 14
+
+      - name: Publicar APK en GitHub Releases (Compatible con Obtainium)
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: control-tension-arterial.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
