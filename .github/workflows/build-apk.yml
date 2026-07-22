@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Descargar código fuente
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -67,10 +69,9 @@ jobs:
           retention-days: 14
 
       - name: Publicar APK en GitHub Releases (Compatible con Obtainium)
+        continue-on-error: true
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.0.4' }}
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.0.4' }}
           files: control-tension-arterial.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
