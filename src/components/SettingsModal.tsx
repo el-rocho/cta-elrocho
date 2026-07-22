@@ -23,7 +23,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const currentWhiteCoatInterval = [5, 10, 15].includes(settings.whiteCoatIntervalMinutes)
+  const currentWhiteCoatInterval = [3, 5, 10].includes(settings.whiteCoatIntervalMinutes)
     ? settings.whiteCoatIntervalMinutes
     : 5;
 
@@ -244,7 +244,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <span>Intervalo máximo de tiempo entre tomas:</span>
                 </div>
                 <div className="chip-options-row">
-                  {[5, 10, 15].map((mins) => (
+                  {[3, 5, 10].map((mins) => (
                     <button
                       key={mins}
                       type="button"

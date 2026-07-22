@@ -106,7 +106,7 @@ export function getStoredSettings(): AppSettings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return DEFAULT_SETTINGS;
     const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
-    if (![5, 10, 15].includes(parsed.whiteCoatIntervalMinutes)) {
+    if (![3, 5, 10].includes(parsed.whiteCoatIntervalMinutes)) {
       parsed.whiteCoatIntervalMinutes = 5;
     }
     if (!['keyboard', 'wheel'].includes(parsed.preferredInputMode)) {
