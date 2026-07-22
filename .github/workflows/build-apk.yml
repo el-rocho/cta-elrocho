@@ -55,7 +55,7 @@ jobs:
       - name: Compilar APK con Gradle
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace --info
 
       - name: Subir APK como Artefacto de Workflow
         uses: actions/upload-artifact@v4
