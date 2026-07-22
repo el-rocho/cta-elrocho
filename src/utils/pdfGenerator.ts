@@ -40,18 +40,20 @@ export function printPDFReport(
     return;
   }
 
-  const dateRangeLabel =
-    dateRange.preset === 'all'
-      ? 'Histórico Completo'
-      : dateRange.preset === '7days'
-      ? 'Últimos 7 días'
-      : dateRange.preset === '30days'
-      ? 'Últimos 30 días'
-      : dateRange.preset === '90days'
-      ? 'Últimos 90 días'
-      : `Del ${dateRange.startDate || ''} al ${dateRange.endDate || ''}`;
+  // Calcular periodo de fechas real directamente
+  let realPeriodStr = '';
+  if (filtered.length > 0) {
+    const timestamps = filtered.map((s) => new Date(s.timestamp).getTime());
+    const minT = Math.min(...timestamps);
+    const maxT = Math.max(...timestamps);
+    const minDStr = new Date(minT).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const maxDStr = new Date(maxT).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    realPeriodStr = minDStr === maxDStr ? minDStr : `Del ${minDStr} al ${maxDStr}`;
+  } else {
+    realPeriodStr = 'Sin registros en este periodo';
+  }
 
-  // Formatear metadatos de paciente (Nombre, Sexo y EDAD)
+  // Formatear metadatos de paciente (Nombre, Sexo y Edad)
   let patientInfoStr = '';
   if (!options.hidePatientData) {
     const parts: string[] = [];
@@ -76,7 +78,7 @@ export function printPDFReport(
     <html lang="es">
     <head>
       <meta charset="UTF-8" />
-      <title>Informe de Tensión Arterial - ${dateRangeLabel}</title>
+      <title>Informe de Tensión Arterial - ${realPeriodStr}</title>
       <style>
         body {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -84,6 +86,55 @@ export function printPDFReport(
           padding: 24px;
           margin: 0;
           background: #ffffff;
+        }
+        .action-bar {
+          background: #0f172a;
+          color: #ffffff;
+          padding: 12px 20px;
+          border-radius: 8px;
+          margin-bottom: 24px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
+        .action-bar-title {
+          font-weight: 600;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .action-buttons {
+          display: flex;
+          gap: 10px;
+        }
+        .btn-print {
+          background: #2563eb;
+          color: #ffffff;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 13px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .btn-print:hover {
+          background: #1d4ed8;
+        }
+        .btn-close-pdf {
+          background: #334155;
+          color: #ffffff;
+          border: none;
+          padding: 8px 14px;
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 13px;
+          cursor: pointer;
+        }
+        .btn-close-pdf:hover {
+          background: #475569;
         }
         .header {
           display: flex;
@@ -170,11 +221,13 @@ export function printPDFReport(
           gap: 16px;
           font-size: 11px;
           color: #475569;
+          align-items: center;
         }
         .legend-item { display: flex; align-items: center; gap: 4px; }
         .dot-red { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; }
         .dot-blue { width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block; }
-        .dot-pink { width: 8px; height: 8px; background: #ec4899; border-radius: 50%; display: inline-block; }
+        .dot-gray { width: 8px; height: 8px; background: #64748b; border-radius: 50%; display: inline-block; }
+        .box-green { width: 12px; height: 8px; background: rgba(16, 185, 129, 0.25); border-radius: 2px; display: inline-block; }
         table {
           width: 100%;
           border-collapse: collapse;
@@ -212,19 +265,29 @@ export function printPDFReport(
         }
         @media print {
           body { padding: 0; }
-          .no-print { display: none; }
+          .no-print { display: none !important; }
         }
       </style>
     </head>
     <body>
+      <div class="action-bar no-print">
+        <div class="action-bar-title">
+          📋 Vista Previa del Informe de Tensión Arterial
+        </div>
+        <div class="action-buttons">
+          <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar en PDF</button>
+          <button class="btn-close-pdf" onclick="window.close()">Cerrar</button>
+        </div>
+      </div>
+
       <div class="header">
         <div>
           <h1 class="header-title">Informe de Tensión Arterial y Pulsaciones</h1>
-          <p class="header-subtitle">${patientInfoStr} | <strong>Periodo:</strong> ${dateRangeLabel}</p>
+          <p class="header-subtitle">${patientInfoStr} | <strong>Periodo:</strong> ${realPeriodStr}</p>
         </div>
         <div class="header-meta">
           <p style="margin:0;">Generado: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
-          <p style="margin:4px 0 0 0; color:#10b981; font-weight:600;">✓ Documento Offline Privado</p>
+          <p style="margin:4px 0 0 0; color:#10b981; font-weight:600;">✓ Documento Privado</p>
         </div>
       </div>
 
@@ -250,7 +313,7 @@ export function printPDFReport(
         </div>
         <div class="summary-card">
           <div class="summary-card-title">Promedio Pulsaciones</div>
-          <div class="summary-card-value" style="color:#ec4899">${avgPulse} <span class="summary-card-unit">ppm</span></div>
+          <div class="summary-card-value" style="color:#64748b">${avgPulse} <span class="summary-card-unit">ppm</span></div>
         </div>
         <div class="summary-card">
           <div class="summary-card-title">Estado Global</div>
@@ -267,7 +330,8 @@ export function printPDFReport(
           <div class="chart-pdf-legend">
             <span class="legend-item"><span class="dot-red"></span> Sistólica (Eje Izq.)</span>
             <span class="legend-item"><span class="dot-blue"></span> Diastólica (Eje Izq.)</span>
-            <span class="legend-item"><span class="dot-pink"></span> Pulsaciones (Eje Der.)</span>
+            <span class="legend-item"><span class="dot-gray"></span> Pulsaciones (Eje Der.)</span>
+            <span class="legend-item"><span class="box-green"></span> Rango Saludable (&lt;120/80)</span>
           </div>
         </div>
         ${svgChartHtml}
@@ -302,7 +366,7 @@ export function printPDFReport(
                 <td><strong>${dateStr}</strong> ${timeStr}</td>
                 <td><strong style="font-size:14px; color:#ef4444;">${s.averageSystolic}</strong> mmHg</td>
                 <td><strong style="font-size:14px; color:#3b82f6;">${s.averageDiastolic}</strong> mmHg</td>
-                <td><strong style="font-size:13px; color:#ec4899;">${s.averageHeartRate}</strong> ppm</td>
+                <td><strong style="font-size:13px; color:#64748b;">${s.averageHeartRate}</strong> ppm</td>
                 <td>${armLabel}</td>
                 <td>
                   <span class="badge" style="background:${cat.badgeBg}; color:${cat.badgeText};">
@@ -318,16 +382,8 @@ export function printPDFReport(
       </table>
 
       <div class="footer">
-        Este documento ha sido generado localmente en el dispositivo de forma 100% privada sin servicios en la nube.
+        Este documento ha sido generado localmente de forma 100% privada.
       </div>
-
-      <script>
-        window.onload = function() {
-          setTimeout(function() {
-            window.print();
-          }, 300);
-        };
-      </script>
     </body>
     </html>
   `;
@@ -386,11 +442,12 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[]): string
   const pulsePath = pulsePoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
 
   const idealSysY = getY_BP(120);
+  const idealDiaY = getY_BP(80);
 
   return `
     <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto;">
-      <!-- Guía de rango óptimo tensión -->
-      <line x1="${paddingLeft}" y1="${idealSysY}" x2="${width - paddingRight}" y2="${idealSysY}" stroke="#10b981" stroke-dasharray="3 3" stroke-width="1" />
+      <!-- Banda de rango óptimo saludable (<120/80 mmHg) - Solo relleno -->
+      <rect x="${paddingLeft}" y="${idealSysY}" width="${chartWidth}" height="${Math.max(0, idealDiaY - idealSysY)}" fill="rgba(16, 185, 129, 0.12)" rx="3" />
 
       <!-- Cuadrícula Y y Eje Izquierdo (mmHg) -->
       ${[60, 90, 120, 150, 180]
@@ -403,38 +460,38 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[]): string
         })
         .join('')}
 
-      <!-- Eje Derecho (Pulsaciones ppm) -->
+      <!-- Eje Derecho (Pulsaciones ppm en gris) -->
       ${[40, 60, 80, 100, 120, 140]
         .map((v) => {
           const y = getY_Pulse(v);
           return `
-          <text x="${width - paddingRight + 6}" y="${y + 3}" text-anchor="start" fill="#ec4899" font-size="9" font-weight="600">${v} ppm</text>
+          <text x="${width - paddingRight + 6}" y="${y + 3}" text-anchor="start" fill="#64748b" font-size="9" font-weight="600">${v} ppm</text>
         `;
         })
         .join('')}
 
-      <!-- Trazo Sistólica (Rojo) -->
-      <path d="${sysPath}" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" />
+      <!-- Trazo Sistólica (Rojo ultra fino) -->
+      <path d="${sysPath}" fill="none" stroke="#ef4444" stroke-width="0.9" stroke-linecap="round" />
 
-      <!-- Trazo Diastólica (Azul) -->
-      <path d="${diaPath}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+      <!-- Trazo Diastólica (Azul ultra fino) -->
+      <path d="${diaPath}" fill="none" stroke="#3b82f6" stroke-width="0.9" stroke-linecap="round" />
 
-      <!-- Trazo Pulsaciones (Rosa/Púrpura punteado) -->
-      <path d="${pulsePath}" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3" />
+      <!-- Trazo Pulsaciones (Gris punteado ultra fino) -->
+      <path d="${pulsePath}" fill="none" stroke="#64748b" stroke-width="0.8" stroke-linecap="round" stroke-dasharray="4 3" />
 
       <!-- Puntos Sistólica -->
       ${sysPoints
-        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#ef4444" stroke="#ffffff" stroke-width="1.5" />`)
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#ef4444" stroke="#ffffff" stroke-width="0.75" />`)
         .join('')}
 
       <!-- Puntos Diastólica -->
       ${diaPoints
-        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5" />`)
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#3b82f6" stroke="#ffffff" stroke-width="0.75" />`)
         .join('')}
 
-      <!-- Puntos Pulsaciones -->
+      <!-- Puntos Pulsaciones (Gris) -->
       ${pulsePoints
-        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#ec4899" stroke="#ffffff" stroke-width="1.5" />`)
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="1.5" fill="#64748b" stroke="#ffffff" stroke-width="0.75" />`)
         .join('')}
 
       <!-- Eje X (Fechas) -->

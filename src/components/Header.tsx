@@ -1,5 +1,6 @@
 import React from 'react';
-import { Activity, ShieldCheck, Download, Moon, Sun, Settings } from 'lucide-react';
+import { ShieldCheck, Download, Moon, Sun, Settings } from 'lucide-react';
+import { HeartIcon } from './HeartIcon';
 
 interface HeaderProps {
   onOpenExportModal: () => void;
@@ -18,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-brand">
         <div className="brand-logo">
-          <Activity size={24} className="pulse-icon" />
+          <HeartIcon size={24} className="pulse-icon" />
         </div>
         <div>
           <h1 className="brand-title">Control Tensión Arterial</h1>

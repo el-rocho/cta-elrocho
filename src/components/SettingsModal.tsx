@@ -104,7 +104,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="settings-section">
             <div className="field-label">
               <User size={16} className="text-blue" />
-              <span>Perfil del Paciente (Para informes y exportación):</span>
+              <span>Perfil del Paciente:</span>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>

@@ -37,6 +37,8 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const activeInputMode = settings.preferredInputMode || inputMode;
+
   // Sincronizar brazo y modo de entrada predeterminado si cambia la configuración
   useEffect(() => {
     setArm(settings.defaultArm || 'left');
@@ -157,7 +159,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
           <div className="input-mode-toggle">
             <button
               type="button"
-              className={`btn-mode-chip ${inputMode === 'keyboard' ? 'active' : ''}`}
+              className={`btn-mode-chip ${activeInputMode === 'keyboard' ? 'active' : ''}`}
               onClick={() => handleToggleInputMode('keyboard')}
               title="Introducir mediante teclado numérico"
             >
@@ -166,7 +168,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
             </button>
             <button
               type="button"
-              className={`btn-mode-chip ${inputMode === 'wheel' ? 'active' : ''}`}
+              className={`btn-mode-chip ${activeInputMode === 'wheel' ? 'active' : ''}`}
               onClick={() => handleToggleInputMode('wheel')}
               title="Introducir mediante ruleta táctil de selección rápida"
             >
@@ -180,7 +182,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
       {errorMsg && <div className="alert-danger">{errorMsg}</div>}
 
       <form onSubmit={handleSubmit} className="bp-form">
-        {inputMode === 'keyboard' ? (
+        {activeInputMode === 'keyboard' ? (
           /* Modo 1: Introducción mediante Teclado Numérico */
           <div className="metrics-inputs-grid">
             <div className="input-group">

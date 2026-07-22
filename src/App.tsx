@@ -190,7 +190,7 @@ export function App() {
       />
 
       <footer className="app-footer">
-        <span>Control Tensión Arterial &copy; {new Date().getFullYear()}</span>
+        <span>Control Tensión Arterial</span>
         <span> &bull; </span>
         <button
           type="button"
