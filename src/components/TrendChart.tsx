@@ -85,8 +85,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
     <div className="card chart-card">
       <div className="chart-header">
         <div className="chart-title">
-          <TrendingUp size={20} className="icon-chart" />
-          <h2>Evolución de Tensión Arterial y Pulsaciones</h2>
+          <TrendingUp size={24} className="icon-chart" />
+          <h2>Evolución Tensión Arterial</h2>
         </div>
 
         <div className="filter-chips">
@@ -136,7 +136,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
         </div>
         <div className="legend-item">
           <span className="legend-box ideal-box"></span>
-          <span>Rango Saludable (&lt;120/80)</span>
+          <span>Rango Saludable</span>
         </div>
       </div>
 

@@ -32,7 +32,7 @@ export const ReadingList: React.FC<ReadingListProps> = ({
       <div className="list-header">
         <div className="list-title">
           <History size={20} className="icon-history" />
-          <h2>Historial de Mediciones</h2>
+          <h2>Historial mediciones</h2>
           <span className="count-badge">{filteredSessions.length}</span>
         </div>
 

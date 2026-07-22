@@ -107,7 +107,7 @@ const WheelColumn: React.FC<WheelColumnProps> = ({
             <div
               key={v}
               className={`wheel-item ${isSelected ? 'selected ' + accentClass : ''}`}
-              style={{ height: ITEM_HEIGHT, lineHeight: `${ITEM_HEIGHT}px` }}
+              style={{ height: ITEM_HEIGHT }}
               onClick={() => {
                 onChange(v);
                 if (containerRef.current) {

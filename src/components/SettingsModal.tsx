@@ -84,8 +84,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title-group">
-            <Settings size={22} className="modal-icon" />
-            <h2>Configuración de la Aplicación</h2>
+            <Settings size={26} className="modal-icon legal-icon-main" />
+            <h2 className="legal-modal-title">Configuración</h2>
           </div>
           <button className="btn-close-modal" onClick={onClose} aria-label="Cerrar">
             <X size={20} />
@@ -96,8 +96,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Opción 1: Datos del Paciente */}
           <div className="settings-section">
             <div className="field-label">
-              <User size={16} className="text-blue" />
-              <span>Perfil del Paciente:</span>
+              <User size={22} className="text-blue settings-field-icon" />
+              <span>Perfil del paciente:</span>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
@@ -113,40 +113,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>Sexo:</label>
-                  <div className="chip-options-row">
-                    <button
-                      type="button"
-                      className={`chip-select ${settings.patientSex === 'masculino' ? 'active' : ''}`}
-                      onClick={() => handlePatientSexChange('masculino')}
-                      style={{ padding: '4px 10px', fontSize: '11px' }}
-                    >
-                      Masculino
-                    </button>
-                    <button
-                      type="button"
-                      className={`chip-select ${settings.patientSex === 'femenino' ? 'active' : ''}`}
-                      onClick={() => handlePatientSexChange('femenino')}
-                      style={{ padding: '4px 10px', fontSize: '11px' }}
-                    >
-                      Femenino
-                    </button>
-                  </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                {/* Sexo sin etiqueta */}
+                <div className="chip-options-row">
+                  <button
+                    type="button"
+                    className={`chip-select ${settings.patientSex === 'masculino' ? 'active' : ''}`}
+                    onClick={() => handlePatientSexChange('masculino')}
+                    style={{ padding: '6px 14px', fontSize: '12px' }}
+                  >
+                    Masculino
+                  </button>
+                  <button
+                    type="button"
+                    className={`chip-select ${settings.patientSex === 'femenino' ? 'active' : ''}`}
+                    onClick={() => handlePatientSexChange('femenino')}
+                    style={{ padding: '6px 14px', fontSize: '12px' }}
+                  >
+                    Femenino
+                  </button>
                 </div>
 
-                <div>
-                  <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>Edad (años):</label>
+                {/* Edad en una sola fila con ancho reducido */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label className="settings-desc" style={{ margin: 0, whiteSpace: 'nowrap' }}>Edad (años):</label>
                   <input
                     type="number"
                     min={1}
                     max={120}
                     value={settings.patientAge ?? ''}
                     onChange={(e) => handlePatientAgeChange(e.target.value)}
-                    placeholder="Ej. 65"
+                    placeholder="65"
                     className="modal-input"
-                    style={{ padding: '6px 10px', fontSize: '13px' }}
+                    style={{ width: '70px', padding: '6px 8px', fontSize: '13px', textAlign: 'center' }}
                   />
                 </div>
               </div>
@@ -156,11 +155,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Opción 2: Copias de Seguridad Automáticas CSV */}
           <div className="settings-section border-top">
             <div className="field-label">
-              <Save size={16} className="text-blue" />
-              <span>Copias de Seguridad Automáticas (Formato CSV):</span>
+              <Save size={22} className="text-blue settings-field-icon" />
+              <span>Copias de Seguridad:</span>
             </div>
             <p className="settings-desc" style={{ marginBottom: '10px' }}>
-              Define la frecuencia para guardar de forma programada copias CSV en tu almacenamiento local.
+              Frecuencia para guardar automáticamente copias CSV en el almacenamiento local.
             </p>
 
             <div className="chip-options-row" style={{ marginBottom: '12px' }}>
@@ -196,8 +195,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             <div className="settings-subcard">
               <div className="field-label" style={{ fontSize: '12px' }}>
-                <Folder size={14} className="text-blue" />
-                <span>Almacenamiento en dispositivo: <strong>Carpeta descargas del navegador</strong></span>
+                <Folder size={20} className="text-blue settings-field-icon" />
+                <span>Almacenamiento en dispositivo:</span>
               </div>
               <p className="settings-desc" style={{ marginTop: '4px', fontSize: '11px', lineHeight: '1.4' }}>
                 Las copias de seguridad, automáticas y manuales, se guardan en la carpeta predeterminada de Descargas del dispositivo.
@@ -218,9 +217,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="settings-section border-top">
             <div className="settings-row-header">
               <div className="settings-label-group">
-                <ShieldAlert size={18} className="text-blue" />
+                <ShieldAlert size={22} className="text-blue settings-field-icon" />
                 <div>
-                  <h3>Filtro de Síndrome de Bata Blanca</h3>
+                  <h3 style={{ fontWeight: 400 }}>Filtro Síndrome bata blanca</h3>
                   <p className="settings-desc" style={{ marginTop: '4px', lineHeight: '1.4' }}>
                     Si realiza varias mediciones continuadas distanciadas entre ellas menos del intervalo de tiempo definido, se descartarán las primeras tomas elevadas para eliminar el sesgo de ansiedad inicial, con el resto de los datos se calcula la media y se almacena como una única medición.
                   </p>
@@ -240,8 +239,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {settings.enableWhiteCoatFilter && (
               <div className="settings-subcard">
                 <div className="field-label">
-                  <Clock size={14} />
-                  <span>Intervalo máximo de tiempo entre tomas consecutivas:</span>
+                  <Clock size={16} />
+                  <span>Intervalo máximo entre tomas consecutivas:</span>
                 </div>
                 <div className="chip-options-row">
                   {[3, 5, 10].map((mins) => (
@@ -262,8 +261,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Opción 4: Brazo por defecto */}
           <div className="settings-section border-top">
             <div className="field-label">
-              <Armchair size={16} />
-              <span>Brazo utilizado por defecto en el formulario:</span>
+              <Armchair size={22} className="settings-field-icon" />
+              <span>Brazo utilizado por defecto:</span>
             </div>
             <div className="chip-options-row">
               <button
@@ -283,30 +282,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Opción 5: Gestionar Registros (Demo y Eliminar Todos) */}
+          {/* Opción 5: Botones de Gestión (Demo y Eliminar Todos) en una fila sin título */}
           <div className="settings-section border-top">
-            <div className="settings-row-header">
-              <div>
-                <h4 style={{ fontSize: '13px', margin: 0 }}>Gestión de Datos Registrados</h4>
-                <p className="settings-desc">Restaura datos de demostración o vacía el historial por completo.</p>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button
+                type="button"
+                className="btn-subtle-reset"
+                onClick={onResetDemoData}
+                style={{ justifyContent: 'center', padding: '10px' }}
+              >
+                <RotateCcw size={16} />
+                <span>Restaurar datos Demo</span>
+              </button>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button type="button" className="btn-subtle-reset" onClick={onResetDemoData}>
-                  <RotateCcw size={14} />
-                  <span>Restaurar Demo</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="btn-subtle-reset"
-                  onClick={onClearAllData}
-                  style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.08)' }}
-                >
-                  <Trash2 size={14} />
-                  <span>Eliminar datos</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                className="btn-danger-reset"
+                onClick={onClearAllData}
+                style={{ justifyContent: 'center', padding: '10px' }}
+              >
+                <Trash2 size={16} />
+                <span>Eliminar todos los datos</span>
+              </button>
             </div>
           </div>
         </div>

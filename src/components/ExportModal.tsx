@@ -3,7 +3,7 @@ import type { BloodPressureSession, DateFilterPreset, DateRange, BloodPressureRe
 import { exportToCSV } from '../utils/exportCsv';
 import { printPDFReport } from '../utils/pdfGenerator';
 import { parseCSVData } from '../utils/importCsv';
-import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle, FileText, EyeOff } from 'lucide-react';
+import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -81,8 +81,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title-group">
-            <Printer size={22} className="modal-icon" />
-            <h2>Gestión de Datos (Exportar / Importar / PDF)</h2>
+            <Printer size={26} className="modal-icon legal-icon-main" />
+            <h2 className="legal-modal-title">Gestión de Datos</h2>
           </div>
           <button className="btn-close-modal" onClick={onClose} aria-label="Cerrar">
             <X size={20} />
@@ -96,14 +96,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             className={`modal-tab ${activeTab === 'export' ? 'active' : ''}`}
             onClick={() => setActiveTab('export')}
           >
-            Exportar CSV e Informe PDF
+            Exportar
           </button>
           <button
             type="button"
             className={`modal-tab ${activeTab === 'import' ? 'active' : ''}`}
             onClick={() => setActiveTab('import')}
           >
-            Importar Copia CSV
+            Importar
           </button>
         </div>
 
@@ -111,35 +111,33 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {activeTab === 'export' ? (
             <>
               {/* Resumen del perfil de paciente */}
-              <div className="modal-field" style={{ background: 'var(--bg-input)', padding: '10px 12px', borderRadius: 'var(--radius-sm)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div className="field-label" style={{ margin: 0 }}>
-                    <User size={15} />
-                    <span>
-                      {settings.patientName
-                        ? `Paciente: ${settings.patientName} (${settings.patientAge ? settings.patientAge + ' años' : ''})`
-                        : 'Paciente: Sin nombre asignado (Configurar en Ajustes)'}
+              <div className="modal-field export-patient-card">
+                <div className="field-label" style={{ margin: 0 }}>
+                  <User size={20} className="export-field-icon" />
+                  <span>
+                    Paciente:{' '}
+                    <span style={{ fontWeight: 400 }}>
+                      {settings.patientName || 'Sin nombre'}
                     </span>
-                  </div>
-
-                  {/* Interruptor para Ocultar datos del paciente */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                    <input
-                      type="checkbox"
-                      checked={hidePatientData}
-                      onChange={(e) => setHidePatientData(e.target.checked)}
-                    />
-                    <EyeOff size={14} />
-                    <span>Ocultar datos en informe</span>
-                  </label>
+                  </span>
                 </div>
+
+                {/* Interruptor para Ocultar datos del paciente */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                  <input
+                    type="checkbox"
+                    checked={hidePatientData}
+                    onChange={(e) => setHidePatientData(e.target.checked)}
+                  />
+                  <span>Ocultar datos en informe</span>
+                </label>
               </div>
 
               {/* Rango de Fechas */}
               <div className="modal-field">
                 <label className="field-label">
-                  <Calendar size={15} />
-                  <span>Selecciona el Intervalo Temporal:</span>
+                  <Calendar size={20} className="export-field-icon" />
+                  <span>Selecciona intervalo temporal:</span>
                 </label>
 
                 <div className="range-options-grid">
@@ -169,7 +167,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     className={`range-option ${preset === 'all' ? 'selected' : ''}`}
                     onClick={() => setPreset('all')}
                   >
-                    Histórico Completo
+                    Completo
                   </button>
                   <button
                     type="button"
@@ -208,8 +206,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               {/* Campo opcional de Observaciones / Nota del informe */}
               <div className="modal-field">
                 <label className="field-label">
-                  <FileText size={15} />
-                  <span>Nota del Informe / Observaciones Médico-Clínicas (Opcional):</span>
+                  <FileText size={20} className="export-field-icon" />
+                  <span>Nota del Informe (Opcional):</span>
                 </label>
                 <textarea
                   value={reportNotes}
@@ -224,18 +222,18 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               {/* Acciones de exportación */}
               <div className="export-actions-container">
                 <button type="button" className="btn-export-csv" onClick={handleExportCSV}>
-                  <FileSpreadsheet size={18} />
-                  <span>Descargar CSV (Excel / Calc)</span>
+                  <FileSpreadsheet size={20} />
+                  <span>Descargar CSV</span>
                 </button>
 
                 <button type="button" className="btn-export-pdf" onClick={handlePrintPDF}>
-                  <Printer size={18} />
-                  <span>Generar Informe PDF (con Gráfico y Pulsaciones) e Imprimir</span>
+                  <Printer size={22} />
+                  <span>Generar Informe PDF</span>
                 </button>
               </div>
             </>
           ) : (
-            /* Pestana Importar CSV */
+            /* Pestaña Importar CSV */
             <div className="import-tab-content">
               <div className="import-dropzone" onClick={() => fileInputRef.current?.click()}>
                 <Upload size={32} className="dropzone-icon" />

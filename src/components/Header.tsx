@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="brand-title">Control Tensión Arterial</h1>
           <div className="brand-badge">
             <ShieldCheck size={13} className="shield-icon" />
-            <span>Privado &amp; Offline &bull; v1.0.0</span>
+            <span>Privado &amp; Offline &bull; v1.1.0</span>
           </div>
         </div>
       </div>
@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="btn-icon"
           title={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
         >
-          {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+          {isDarkMode ? <Sun size={22} /> : <Moon size={22} />}
         </button>
 
         <button
@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="btn-icon"
           title="Configuración de la aplicación"
         >
-          <Settings size={18} />
+          <Settings size={22} />
         </button>
 
         <button onClick={onOpenExportModal} className="btn-primary-gradient">

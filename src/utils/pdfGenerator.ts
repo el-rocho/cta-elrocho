@@ -326,18 +326,18 @@ export function printPDFReport(
       <!-- Gráfico antes de la lista de registros -->
       <div class="chart-pdf-container">
         <div class="chart-pdf-title">
-          <span>Evolución Temporal de Tensión Arterial y Pulsaciones</span>
+          <span>Evolución Tensión Arterial</span>
           <div class="chart-pdf-legend">
             <span class="legend-item"><span class="dot-red"></span> Sistólica (Eje Izq.)</span>
             <span class="legend-item"><span class="dot-blue"></span> Diastólica (Eje Izq.)</span>
             <span class="legend-item"><span class="dot-gray"></span> Pulsaciones (Eje Der.)</span>
-            <span class="legend-item"><span class="box-green"></span> Rango Saludable (&lt;120/80)</span>
+            <span class="legend-item"><span class="box-green"></span> Rango Saludable</span>
           </div>
         </div>
         ${svgChartHtml}
       </div>
 
-      <h3 style="font-size:16px; color:#1e293b; margin-bottom:12px;">Historial de Mediciones (${total} registros)</h3>
+      <h3 style="font-size:16px; color:#1e293b; margin-bottom:12px;">Historial mediciones (${total} registros)</h3>
 
       <table>
         <thead>
