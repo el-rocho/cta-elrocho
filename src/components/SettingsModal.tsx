@@ -222,7 +222,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div>
                   <h3>Filtro de Síndrome de Bata Blanca</h3>
                   <p className="settings-desc" style={{ marginTop: '4px', lineHeight: '1.4' }}>
-                    Al realizar mediciones continuadas dentro del intervalo definido, se descartan las tomas elevadas para evitar el sesgo de ansiedad inicial, con el resto de las mediciones se calcula la media y almacena una única medición
+                    Si realiza varias mediciones continuadas distanciadas entre ellas menos del intervalo de tiempo definido, se descartarán las primeras tomas elevadas para eliminar el sesgo de ansiedad inicial, con el resto de los datos se calcula la media y se almacena como una única medición.
                   </p>
                 </div>
               </div>
@@ -241,7 +241,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="settings-subcard">
                 <div className="field-label">
                   <Clock size={14} />
-                  <span>Intervalo máximo de tiempo entre tomas:</span>
+                  <span>Intervalo máximo de tiempo entre tomas consecutivas:</span>
                 </div>
                 <div className="chip-options-row">
                   {[3, 5, 10].map((mins) => (
