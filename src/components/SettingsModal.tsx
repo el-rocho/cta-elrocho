@@ -69,13 +69,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
   };
 
-  const handleChangeBackupFolder = (folder: string) => {
-    onUpdateSettings({
-      ...settings,
-      backupFolder: folder,
-    });
-  };
-
   const lastBackupStr = settings.lastBackupTimestamp
     ? new Date(settings.lastBackupTimestamp).toLocaleDateString('es-ES', {
         day: '2-digit',
@@ -203,24 +196,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             <div className="settings-subcard">
               <div className="field-label" style={{ fontSize: '12px' }}>
-                <Folder size={14} />
-                <span>Carpeta o ruta de almacenamiento de la copia:</span>
+                <Folder size={14} className="text-blue" />
+                <span>Ubicación de almacenamiento: <strong>Carpeta de Descargas del Navegador (Downloads)</strong></span>
               </div>
-              <input
-                type="text"
-                value={settings.backupFolder || 'Descargas/Copias_Tension'}
-                onChange={(e) => handleChangeBackupFolder(e.target.value)}
-                placeholder="Ej. Descargas/Copias_Tension_Arterial"
-                className="modal-input"
-                style={{ fontSize: '13px', padding: '8px 10px' }}
-              />
+              <p className="settings-desc" style={{ marginTop: '4px', fontSize: '11px', lineHeight: '1.4' }}>
+                Por seguridad del navegador, los archivos de respaldo CSV se guardan de forma privada en la carpeta predeterminada de Descargas de tu dispositivo.
+              </p>
 
               <div className="backup-meta-row" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
                 <span>
                   <CalendarCheck size={12} className="inline-icon" /> Última copia: <strong>{lastBackupStr}</strong>
                 </span>
                 <button type="button" className="btn-subtle-reset" onClick={onTriggerManualBackup}>
-                  Generar Copia Ahora
+                  Descargar Copia Ahora
                 </button>
               </div>
             </div>

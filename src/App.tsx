@@ -85,7 +85,7 @@ export function App() {
       lastBackupTimestamp: now.toISOString(),
     };
     handleUpdateSettings(updatedSettings);
-    setNotificationMsg('✓ Copia de seguridad CSV generada y descargada.');
+    setNotificationMsg('✓ Copia de seguridad CSV descargada en tu carpeta Descargas.');
     setTimeout(() => setNotificationMsg(null), 5000);
   };
 
