@@ -28,7 +28,7 @@ El **Filtro de Síndrome de Bata Blanca** mitiga la distorsión generada por el 
 1. **Agrupación Consecutiva**: Se agrupan dentro de una misma sesión las tomas donde el intervalo entre una toma y la anterior sea menor al margen configurado (**3, 5 o 10 minutos**).
 2. **Sesiones de 2 tomas**: Si la 1ª toma es significativamente superior a la 2ª ($\ge 8$ mmHg sistólica / $\ge 4$ mmHg diastólica), se descarta la 1ª toma reteniendo la 2ª. En caso contrario, se promedian ambas.
 3. **Sesiones de 3 tomas**: Se descarta siempre la 1ª toma (por su bajo valor diagnóstico de aclimatación al manguito) y se calcula la media con las 2 tomas restantes.
-4. **Sesiones de 4 o más tomas**: Se descarta la 1ª toma y se continúan descartando tomas iniciales elevadas (2ª, 3ª...) por ansiedad prolongada, **siempre y cuando queden al menos 3 tomas válidas** para calcular la media definitiva.
+4. **Sesiones de 4 o más tomas**: Se descarta la 1ª toma y se continúan descartando las siguientes tomas iniciales elevadas ($\ge 8$ mmHg sistólica / $\ge 4$ mmHg diastólica) respecto a la media de las restantes, siempre y cuando queden al menos 3 tomas válidas para calcular la media definitiva.
 
 ---
 
