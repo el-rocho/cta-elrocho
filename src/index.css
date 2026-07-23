@@ -156,16 +156,24 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #ef4444, #ec4899);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  background: transparent;
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
 }
 
 .pulse-icon {
-  animation: pulseBeat 2s infinite ease-in-out;
+  animation: pulseBeat 2.5s infinite ease-in-out;
 }
 
 @keyframes pulseBeat {

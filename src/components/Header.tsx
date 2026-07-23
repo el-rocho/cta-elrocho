@@ -1,6 +1,5 @@
 import React from 'react';
 import { ShieldCheck, Download, Moon, Sun, Settings } from 'lucide-react';
-import { HeartIcon } from './HeartIcon';
 
 interface HeaderProps {
   onOpenExportModal: () => void;
@@ -15,13 +14,13 @@ export const Header: React.FC<HeaderProps> = ({
   isDarkMode,
   onToggleDarkMode,
 }) => {
-  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.2.8';
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.2.9';
 
   return (
     <header className="app-header">
       <div className="header-brand">
         <div className="brand-logo">
-          <HeartIcon size={24} className="pulse-icon" />
+          <img src="./icon-512.png" alt="Logo Control Tensión Arterial" className="brand-logo-img pulse-icon" />
         </div>
         <div>
           <h1 className="brand-title">Control Tensión Arterial</h1>
