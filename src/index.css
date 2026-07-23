@@ -181,7 +181,7 @@ body {
 .brand-title {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: -0.5px;
   color: var(--text-primary);
 }
@@ -285,7 +285,7 @@ body {
 .form-title-group h2 {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .form-controls-wrapper {
@@ -743,7 +743,7 @@ body {
 .chart-title h2 {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .icon-chart {
@@ -915,7 +915,7 @@ body {
 .list-title h2 {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .icon-history { color: #ec4899; }
@@ -1232,7 +1232,7 @@ body {
 .modal-title-group h2 {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .modal-icon { color: #3b82f6; }

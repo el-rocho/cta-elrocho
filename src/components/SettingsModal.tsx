@@ -1,6 +1,7 @@
 import React from 'react';
-import type { AppSettings, BackupFrequency, PatientSex } from '../types/bloodPressure';
-import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck, User, Trash2 } from 'lucide-react';
+import type { AppSettings, BackupFrequency, PatientSex, LanguageOption } from '../types/bloodPressure';
+import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck, User, Trash2, Globe } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -21,11 +22,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClearAllData,
   onTriggerManualBackup,
 }) => {
+  const { t } = useLanguage();
+
   if (!isOpen) return null;
 
   const currentWhiteCoatInterval = [3, 5, 10].includes(settings.whiteCoatIntervalMinutes)
     ? settings.whiteCoatIntervalMinutes
     : 5;
+
+  const handleLanguageChange = (lang: LanguageOption) => {
+    onUpdateSettings({ ...settings, language: lang });
+  };
 
   const handlePatientNameChange = (name: string) => {
     onUpdateSettings({ ...settings, patientName: name });
@@ -69,15 +76,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
   };
 
+  const locale = settings.language === 'en' ? 'en-US' : 'es-ES';
   const lastBackupStr = settings.lastBackupTimestamp
-    ? new Date(settings.lastBackupTimestamp).toLocaleDateString('es-ES', {
+    ? new Date(settings.lastBackupTimestamp).toLocaleDateString(locale, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
       })
-    : 'Ninguna copia realizada todavía';
+    : t('settings.lastBackupNone');
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -85,36 +93,63 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="modal-header">
           <div className="modal-title-group">
             <Settings size={26} className="modal-icon legal-icon-main" />
-            <h2 className="legal-modal-title">Configuración</h2>
+            <h2 className="legal-modal-title">{t('settings.title')}</h2>
           </div>
-          <button className="btn-close-modal" onClick={onClose} aria-label="Cerrar">
+          <button className="btn-close-modal" onClick={onClose} aria-label={t('settings.close')}>
             <X size={20} />
           </button>
         </div>
 
         <div className="modal-body">
-          {/* Opción 1: Datos del Paciente */}
+          {/* Opción 0: Selector de Idioma / Language */}
           <div className="settings-section">
             <div className="field-label">
+              <Globe size={22} className="text-blue settings-field-icon" />
+              <span>{t('settings.languageTitle')}</span>
+            </div>
+            <div className="chip-options-row" style={{ marginTop: '8px' }}>
+              <button
+                type="button"
+                className={`chip-select ${settings.language === 'es' ? 'active' : ''}`}
+                onClick={() => handleLanguageChange('es')}
+                style={{ padding: '6px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span>🇪🇸</span> {t('settings.langSpanish')}
+              </button>
+              <button
+                type="button"
+                className={`chip-select ${settings.language === 'en' ? 'active' : ''}`}
+                onClick={() => handleLanguageChange('en')}
+                style={{ padding: '6px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span>🇬🇧</span> {t('settings.langEnglish')}
+              </button>
+            </div>
+          </div>
+
+          {/* Opción 1: Datos del Paciente */}
+          <div className="settings-section border-top">
+            <div className="field-label">
               <User size={22} className="text-blue settings-field-icon" />
-              <span>Perfil del paciente:</span>
+              <span>{t('settings.patientProfile')}</span>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
               <div>
-                <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>Nombre completo:</label>
+                <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>
+                  {t('settings.fullName')}
+                </label>
                 <input
                   type="text"
                   value={settings.patientName || ''}
                   onChange={(e) => handlePatientNameChange(e.target.value)}
-                  placeholder="Ej. Juan Pérez"
+                  placeholder={t('settings.fullNamePlaceholder')}
                   className="modal-input"
                   style={{ padding: '8px 10px', fontSize: '13px' }}
                 />
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-                {/* Sexo sin etiqueta */}
                 <div className="chip-options-row">
                   <button
                     type="button"
@@ -122,7 +157,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClick={() => handlePatientSexChange('masculino')}
                     style={{ padding: '6px 14px', fontSize: '12px' }}
                   >
-                    Masculino
+                    {t('settings.sexMale')}
                   </button>
                   <button
                     type="button"
@@ -130,20 +165,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClick={() => handlePatientSexChange('femenino')}
                     style={{ padding: '6px 14px', fontSize: '12px' }}
                   >
-                    Femenino
+                    {t('settings.sexFemale')}
                   </button>
                 </div>
 
-                {/* Edad en una sola fila con ancho reducido */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label className="settings-desc" style={{ margin: 0, whiteSpace: 'nowrap' }}>Edad (años):</label>
+                  <label className="settings-desc" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+                    {t('settings.age')}
+                  </label>
                   <input
                     type="number"
                     min={1}
                     max={120}
                     value={settings.patientAge ?? ''}
                     onChange={(e) => handlePatientAgeChange(e.target.value)}
-                    placeholder="65"
+                    placeholder={t('settings.agePlaceholder')}
                     className="modal-input"
                     style={{ width: '70px', padding: '6px 8px', fontSize: '13px', textAlign: 'center' }}
                   />
@@ -156,10 +192,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="settings-section border-top">
             <div className="field-label">
               <Save size={22} className="text-blue settings-field-icon" />
-              <span>Copias de Seguridad:</span>
+              <span>{t('settings.backupTitle')}</span>
             </div>
             <p className="settings-desc" style={{ marginBottom: '10px' }}>
-              Frecuencia para guardar automáticamente copias CSV en el almacenamiento local.
+              {t('settings.backupDesc')}
             </p>
 
             <div className="chip-options-row" style={{ marginBottom: '12px' }}>
@@ -168,43 +204,43 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className={`chip-select ${settings.backupFrequency === 'daily' ? 'active' : ''}`}
                 onClick={() => handleChangeBackupFrequency('daily')}
               >
-                Diarias (00:00)
+                {t('settings.backupDaily')}
               </button>
               <button
                 type="button"
                 className={`chip-select ${settings.backupFrequency === 'weekly' ? 'active' : ''}`}
                 onClick={() => handleChangeBackupFrequency('weekly')}
               >
-                Semanales
+                {t('settings.backupWeekly')}
               </button>
               <button
                 type="button"
                 className={`chip-select ${settings.backupFrequency === 'monthly' ? 'active' : ''}`}
                 onClick={() => handleChangeBackupFrequency('monthly')}
               >
-                Mensuales
+                {t('settings.backupMonthly')}
               </button>
               <button
                 type="button"
                 className={`chip-select ${settings.backupFrequency === 'disabled' ? 'active' : ''}`}
                 onClick={() => handleChangeBackupFrequency('disabled')}
               >
-                Desactivadas
+                {t('settings.backupDisabled')}
               </button>
             </div>
 
             <div className="settings-subcard">
               <div className="field-label" style={{ fontSize: '12px' }}>
                 <Folder size={20} className="text-blue settings-field-icon" />
-                <span>Almacenamiento en dispositivo:</span>
+                <span>{t('settings.storageTitle')}</span>
               </div>
               <p className="settings-desc" style={{ marginTop: '4px', fontSize: '11px', lineHeight: '1.4' }}>
-                Las copias de seguridad, automáticas y manuales, se guardan en la carpeta predeterminada de Descargas del dispositivo.
+                {t('settings.storageDesc')}
               </p>
 
               <div className="backup-meta-row" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
                 <span>
-                  <CalendarCheck size={12} className="inline-icon" /> Última copia: <strong>{lastBackupStr}</strong>
+                  <CalendarCheck size={12} className="inline-icon" /> {t('settings.lastBackup')} <strong>{lastBackupStr}</strong>
                 </span>
                 <button
                   type="button"
@@ -223,7 +259,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  Descargar copia
+                  {t('settings.downloadBackup')}
                 </button>
               </div>
             </div>
@@ -235,9 +271,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="settings-label-group">
                 <ShieldAlert size={22} className="text-blue settings-field-icon" />
                 <div>
-                  <h3 style={{ fontWeight: 400 }}>Filtro Síndrome bata blanca</h3>
+                  <h3 style={{ fontWeight: 400 }}>{t('settings.whiteCoatTitle')}</h3>
                   <p className="settings-desc" style={{ marginTop: '4px', lineHeight: '1.4' }}>
-                    Si realiza varias mediciones continuadas distanciadas entre ellas menos del intervalo de tiempo definido, se descartarán las primeras tomas elevadas para eliminar el sesgo de ansiedad inicial, con el resto de los datos se calcula la media y se almacena como una única medición.
+                    {t('settings.whiteCoatDesc')}
                   </p>
                 </div>
               </div>
@@ -256,7 +292,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="settings-subcard">
                 <div className="field-label">
                   <Clock size={16} />
-                  <span>Intervalo máximo entre tomas consecutivas:</span>
+                  <span>{t('settings.intervalLabel')}</span>
                 </div>
                 <div className="chip-options-row">
                   {[3, 5, 10].map((mins) => (
@@ -266,7 +302,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className={`chip-select ${currentWhiteCoatInterval === mins ? 'active' : ''}`}
                       onClick={() => handleChangeInterval(mins)}
                     >
-                      {mins} minutos
+                      {t('settings.minutesText', { mins })}
                     </button>
                   ))}
                 </div>
@@ -278,7 +314,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="settings-section border-top">
             <div className="field-label">
               <Armchair size={22} className="settings-field-icon" />
-              <span>Brazo utilizado por defecto:</span>
+              <span>{t('settings.defaultArmTitle')}</span>
             </div>
             <div className="chip-options-row">
               <button
@@ -286,19 +322,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className={`chip-select ${settings.defaultArm === 'left' ? 'active' : ''}`}
                 onClick={() => handleChangeDefaultArm('left')}
               >
-                Brazo Izquierdo
+                {t('settings.defaultArmLeft')}
               </button>
               <button
                 type="button"
                 className={`chip-select ${settings.defaultArm === 'right' ? 'active' : ''}`}
                 onClick={() => handleChangeDefaultArm('right')}
               >
-                Brazo Derecho
+                {t('settings.defaultArmRight')}
               </button>
             </div>
           </div>
 
-          {/* Opción 5: Botones de Gestión (Demo y Eliminar Todos) en una fila sin título */}
+          {/* Opción 5: Botones de Gestión */}
           <div className="settings-section border-top">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <button
@@ -308,7 +344,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 style={{ justifyContent: 'center', padding: '10px' }}
               >
                 <RotateCcw size={16} />
-                <span>Restaurar datos Demo</span>
+                <span>{t('settings.resetDemo')}</span>
               </button>
 
               <button
@@ -318,7 +354,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 style={{ justifyContent: 'center', padding: '10px' }}
               >
                 <Trash2 size={16} />
-                <span>Eliminar todos los datos</span>
+                <span>{t('settings.clearAll')}</span>
               </button>
             </div>
           </div>

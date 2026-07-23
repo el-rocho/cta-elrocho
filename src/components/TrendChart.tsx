@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import type { BloodPressureSession, DateFilterPreset } from '../types/bloodPressure';
 import { TrendingUp } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface TrendChartProps {
   sessions: BloodPressureSession[];
 }
 
 export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
+  const { t, language } = useLanguage();
   const [filter, setFilter] = useState<DateFilterPreset>('30days');
   const [activeTooltip, setActiveTooltip] = useState<BloodPressureSession | null>(null);
 
@@ -32,11 +34,11 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
       <div className="card chart-card">
         <div className="chart-header">
           <h3>
-            <TrendingUp size={18} /> Tendencia de Tensión Arterial
+            <TrendingUp size={18} /> {t('trend.title')}
           </h3>
         </div>
         <div className="empty-state">
-          <p>No hay mediciones en el periodo seleccionado.</p>
+          <p>{t('trend.noData')}</p>
         </div>
       </div>
     );
@@ -81,12 +83,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
   const idealSysY = getY(120);
   const idealDiaY = getY(80);
 
+  const locale = language === 'en' ? 'en-US' : 'es-ES';
+
   return (
     <div className="card chart-card">
       <div className="chart-header">
         <div className="chart-title">
           <TrendingUp size={24} className="icon-chart" />
-          <h2>Evolución Tensión Arterial</h2>
+          <h2>{t('trend.title')}</h2>
         </div>
 
         <div className="filter-chips">
@@ -95,28 +99,28 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
             className={`chip ${filter === '7days' ? 'active' : ''}`}
             onClick={() => setFilter('7days')}
           >
-            7 Días
+            {t('list.preset7Days')}
           </button>
           <button
             type="button"
             className={`chip ${filter === '30days' ? 'active' : ''}`}
             onClick={() => setFilter('30days')}
           >
-            30 Días
+            {t('list.preset30Days')}
           </button>
           <button
             type="button"
             className={`chip ${filter === '90days' ? 'active' : ''}`}
             onClick={() => setFilter('90days')}
           >
-            90 Días
+            {t('list.preset90Days')}
           </button>
           <button
             type="button"
             className={`chip ${filter === 'all' ? 'active' : ''}`}
             onClick={() => setFilter('all')}
           >
-            Todo
+            {t('list.presetAll')}
           </button>
         </div>
       </div>
@@ -124,19 +128,15 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
       <div className="chart-legend">
         <div className="legend-item">
           <span className="legend-dot sys-dot"></span>
-          <span>Sistólica (Máxima)</span>
+          <span>{t('form.systolic')}</span>
         </div>
         <div className="legend-item">
           <span className="legend-dot dia-dot"></span>
-          <span>Diastólica (Mínima)</span>
+          <span>{t('form.diastolic')}</span>
         </div>
         <div className="legend-item">
           <span className="legend-dot pulse-dot"></span>
-          <span>Pulsaciones (ppm)</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-box ideal-box"></span>
-          <span>Rango Saludable</span>
+          <span>{t('form.heartRate')}</span>
         </div>
       </div>
 
@@ -201,7 +201,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
             const sysP = sysPoints[i];
             const diaP = diaPoints[i];
             const pulseP = pulsePoints[i];
-            const dateStr = new Date(s.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+            const dateStr = new Date(s.timestamp).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
 
             return (
               <g key={s.id} className="chart-point-group">
@@ -271,7 +271,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
         <div className="chart-tooltip-detail">
           <div className="tooltip-header">
             <strong>
-              {new Date(activeTooltip.timestamp).toLocaleDateString('es-ES', {
+              {new Date(activeTooltip.timestamp).toLocaleDateString(locale, {
                 weekday: 'short',
                 day: '2-digit',
                 month: 'short',
@@ -285,21 +285,23 @@ export const TrendChart: React.FC<TrendChartProps> = ({ sessions }) => {
           </div>
           <div className="tooltip-body">
             <div className="tooltip-metric">
-              <span className="label">Presión:</span>
+              <span className="label">{t('form.systolic')} / {t('form.diastolic')}:</span>
               <span className="val-sys">{activeTooltip.averageSystolic}</span> /{' '}
               <span className="val-dia">{activeTooltip.averageDiastolic}</span> <span className="unit">mmHg</span>
             </div>
             <div className="tooltip-metric">
-              <span className="label">Pulsaciones:</span>
-              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{activeTooltip.averageHeartRate} ppm</span>
+              <span className="label">{t('form.heartRate')}:</span>
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                {activeTooltip.averageHeartRate} {language === 'en' ? 'BPM' : 'ppm'}
+              </span>
             </div>
             <div className="tooltip-metric">
-              <span className="label">Brazo:</span>
-              <span>{activeTooltip.arm === 'left' ? 'Izquierdo' : 'Derecho'}</span>
+              <span className="label">{t('list.arm')}:</span>
+              <span>{activeTooltip.arm === 'left' ? t('form.armLeft') : t('form.armRight')}</span>
             </div>
             {activeTooltip.readings.length > 1 && (
               <div className="tooltip-badge-session">
-                ✓ Media de {activeTooltip.readings.length} tomas (filtro bata blanca)
+                ✓ {t('list.readingsCount', { count: activeTooltip.readings.length })} ({t('whiteCoatBanner.activeTitle')})
               </div>
             )}
             {activeTooltip.notes && <div className="tooltip-notes">"{activeTooltip.notes}"</div>}

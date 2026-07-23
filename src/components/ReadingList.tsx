@@ -3,6 +3,7 @@ import type { BloodPressureSession, DateRange } from '../types/bloodPressure';
 import { getHealthCategory } from '../utils/healthClassification';
 import { filterSessionsByDateRange } from '../utils/exportCsv';
 import { History, Trash2, ChevronDown, ChevronUp, Clock, Armchair, ShieldCheck, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface ReadingListProps {
   sessions: BloodPressureSession[];
@@ -19,6 +20,7 @@ export const ReadingList: React.FC<ReadingListProps> = ({
   dateRange,
   onDateRangeChange,
 }) => {
+  const { t, language } = useLanguage();
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   const filteredSessions = filterSessionsByDateRange(sessions, dateRange);
@@ -27,12 +29,14 @@ export const ReadingList: React.FC<ReadingListProps> = ({
     setExpandedSessionId(expandedSessionId === id ? null : id);
   };
 
+  const locale = language === 'en' ? 'en-US' : 'es-ES';
+
   return (
     <div className="card list-card">
       <div className="list-header">
         <div className="list-title">
           <History size={20} className="icon-history" />
-          <h2>Historial mediciones</h2>
+          <h2>{t('list.title')}</h2>
           <span className="count-badge">{filteredSessions.length}</span>
         </div>
 
@@ -43,49 +47,49 @@ export const ReadingList: React.FC<ReadingListProps> = ({
             className={`chip ${dateRange.preset === 'all' ? 'active' : ''}`}
             onClick={() => onDateRangeChange({ preset: 'all' })}
           >
-            Todas
+            {t('list.presetAll')}
           </button>
           <button
             type="button"
             className={`chip ${dateRange.preset === '7days' ? 'active' : ''}`}
             onClick={() => onDateRangeChange({ preset: '7days' })}
           >
-            7 Días
+            {t('list.preset7Days')}
           </button>
           <button
             type="button"
             className={`chip ${dateRange.preset === '30days' ? 'active' : ''}`}
             onClick={() => onDateRangeChange({ preset: '30days' })}
           >
-            30 Días
+            {t('list.preset30Days')}
           </button>
           <button
             type="button"
             className={`chip ${dateRange.preset === '90days' ? 'active' : ''}`}
             onClick={() => onDateRangeChange({ preset: '90days' })}
           >
-            90 Días
+            {t('list.preset90Days')}
           </button>
         </div>
       </div>
 
       {filteredSessions.length === 0 ? (
         <div className="empty-state">
-          <p>No se encontraron registros de tensión para el periodo seleccionado.</p>
+          <p>{t('list.emptyState')}</p>
         </div>
       ) : (
         <div className="sessions-list">
           {filteredSessions.map((session) => {
-            const category = getHealthCategory(session.averageSystolic, session.averageDiastolic);
+            const category = getHealthCategory(session.averageSystolic, session.averageDiastolic, language);
             const isExpanded = expandedSessionId === session.id;
             const dateObj = new Date(session.timestamp);
-            const dateStr = dateObj.toLocaleDateString('es-ES', {
+            const dateStr = dateObj.toLocaleDateString(locale, {
               weekday: 'short',
               day: '2-digit',
               month: 'short',
               year: 'numeric',
             });
-            const timeStr = dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const timeStr = dateObj.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
             const isMulti = session.readings.length > 1;
 
             return (
@@ -109,7 +113,7 @@ export const ReadingList: React.FC<ReadingListProps> = ({
                     </div>
                     <div className="pulse-display">
                       <span className="pulse-num">{session.averageHeartRate}</span>
-                      <span className="pulse-unit">ppm</span>
+                      <span className="pulse-unit">{language === 'en' ? 'BPM' : 'ppm'}</span>
                     </div>
                   </div>
 
@@ -126,8 +130,8 @@ export const ReadingList: React.FC<ReadingListProps> = ({
 
                     {/* Badge de Bata Blanca */}
                     {isMulti && (
-                      <span className="white-coat-pill" title="Media calculada descartando tomas iniciales elevadas">
-                        <ShieldCheck size={12} /> Media ({session.readings.length} tomas)
+                      <span className="white-coat-pill">
+                        <ShieldCheck size={12} /> {t('list.readingsCount', { count: session.readings.length })}
                       </span>
                     )}
                   </div>
@@ -135,7 +139,7 @@ export const ReadingList: React.FC<ReadingListProps> = ({
                   {/* Brazo y Notas */}
                   <div className="session-details-col">
                     <span className="arm-badge">
-                      <Armchair size={12} /> {session.arm === 'left' ? 'Brazo Izq.' : 'Brazo Der.'}
+                      <Armchair size={12} /> {t('list.arm')}: {session.arm === 'left' ? t('form.armLeft') : t('form.armRight')}
                     </span>
                     {session.notes && <span className="notes-preview">"{session.notes}"</span>}
                   </div>
@@ -147,7 +151,6 @@ export const ReadingList: React.FC<ReadingListProps> = ({
                         type="button"
                         onClick={() => toggleExpand(session.id)}
                         className="btn-icon-subtle"
-                        title="Ver tomas individuales de la sesión"
                       >
                         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </button>
@@ -157,7 +160,6 @@ export const ReadingList: React.FC<ReadingListProps> = ({
                       type="button"
                       onClick={() => onDeleteSession(session)}
                       className="btn-icon-delete"
-                      title="Eliminar este registro"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -170,26 +172,26 @@ export const ReadingList: React.FC<ReadingListProps> = ({
                     <div className="expanded-banner-info">
                       <AlertCircle size={14} />
                       <span>
-                        Se realizaron {session.readings.length} tomas seguidas en menos de 3 minutos.{' '}
+                        {t('list.readingsCount', { count: session.readings.length })}{' '}
                         {session.discardedCount > 0 &&
-                          `Se descartó la ${session.discardedCount === 1 ? '1ª toma' : '1ª y 2ª tomas'} por pico de bata blanca.`}
+                          `(${t('list.whiteCoatDiscarded', { count: session.discardedCount })})`}
                       </span>
                     </div>
 
                     <table className="expanded-readings-table">
                       <thead>
                         <tr>
-                          <th># Toma</th>
-                          <th>Hora</th>
-                          <th>Presión</th>
-                          <th>Pulso</th>
-                          <th>Estado en Algoritmo</th>
-                          <th>Acción</th>
+                          <th>#</th>
+                          <th>{language === 'en' ? 'Time' : 'Hora'}</th>
+                          <th>{t('form.title')}</th>
+                          <th>{t('form.heartRate')}</th>
+                          <th>{language === 'en' ? 'Status' : 'Estado'}</th>
+                          <th>{language === 'en' ? 'Action' : 'Acción'}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {session.readings.map((r, index) => {
-                          const rTime = new Date(r.timestamp).toLocaleTimeString('es-ES', {
+                          const rTime = new Date(r.timestamp).toLocaleTimeString(locale, {
                             hour: '2-digit',
                             minute: '2-digit',
                             second: '2-digit',
@@ -201,17 +203,21 @@ export const ReadingList: React.FC<ReadingListProps> = ({
 
                           return (
                             <tr key={r.id} className={isDiscarded ? 'row-discarded' : 'row-used'}>
-                              <td>Toma {index + 1}</td>
+                              <td>#{index + 1}</td>
                               <td>{rTime}</td>
                               <td>
                                 <strong>{r.systolic}</strong> / <strong>{r.diastolic}</strong> mmHg
                               </td>
-                              <td>{r.heartRate} ppm</td>
+                              <td>{r.heartRate} {language === 'en' ? 'BPM' : 'ppm'}</td>
                               <td>
                                 {isDiscarded ? (
-                                  <span className="status-discarded"> Descartada (Bata Blanca)</span>
+                                  <span className="status-discarded">
+                                    {language === 'en' ? 'Discarded' : 'Descartada'}
+                                  </span>
                                 ) : (
-                                  <span className="status-used"> Utilizada en Media</span>
+                                  <span className="status-used">
+                                    {language === 'en' ? 'Used' : 'Utilizada'}
+                                  </span>
                                 )}
                               </td>
                               <td>
@@ -220,7 +226,7 @@ export const ReadingList: React.FC<ReadingListProps> = ({
                                   className="btn-text-delete"
                                   onClick={() => onDeleteSingleReading(r.id)}
                                 >
-                                  Eliminar
+                                  {language === 'en' ? 'Delete' : 'Eliminar'}
                                 </button>
                               </td>
                             </tr>

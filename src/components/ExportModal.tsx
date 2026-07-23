@@ -4,6 +4,7 @@ import { exportToCSV } from '../utils/exportCsv';
 import { printPDFReport } from '../utils/pdfGenerator';
 import { parseCSVData } from '../utils/importCsv';
 import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -20,9 +21,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   settings,
   onImportReadings,
 }) => {
+  const { t, language } = useLanguage();
   const [preset, setPreset] = useState<DateFilterPreset>('30days');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
   const [reportNotes, setReportNotes] = useState<string>('');
   const [hidePatientData, setHidePatientData] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
@@ -34,8 +34,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const getCurrentRange = (): DateRange => ({
     preset,
-    startDate: preset === 'custom' ? startDate : undefined,
-    endDate: preset === 'custom' ? endDate : undefined,
   });
 
   const getExportOptions = (): ExportReportOptions => ({
@@ -47,12 +45,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   });
 
   const handleExportCSV = () => {
-    exportToCSV(sessions, getCurrentRange(), 'tension_arterial', getExportOptions());
+    exportToCSV(sessions, getCurrentRange(), 'tension_arterial', getExportOptions(), language);
     onClose();
   };
 
   const handlePrintPDF = () => {
-    printPDFReport(sessions, getCurrentRange(), getExportOptions());
+    printPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
     onClose();
   };
 
@@ -66,10 +64,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (text) {
         const parsed = parseCSVData(text);
         if (parsed.length === 0) {
-          setImportStatus('No se encontraron registros de tensión válidos en el archivo CSV.');
+          setImportStatus(language === 'en' ? 'No valid blood pressure records found in CSV.' : 'No se encontraron registros de tensión válidos en el archivo CSV.');
         } else {
           onImportReadings(parsed);
-          setImportStatus(`¡Éxito! Se han procesado e importado ${parsed.length} registros.`);
+          setImportStatus(t('toast.importedCount', { count: parsed.length }));
         }
       }
     };
@@ -82,9 +80,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="modal-header">
           <div className="modal-title-group">
             <Printer size={26} className="modal-icon legal-icon-main" />
-            <h2 className="legal-modal-title">Gestión de Datos</h2>
+            <h2 className="legal-modal-title">{t('export.title')}</h2>
           </div>
-          <button className="btn-close-modal" onClick={onClose} aria-label="Cerrar">
+          <button className="btn-close-modal" onClick={onClose} aria-label={t('settings.close')}>
             <X size={20} />
           </button>
         </div>
@@ -96,14 +94,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             className={`modal-tab ${activeTab === 'export' ? 'active' : ''}`}
             onClick={() => setActiveTab('export')}
           >
-            Exportar
+            {t('export.tabPdf').split(' ')[0]}
           </button>
           <button
             type="button"
             className={`modal-tab ${activeTab === 'import' ? 'active' : ''}`}
             onClick={() => setActiveTab('import')}
           >
-            Importar
+            {language === 'en' ? 'Import' : 'Importar'}
           </button>
         </div>
 
@@ -115,9 +113,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 <div className="field-label" style={{ margin: 0 }}>
                   <User size={20} className="export-field-icon" />
                   <span>
-                    Paciente:{' '}
+                    {language === 'en' ? 'Patient: ' : 'Paciente: '}
                     <span style={{ fontWeight: 400 }}>
-                      {settings.patientName || 'Sin nombre'}
+                      {settings.patientName || (language === 'en' ? 'Unnamed' : 'Sin nombre')}
                     </span>
                   </span>
                 </div>
@@ -129,7 +127,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     checked={hidePatientData}
                     onChange={(e) => setHidePatientData(e.target.checked)}
                   />
-                  <span>Ocultar datos en informe</span>
+                  <span>{t('export.hidePatientData')}</span>
                 </label>
               </div>
 
@@ -137,7 +135,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <div className="modal-field">
                 <label className="field-label">
                   <Calendar size={20} className="export-field-icon" />
-                  <span>Selecciona intervalo temporal:</span>
+                  <span>{t('export.filterRangeLabel')}</span>
                 </label>
 
                 <div className="range-options-grid">
@@ -146,73 +144,42 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     className={`range-option ${preset === '7days' ? 'selected' : ''}`}
                     onClick={() => setPreset('7days')}
                   >
-                    Últimos 7 días
+                    {t('list.preset7Days')}
                   </button>
                   <button
                     type="button"
                     className={`range-option ${preset === '30days' ? 'selected' : ''}`}
                     onClick={() => setPreset('30days')}
                   >
-                    Últimos 30 días
+                    {t('list.preset30Days')}
                   </button>
                   <button
                     type="button"
                     className={`range-option ${preset === '90days' ? 'selected' : ''}`}
                     onClick={() => setPreset('90days')}
                   >
-                    Últimos 90 días
+                    {t('list.preset90Days')}
                   </button>
                   <button
                     type="button"
                     className={`range-option ${preset === 'all' ? 'selected' : ''}`}
                     onClick={() => setPreset('all')}
                   >
-                    Completo
-                  </button>
-                  <button
-                    type="button"
-                    className={`range-option ${preset === 'custom' ? 'selected' : ''}`}
-                    onClick={() => setPreset('custom')}
-                  >
-                    Personalizado
+                    {t('list.presetAll')}
                   </button>
                 </div>
               </div>
-
-              {/* Campos de Fecha Personalizada */}
-              {preset === 'custom' && (
-                <div className="custom-date-inputs">
-                  <div className="date-input-group">
-                    <label>Desde:</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="modal-input-date"
-                    />
-                  </div>
-                  <div className="date-input-group">
-                    <label>Hasta:</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="modal-input-date"
-                    />
-                  </div>
-                </div>
-              )}
 
               {/* Campo opcional de Observaciones / Nota del informe */}
               <div className="modal-field">
                 <label className="field-label">
                   <FileText size={20} className="export-field-icon" />
-                  <span>Nota del Informe (Opcional):</span>
+                  <span>{t('export.clinicalNotesLabel')}</span>
                 </label>
                 <textarea
                   value={reportNotes}
                   onChange={(e) => setReportNotes(e.target.value)}
-                  placeholder="En tratamiento con hipertensivo"
+                  placeholder={t('export.clinicalNotesPlaceholder')}
                   className="modal-input"
                   rows={2}
                   style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: '13px' }}
@@ -223,12 +190,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <div className="export-actions-container">
                 <button type="button" className="btn-export-csv" onClick={handleExportCSV}>
                   <FileSpreadsheet size={20} />
-                  <span>Descargar CSV</span>
+                  <span>{t('export.downloadCsv')}</span>
                 </button>
 
                 <button type="button" className="btn-export-pdf" onClick={handlePrintPDF}>
                   <Printer size={22} />
-                  <span>Informe PDF</span>
+                  <span>{t('export.downloadPdf')}</span>
                 </button>
               </div>
             </>
@@ -237,9 +204,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <div className="import-tab-content">
               <div className="import-dropzone" onClick={() => fileInputRef.current?.click()}>
                 <Upload size={32} className="dropzone-icon" />
-                <h3>Haz clic para seleccionar tu archivo CSV</h3>
+                <h3>{t('export.selectCsv')}</h3>
                 <p className="dropzone-sub">
-                  Admite copias de seguridad de la aplicación y formatos CSV estándar (delimitados por ; o ,)
+                  {t('export.csvImportDesc')}
                 </p>
                 <input
                   type="file"
@@ -251,8 +218,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               </div>
 
               {importStatus && (
-                <div className={`import-status-box ${importStatus.includes('¡Éxito!') ? 'success' : 'error'}`}>
-                  {importStatus.includes('¡Éxito!') ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                <div className={`import-status-box ${importStatus.includes('✓') || importStatus.includes('Éxito') ? 'success' : 'error'}`}>
+                  {importStatus.includes('✓') || importStatus.includes('Éxito') ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
                   <span>{importStatus}</span>
                 </div>
               )}

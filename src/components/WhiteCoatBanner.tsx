@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert, ChevronDown, ChevronUp, Info, Settings } from 'lucide-react';
 import type { AppSettings } from '../types/bloodPressure';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface WhiteCoatBannerProps {
   settings: AppSettings;
@@ -8,6 +9,7 @@ interface WhiteCoatBannerProps {
 }
 
 export const WhiteCoatBanner: React.FC<WhiteCoatBannerProps> = ({ settings, onOpenSettings }) => {
+  const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Si el filtro de bata blanca está inactivo por configuración, no mostrar el banner en la interfaz
@@ -21,8 +23,8 @@ export const WhiteCoatBanner: React.FC<WhiteCoatBannerProps> = ({ settings, onOp
         <div className="banner-title">
           <ShieldAlert className="banner-icon" size={18} />
           <span>
-            Filtro de Síndrome de Bata Blanca:{' '}
-            <strong className="text-green">Activo ({settings.whiteCoatIntervalMinutes} min)</strong>
+            {t('whiteCoatBanner.activeTitle')}:{' '}
+            <strong className="text-green">({settings.whiteCoatIntervalMinutes} min)</strong>
           </span>
         </div>
         <div className="banner-actions-group" onClick={(e) => e.stopPropagation()}>
@@ -30,15 +32,15 @@ export const WhiteCoatBanner: React.FC<WhiteCoatBannerProps> = ({ settings, onOp
             type="button"
             className="btn-subtle-settings"
             onClick={onOpenSettings}
-            title="Configurar opciones de bata blanca"
+            title={t('whiteCoatBanner.configure')}
           >
-            <Settings size={14} /> Ajustes
+            <Settings size={14} /> {t('whiteCoatBanner.configure')}
           </button>
           <button
             type="button"
             className="btn-banner-toggle"
             onClick={() => setIsExpanded(!isExpanded)}
-            aria-label="Más detalles"
+            aria-label="Toggle details"
           >
             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
@@ -49,8 +51,7 @@ export const WhiteCoatBanner: React.FC<WhiteCoatBannerProps> = ({ settings, onOp
         <div className="banner-content">
           <p>
             <Info size={14} className="inline-icon" />
-            El filtro está <strong>ACTIVADO</strong>. Si registras varias tomas en menos de {settings.whiteCoatIntervalMinutes} minutos,
-            se calculará la media descartando las lecturas iniciales más altas.
+            {t('whiteCoatBanner.activeDesc', { mins: settings.whiteCoatIntervalMinutes })}
           </p>
         </div>
       )}

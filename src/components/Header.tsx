@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldCheck, Download, Moon, Sun, Settings } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface HeaderProps {
   onOpenExportModal: () => void;
@@ -14,7 +15,8 @@ export const Header: React.FC<HeaderProps> = ({
   isDarkMode,
   onToggleDarkMode,
 }) => {
-  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.3.1';
+  const { t } = useLanguage();
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.3.2';
 
   return (
     <header className="app-header">
@@ -22,12 +24,12 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="brand-logo">
           <img
             src={isDarkMode ? './logo-night.png' : './logo-day.png'}
-            alt="Logo Control Tensión Arterial"
+            alt={t('header.title')}
             className="brand-logo-img"
           />
         </div>
         <div>
-          <h1 className="brand-title">Control Tensión Arterial</h1>
+          <h1 className="brand-title">{t('header.title')}</h1>
           <div className="brand-badge">
             <ShieldCheck size={13} className="shield-icon" />
             <span>Privado &amp; Offline &bull; {appVersion}</span>
@@ -39,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onToggleDarkMode}
           className="btn-icon"
-          title={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+          title={isDarkMode ? t('header.lightMode') : t('header.darkMode')}
         >
           {isDarkMode ? <Sun size={22} /> : <Moon size={22} />}
         </button>
@@ -47,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenSettingsModal}
           className="btn-icon"
-          title="Configuración de la aplicación"
+          title={t('header.settingsTooltip')}
         >
           <Settings size={22} />
         </button>

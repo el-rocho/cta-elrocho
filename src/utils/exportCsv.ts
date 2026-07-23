@@ -1,4 +1,4 @@
-import type { BloodPressureSession, DateRange, ExportReportOptions } from '../types/bloodPressure';
+import type { BloodPressureSession, DateRange, ExportReportOptions, LanguageOption } from '../types/bloodPressure';
 import { getHealthCategory } from './healthClassification';
 
 export function filterSessionsByDateRange(
@@ -45,47 +45,65 @@ export function exportToCSV(
   sessions: BloodPressureSession[],
   dateRange: DateRange,
   filenamePrefix = 'tension_arterial',
-  options: ExportReportOptions = {}
+  options: ExportReportOptions = {},
+  lang: LanguageOption = 'es'
 ): void {
   const filtered = filterSessionsByDateRange(sessions, dateRange);
 
-  const headers = [
-    'Fecha',
-    'Hora',
-    'Sistolica_mmHg',
-    'Diastolica_mmHg',
-    'Pulsaciones_ppm',
-    'Brazo',
-    'Clasificacion_OMS',
-    'Tomas_En_Sesion',
-    'Tomas_Descartadas',
-    'Notas',
-  ];
+  const isEn = lang === 'en';
+
+  const headers = isEn
+    ? [
+        'Date',
+        'Time',
+        'Systolic_mmHg',
+        'Diastolic_mmHg',
+        'Pulse_BPM',
+        'Arm',
+        'WHO_Classification',
+        'Readings_In_Session',
+        'Discarded_Readings',
+        'Notes',
+      ]
+    : [
+        'Fecha',
+        'Hora',
+        'Sistolica_mmHg',
+        'Diastolica_mmHg',
+        'Pulsaciones_ppm',
+        'Brazo',
+        'Clasificacion_OMS',
+        'Tomas_En_Sesion',
+        'Tomas_Descartadas',
+        'Notas',
+      ];
 
   let metadataHeader = '';
   if (!options.hidePatientData) {
-    if (options.patientName) metadataHeader += `# Paciente: ${options.patientName}\n`;
-    if (options.patientSex) metadataHeader += `# Sexo: ${options.patientSex}\n`;
-    if (options.patientAge) metadataHeader += `# Edad: ${options.patientAge} años\n`;
+    if (options.patientName) metadataHeader += `# ${isEn ? 'Patient' : 'Paciente'}: ${options.patientName}\n`;
+    if (options.patientSex) metadataHeader += `# ${isEn ? 'Sex' : 'Sexo'}: ${options.patientSex}\n`;
+    if (options.patientAge) metadataHeader += `# ${isEn ? 'Age' : 'Edad'}: ${options.patientAge}\n`;
   }
   if (options.reportNotes) {
-    metadataHeader += `# Observaciones: ${options.reportNotes}\n`;
+    metadataHeader += `# ${isEn ? 'Remarks' : 'Observaciones'}: ${options.reportNotes}\n`;
   }
+
+  const locale = isEn ? 'en-US' : 'es-ES';
 
   const rows = filtered.map((s) => {
     const dateObj = new Date(s.timestamp);
-    const dateStr = dateObj.toLocaleDateString('es-ES', {
+    const dateStr = dateObj.toLocaleDateString(locale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
     });
-    const timeStr = dateObj.toLocaleTimeString('es-ES', {
+    const timeStr = dateObj.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
     });
 
-    const category = getHealthCategory(s.averageSystolic, s.averageDiastolic);
-    const armStr = s.arm === 'left' ? 'Izquierdo' : 'Derecho';
+    const category = getHealthCategory(s.averageSystolic, s.averageDiastolic, lang);
+    const armStr = s.arm === 'left' ? (isEn ? 'Left' : 'Izquierdo') : (isEn ? 'Right' : 'Derecho');
     const notesClean = s.notes ? `"${s.notes.replace(/"/g, '""')}"` : '';
 
     return [
@@ -108,7 +126,6 @@ export function exportToCSV(
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
 
-  // Formatear la fecha y hora exacta (AAAA-MM-DD_HH-MM-SS)
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');

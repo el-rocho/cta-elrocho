@@ -22,6 +22,8 @@ import { ReadingList } from './components/ReadingList';
 import { ExportModal } from './components/ExportModal';
 import { SettingsModal } from './components/SettingsModal';
 import { LegalNoticeModal } from './components/LegalNoticeModal';
+import { LanguageProvider } from './i18n/LanguageContext';
+import { getTranslation } from './i18n/translations';
 
 export function App() {
   const [readings, setReadings] = useState<BloodPressureReading[]>(() => getStoredReadings());
@@ -47,7 +49,7 @@ export function App() {
     if (sessions.length > 0) {
       const result = checkAndExecuteAutoBackup(sessions, settings, handleUpdateSettings);
       if (result.backupExecuted) {
-        setNotificationMsg(`✓ Copia de seguridad automática CSV guardada (${result.dateStr})`);
+        setNotificationMsg(getTranslation(settings.language, 'toast.autoBackup', { date: result.dateStr ?? '' }));
         setTimeout(() => setNotificationMsg(null), 6000);
       }
     }
@@ -65,13 +67,13 @@ export function App() {
   const handleImportReadings = (imported: Omit<BloodPressureReading, 'id'>[]) => {
     const result = importReadingsIntoStorage(imported);
     setReadings(result.updated);
-    setNotificationMsg(`✓ Se han importado ${result.addedCount} registros nuevos.`);
+    setNotificationMsg(getTranslation(settings.language, 'toast.importedCount', { count: result.addedCount }));
     setTimeout(() => setNotificationMsg(null), 5000);
   };
 
   const handleTriggerManualBackup = () => {
     if (sessions.length === 0) {
-      alert('No hay registros suficientes para exportar copia de seguridad.');
+      alert(getTranslation(settings.language, 'toast.noDataToExport'));
       return;
     }
     const now = new Date();
@@ -79,33 +81,33 @@ export function App() {
       patientName: settings.patientName,
       patientSex: settings.patientSex,
       patientAge: settings.patientAge,
-    });
+    }, settings.language);
     const updatedSettings = {
       ...settings,
       lastBackupTimestamp: now.toISOString(),
     };
     handleUpdateSettings(updatedSettings);
-    setNotificationMsg('✓ Copia de seguridad CSV descargada en tu carpeta Descargas.');
+    setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupSuccess'));
     setTimeout(() => setNotificationMsg(null), 5000);
   };
 
   const handleResetDemoData = () => {
-    if (window.confirm('¿Deseas restaurar los datos de ejemplo predeterminados?')) {
+    if (window.confirm(getTranslation(settings.language, 'toast.resetDemoConfirm'))) {
       localStorage.removeItem('graphene_bp_readings_v1');
       const freshReadings = getStoredReadings();
       setReadings(freshReadings);
       setIsSettingsModalOpen(false);
-      setNotificationMsg('✓ Se han restaurado los datos de ejemplo.');
+      setNotificationMsg(getTranslation(settings.language, 'toast.resetDemoSuccess'));
       setTimeout(() => setNotificationMsg(null), 4000);
     }
   };
 
   const handleClearAllData = () => {
-    if (window.confirm('¿Seguro que deseas ELIMINAR TODOS los datos? Esta acción borrará permanentemente todo tu historial.')) {
+    if (window.confirm(getTranslation(settings.language, 'toast.clearAllConfirm'))) {
       clearAllStoredData();
       setReadings([]);
       setIsSettingsModalOpen(false);
-      setNotificationMsg('✓ Se han eliminado todos los datos de la aplicación.');
+      setNotificationMsg(getTranslation(settings.language, 'toast.clearAllSuccess'));
       setTimeout(() => setNotificationMsg(null), 4000);
     }
   };
@@ -139,14 +141,14 @@ export function App() {
   };
 
   const handleDeleteSession = (sessionToDelete: any) => {
-    if (window.confirm('¿Seguro que deseas eliminar esta sesión de medición?')) {
+    if (window.confirm(getTranslation(settings.language, 'list.deleteSessionConfirm'))) {
       const updated = deleteSessionFromStorage(sessionToDelete.readings);
       setReadings(updated);
     }
   };
 
   const handleDeleteSingleReading = (readingId: string) => {
-    if (window.confirm('¿Seguro que deseas eliminar esta toma individual?')) {
+    if (window.confirm(getTranslation(settings.language, 'list.deleteReadingConfirm'))) {
       const updated = deleteReadingFromStorage(readingId);
       setReadings(updated);
     }
@@ -155,75 +157,80 @@ export function App() {
   const lastReading = readings.length > 0 ? readings[0] : null;
 
   return (
-    <div className="app-container">
-      {notificationMsg && (
-        <div className="toast-notification">
-          <span>{notificationMsg}</span>
-          <button onClick={() => setNotificationMsg(null)}>×</button>
-        </div>
-      )}
+    <LanguageProvider
+      language={settings.language}
+      onLanguageChange={(lang) => handleUpdateSettings({ ...settings, language: lang })}
+    >
+      <div className="app-container">
+        {notificationMsg && (
+          <div className="toast-notification">
+            <span>{notificationMsg}</span>
+            <button onClick={() => setNotificationMsg(null)}>×</button>
+          </div>
+        )}
 
-      <Header
-        onOpenExportModal={() => setIsExportModalOpen(true)}
-        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={handleToggleDarkMode}
-      />
+        <Header
+          onOpenExportModal={() => setIsExportModalOpen(true)}
+          onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={handleToggleDarkMode}
+        />
 
-      <ReadingForm
-        onAddReading={handleAddReading}
-        settings={settings}
-        onUpdateInputMode={handleUpdateInputMode}
-        lastReading={lastReading}
-      />
+        <ReadingForm
+          onAddReading={handleAddReading}
+          settings={settings}
+          onUpdateInputMode={handleUpdateInputMode}
+          lastReading={lastReading}
+        />
 
-      <WhiteCoatBanner settings={settings} onOpenSettings={() => setIsSettingsModalOpen(true)} />
+        <WhiteCoatBanner settings={settings} onOpenSettings={() => setIsSettingsModalOpen(true)} />
 
-      <TrendChart sessions={sessions} />
+        <TrendChart sessions={sessions} />
 
-      <ReadingList
-        sessions={sessions}
-        onDeleteSession={handleDeleteSession}
-        onDeleteSingleReading={handleDeleteSingleReading}
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
+        <ReadingList
+          sessions={sessions}
+          onDeleteSession={handleDeleteSession}
+          onDeleteSingleReading={handleDeleteSingleReading}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+        />
 
-      <footer className="app-footer">
-        <span>Control Tensión Arterial</span>
-        <span> &bull; </span>
-        <button
-          type="button"
-          className="btn-footer-link"
-          onClick={() => setIsLegalNoticeOpen(true)}
-        >
-          Aviso Legal &amp; Privacidad (RGPD)
-        </button>
-      </footer>
+        <footer className="app-footer">
+          <span>{getTranslation(settings.language, 'header.title')}</span>
+          <span> &bull; </span>
+          <button
+            type="button"
+            className="btn-footer-link"
+            onClick={() => setIsLegalNoticeOpen(true)}
+          >
+            {getTranslation(settings.language, 'legal.footerLink')}
+          </button>
+        </footer>
 
-      <ExportModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        sessions={sessions}
-        settings={settings}
-        onImportReadings={handleImportReadings}
-      />
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          sessions={sessions}
+          settings={settings}
+          onImportReadings={handleImportReadings}
+        />
 
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        settings={settings}
-        onUpdateSettings={handleUpdateSettings}
-        onResetDemoData={handleResetDemoData}
-        onClearAllData={handleClearAllData}
-        onTriggerManualBackup={handleTriggerManualBackup}
-      />
+        <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          settings={settings}
+          onUpdateSettings={handleUpdateSettings}
+          onResetDemoData={handleResetDemoData}
+          onClearAllData={handleClearAllData}
+          onTriggerManualBackup={handleTriggerManualBackup}
+        />
 
-      <LegalNoticeModal
-        isOpen={isLegalNoticeOpen}
-        onClose={() => setIsLegalNoticeOpen(false)}
-      />
-    </div>
+        <LegalNoticeModal
+          isOpen={isLegalNoticeOpen}
+          onClose={() => setIsLegalNoticeOpen(false)}
+        />
+      </div>
+    </LanguageProvider>
   );
 }
 
