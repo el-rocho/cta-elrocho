@@ -20,7 +20,11 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-brand">
         <div className="brand-logo">
-          <img src="./icon-512.png" alt="Logo Control Tensión Arterial" className="brand-logo-img pulse-icon" />
+          <img
+            src={isDarkMode ? './logo-night.png' : './logo-day.png'}
+            alt="Logo Control Tensión Arterial"
+            className="brand-logo-img"
+          />
         </div>
         <div>
           <h1 className="brand-title">Control Tensión Arterial</h1>

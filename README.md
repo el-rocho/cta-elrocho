@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo-day.png" alt="Logo Control Tensión Arterial - Modo Día" width="160" int="160" />
+</p>
+
 # Control Tensión Arterial & Pulsaciones 🩺
 
 ![Built with Vibe Coding](https://img.shields.io/badge/Built%20with-Vibe%20Coding%20%26%20AI-7c3aed?style=for-the-badge&logo=sparkles)
