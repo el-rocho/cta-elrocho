@@ -39,7 +39,7 @@ jobs:
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             TAG="${{ github.ref_name }}"
           else
-            TAG="v1.2.5"
+            TAG="v1.2.6"
           fi
           VITE_APP_VERSION="$TAG" npm run build
 
@@ -63,13 +63,13 @@ jobs:
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             TAG="${{ github.ref_name }}"
           else
-            TAG="v1.2.5"
+            TAG="v1.2.6"
           fi
           VERSION="${TAG#v}"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           MAJOR=${MAJOR:-1}
           MINOR=${MINOR:-2}
-          PATCH=${PATCH:-5}
+          PATCH=${PATCH:-6}
           VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
           echo "Compilando APK versión $VERSION (versionCode: $VERSION_CODE)..."
           cd android
@@ -86,20 +86,15 @@ jobs:
           path: android/app/build/outputs/apk/debug/control-tension-arterial.apk
           retention-days: 14
 
-      - name: Publicar APK en GitHub Releases (Sólo en Tags / Releases / Manual)
+      - name: Publicar APK en GitHub Releases (GitHub CLI)
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v1.2.5' }}
-          name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v1.2.5' }}
-          body: |
-            Release ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v1.2.5' }}
-            - Aplicación nativa Android (APK) para Control Tensión Arterial.
-            - Compatible con Obtainium y GrapheneOS.
-          files: |
-            android/app/build/outputs/apk/debug/control-tension-arterial.apk
-          make_latest: true
-          draft: false
-          prerelease: false
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="v1.2.6"
+          fi
+          echo "Publicando release $TAG con GitHub CLI..."
+          gh release create "$TAG" android/app/build/outputs/apk/debug/control-tension-arterial.apk --title "$TAG" --notes "Release $TAG - Control Tensión Arterial APK" --latest || gh release upload "$TAG" android/app/build/outputs/apk/debug/control-tension-arterial.apk --clobber
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

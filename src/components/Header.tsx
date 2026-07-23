@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   isDarkMode,
   onToggleDarkMode,
 }) => {
-  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.2.5';
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.2.6';
 
   return (
     <header className="app-header">
