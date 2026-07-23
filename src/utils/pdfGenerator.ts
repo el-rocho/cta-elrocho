@@ -1,16 +1,22 @@
+import html2pdf from 'html2pdf.js';
 import type { BloodPressureSession, DateRange, ExportReportOptions, LanguageOption } from '../types/bloodPressure';
 import { filterSessionsByDateRange } from './exportCsv';
 import { getHealthCategory } from './healthClassification';
 
-export function printPDFReport(
+export async function downloadPDFReport(
   sessions: BloodPressureSession[],
   dateRange: DateRange,
   options: ExportReportOptions = {},
   lang: LanguageOption = 'es'
-): void {
+): Promise<void> {
   const isEn = lang === 'en';
   const locale = isEn ? 'en-US' : 'es-ES';
   const filtered = filterSessionsByDateRange(sessions, dateRange);
+
+  if (filtered.length === 0) {
+    alert(isEn ? 'No blood pressure records found for selected period.' : 'No hay registros de tensión en el periodo seleccionado.');
+    return;
+  }
 
   // Ordenar de más antiguo a más reciente para el gráfico
   const chronological = [...filtered].sort(
@@ -35,32 +41,18 @@ export function printPDFReport(
   const avgCategory = getHealthCategory(avgSys, avgDia, lang);
 
   // Generar SVG del gráfico
-  const svgChartHtml = generateChartSVG(chronological, locale);
+  const svgChartHtml = generateChartSVG(chronological, locale, isEn);
 
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert(
-      isEn
-        ? 'Please allow pop-ups in your browser to generate the PDF report.'
-        : 'Por favor, permite las ventanas emergentes en tu navegador para generar el informe PDF.'
-    );
-    return;
-  }
-
-  // Calcular periodo de fechas real directamente
+  // Calcular periodo de fechas real
   let realPeriodStr = '';
-  if (filtered.length > 0) {
-    const timestamps = filtered.map((s) => new Date(s.timestamp).getTime());
-    const minT = Math.min(...timestamps);
-    const maxT = Math.max(...timestamps);
-    const minDStr = new Date(minT).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const maxDStr = new Date(maxT).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
-    realPeriodStr = minDStr === maxDStr ? minDStr : isEn ? `From ${minDStr} to ${maxDStr}` : `Del ${minDStr} al ${maxDStr}`;
-  } else {
-    realPeriodStr = isEn ? 'No records in this period' : 'Sin registros en este periodo';
-  }
+  const timestamps = filtered.map((s) => new Date(s.timestamp).getTime());
+  const minT = Math.min(...timestamps);
+  const maxT = Math.max(...timestamps);
+  const minDStr = new Date(minT).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const maxDStr = new Date(maxT).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  realPeriodStr = minDStr === maxDStr ? minDStr : isEn ? `From ${minDStr} to ${maxDStr}` : `Del ${minDStr} al ${maxDStr}`;
 
-  // Formatear metadatos de paciente (Nombre, Sexo y Edad)
+  // Formatear metadatos de paciente
   let patientInfoStr = '';
   if (!options.hidePatientData) {
     const parts: string[] = [];
@@ -80,327 +72,176 @@ export function printPDFReport(
     patientInfoStr = `<strong>${isEn ? 'Patient Data:' : 'Datos de Paciente:'}</strong> ${isEn ? 'Hidden / Anonymous' : 'Ocultos / Anónimos'}`;
   }
 
-  const html = `
-    <!DOCTYPE html>
-    <html lang="${lang}">
-    <head>
-      <meta charset="UTF-8" />
-      <title>${isEn ? 'Blood Pressure Report' : 'Informe de Tensión Arterial'} - ${realPeriodStr}</title>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          color: #1e293b;
-          padding: 24px;
-          margin: 0;
-          background: #ffffff;
-        }
-        .action-bar {
-          background: #0f172a;
-          color: #ffffff;
-          padding: 12px 20px;
-          border-radius: 8px;
-          margin-bottom: 24px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-        }
-        .action-bar-title {
-          font-weight: 600;
-          font-size: 15px;
-        }
-        .action-buttons {
-          display: flex;
-          gap: 10px;
-        }
-        .btn-print {
-          background: #2563eb;
-          color: #ffffff;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 6px;
-          font-weight: 600;
-          cursor: pointer;
-          font-size: 13px;
-        }
-        .btn-close-pdf {
-          background: #475569;
-          color: #ffffff;
-          border: none;
-          padding: 8px 14px;
-          border-radius: 6px;
-          font-weight: 600;
-          cursor: pointer;
-          font-size: 13px;
-        }
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          border-bottom: 2px solid #e2e8f0;
-          padding-bottom: 16px;
-          margin-bottom: 20px;
-        }
-        .header-title {
-          margin: 0;
-          font-size: 22px;
-          color: #0f172a;
-        }
-        .header-subtitle {
-          margin: 6px 0 0 0;
-          font-size: 13px;
-          color: #64748b;
-        }
-        .header-meta {
-          text-align: right;
-          font-size: 12px;
-          color: #64748b;
-        }
-        .report-notes-box {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-left: 4px solid #3b82f6;
-          padding: 12px 16px;
-          border-radius: 6px;
-          margin-bottom: 20px;
-          font-size: 13px;
-        }
-        .summary-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 12px;
-          margin-bottom: 24px;
-        }
-        .summary-card {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 12px;
-          text-align: center;
-        }
-        .summary-card-title {
-          font-size: 11px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          color: #64748b;
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-        .summary-card-value {
-          font-size: 22px;
-          font-weight: 800;
-          color: #0f172a;
-        }
-        .summary-card-unit {
-          font-size: 12px;
-          font-weight: 400;
-          color: #64748b;
-        }
-        .chart-pdf-container {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 16px;
-          margin-bottom: 24px;
-        }
-        .chart-pdf-title {
-          font-size: 14px;
-          font-weight: 700;
-          color: #0f172a;
-          margin-bottom: 12px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .chart-pdf-legend {
-          display: flex;
-          gap: 12px;
-          font-size: 10px;
-          font-weight: 500;
-          color: #64748b;
-        }
-        .legend-item {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .dot-red { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; }
-        .dot-blue { width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block; }
-        .dot-gray { width: 8px; height: 8px; background: #64748b; border-radius: 50%; display: inline-block; }
-        .box-green { width: 10px; height: 8px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); display: inline-block; }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 12px;
-        }
-        th {
-          background-color: #f1f5f9;
-          color: #475569;
-          font-weight: 600;
-          text-align: left;
-          padding: 8px 10px;
-          border-bottom: 2px solid #cbd5e1;
-        }
-        td {
-          padding: 8px 10px;
-          border-bottom: 1px solid #e2e8f0;
-        }
-        tr:nth-child(even) { background-color: #f8fafc; }
-        .badge {
-          display: inline-block;
-          padding: 2px 8px;
-          border-radius: 9999px;
-          font-size: 11px;
-          font-weight: 600;
-        }
-        .footer {
-          margin-top: 32px;
-          border-top: 1px solid #e2e8f0;
-          padding-top: 12px;
-          font-size: 11px;
-          color: #94a3b8;
-          text-align: center;
-        }
-        @media print {
-          body { padding: 0; }
-          .no-print { display: none !important; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="action-bar no-print">
-        <div class="action-bar-title">
-          📋 ${isEn ? 'Blood Pressure Report Preview' : 'Vista Previa del Informe de Tensión Arterial'}
-        </div>
-        <div class="action-buttons">
-          <button class="btn-print" onclick="window.print()">🖨️ ${isEn ? 'Print / Save as PDF' : 'Imprimir / Guardar en PDF'}</button>
-          <button class="btn-close-pdf" onclick="window.close()">${isEn ? 'Close' : 'Cerrar'}</button>
+  // Crear contenedor temporal fuera de pantalla para renderizar el PDF
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '794px'; // Ancho A4 estándar en píxeles
+  container.style.backgroundColor = '#ffffff';
+  container.style.color = '#1e293b';
+  container.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  container.style.padding = '24px';
+  container.style.boxSizing = 'border-box';
+
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px;">
+      <div>
+        <h1 style="margin: 0; font-size: 22px; color: #0f172a;">${isEn ? 'Blood Pressure & Pulse Clinical Report' : 'Informe de Tensión Arterial y Pulsaciones'}</h1>
+        <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b;">${patientInfoStr} | <strong>${isEn ? 'Period:' : 'Periodo:'}</strong> ${realPeriodStr}</p>
+      </div>
+      <div style="text-align: right; font-size: 12px; color: #64748b;">
+        <p style="margin:0;">${isEn ? 'Generated:' : 'Generado:'} ${new Date().toLocaleDateString(locale)} ${new Date().toLocaleTimeString(locale)}</p>
+        <p style="margin:4px 0 0 0; color:#10b981; font-weight:600;">✓ ${isEn ? 'Private Document' : 'Documento Privado'}</p>
+      </div>
+    </div>
+
+    ${
+      options.reportNotes
+        ? `
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 13px;">
+        <strong>${isEn ? 'Medical Remarks:' : 'Observaciones Médico-Clínicas:'}</strong>
+        <p style="margin:4px 0 0 0; font-style:italic;">"${options.reportNotes}"</p>
+      </div>
+    `
+        : ''
+    }
+
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 4px;">${isEn ? 'Avg Systolic' : 'Promedio Sistólico'}</div>
+        <div style="font-size: 22px; font-weight: 800; color: #0f172a;">${avgSys} <span style="font-size: 12px; font-weight: 400; color: #64748b;">mmHg</span></div>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 4px;">${isEn ? 'Avg Diastolic' : 'Promedio Diastólico'}</div>
+        <div style="font-size: 22px; font-weight: 800; color: #0f172a;">${avgDia} <span style="font-size: 12px; font-weight: 400; color: #64748b;">mmHg</span></div>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 4px;">${isEn ? 'Avg Pulse' : 'Promedio Pulsaciones'}</div>
+        <div style="font-size: 22px; font-weight: 800; color: #64748b;">${avgPulse} <span style="font-size: 12px; font-weight: 400; color: #64748b;">${isEn ? 'BPM' : 'ppm'}</span></div>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 4px;">${isEn ? 'Global Status' : 'Estado Global'}</div>
+        <div style="font-size: 15px; color: ${avgCategory.colorHex}; font-weight: 700; padding-top: 4px;">
+          ${avgCategory.name}
         </div>
       </div>
+    </div>
 
-      <div class="header">
-        <div>
-          <h1 class="header-title">${isEn ? 'Blood Pressure & Pulse Clinical Report' : 'Informe de Tensión Arterial y Pulsaciones'}</h1>
-          <p class="header-subtitle">${patientInfoStr} | <strong>${isEn ? 'Period:' : 'Periodo:'}</strong> ${realPeriodStr}</p>
-        </div>
-        <div class="header-meta">
-          <p style="margin:0;">${isEn ? 'Generated:' : 'Generado:'} ${new Date().toLocaleDateString(locale)} ${new Date().toLocaleTimeString(locale)}</p>
-          <p style="margin:4px 0 0 0; color:#10b981; font-weight:600;">✓ ${isEn ? 'Private Document' : 'Documento Privado'}</p>
-        </div>
-      </div>
-
-      ${
-        options.reportNotes
-          ? `
-        <div class="report-notes-box">
-          <strong>${isEn ? 'Medical Remarks:' : 'Observaciones Médico-Clínicas:'}</strong>
-          <p style="margin:4px 0 0 0; font-style:italic;">"${options.reportNotes}"</p>
-        </div>
-      `
-          : ''
-      }
-
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="summary-card-title">${isEn ? 'Avg Systolic' : 'Promedio Sistólico'}</div>
-          <div class="summary-card-value">${avgSys} <span class="summary-card-unit">mmHg</span></div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-card-title">${isEn ? 'Avg Diastolic' : 'Promedio Diastólico'}</div>
-          <div class="summary-card-value">${avgDia} <span class="summary-card-unit">mmHg</span></div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-card-title">${isEn ? 'Avg Pulse' : 'Promedio Pulsaciones'}</div>
-          <div class="summary-card-value" style="color:#64748b">${avgPulse} <span class="summary-card-unit">${isEn ? 'BPM' : 'ppm'}</span></div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-card-title">${isEn ? 'Global Status' : 'Estado Global'}</div>
-          <div class="summary-card-value" style="font-size:16px; color:${avgCategory.colorHex}; font-weight:700; padding-top:4px;">
-            ${avgCategory.name}
-          </div>
+    <!-- Gráfico vectorial del informe -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <span>${isEn ? 'Blood Pressure Evolution' : 'Evolución Tensión Arterial'}</span>
+        <div style="display: flex; gap: 12px; font-size: 10px; font-weight: 500; color: #64748b;">
+          <span style="display: flex; align-items: center; gap: 4px;"><span style="width:8px; height:8px; background:#ef4444; border-radius:50%; display:inline-block;"></span> ${isEn ? 'Systolic' : 'Sistólica'}</span>
+          <span style="display: flex; align-items: center; gap: 4px;"><span style="width:8px; height:8px; background:#3b82f6; border-radius:50%; display:inline-block;"></span> ${isEn ? 'Diastolic' : 'Diastólica'}</span>
+          <span style="display: flex; align-items: center; gap: 4px;"><span style="width:8px; height:8px; background:#64748b; border-radius:50%; display:inline-block;"></span> ${isEn ? 'Pulse' : 'Pulsaciones'}</span>
+          <span style="display: flex; align-items: center; gap: 4px;"><span style="width:10px; height:8px; background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.4); display:inline-block;"></span> ${isEn ? 'Healthy Range' : 'Rango Saludable'}</span>
         </div>
       </div>
+      ${svgChartHtml}
+    </div>
 
-      <!-- Gráfico antes de la lista de registros -->
-      <div class="chart-pdf-container">
-        <div class="chart-pdf-title">
-          <span>${isEn ? 'Blood Pressure Evolution' : 'Evolución Tensión Arterial'}</span>
-          <div class="chart-pdf-legend">
-            <span class="legend-item"><span class="dot-red"></span> ${isEn ? 'Systolic' : 'Sistólica (Eje Izq.)'}</span>
-            <span class="legend-item"><span class="dot-blue"></span> ${isEn ? 'Diastolic' : 'Diastólica (Eje Izq.)'}</span>
-            <span class="legend-item"><span class="dot-gray"></span> ${isEn ? 'Pulse' : 'Pulsaciones (Eje Der.)'}</span>
-            <span class="legend-item"><span class="box-green"></span> ${isEn ? 'Healthy Range' : 'Rango Saludable'}</span>
-          </div>
-        </div>
-        ${svgChartHtml}
-      </div>
+    <h3 style="font-size:15px; color:#1e293b; margin-bottom:12px;">${isEn ? `Measurement History (${total} records)` : `Historial mediciones (${total} registros)`}</h3>
 
-      <h3 style="font-size:16px; color:#1e293b; margin-bottom:12px;">${isEn ? `Measurement History (${total} records)` : `Historial mediciones (${total} registros)`}</h3>
+    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+      <thead>
+        <tr style="background-color: #f1f5f9; color: #475569; text-align: left;">
+          <th style="padding: 8px 10px; border-bottom: 2px solid #cbd5e1;">${isEn ? 'Date & Time' : 'Fecha y Hora'}</th>
+          <th style="padding: 8px 10px; border-bottom: 2px solid #cbd5e1;">${isEn ? 'Systolic' : 'Sistólica'}</th>
+          <th style="padding: 8px 10px; border-bottom: 2px solid #cbd5e1;">${isEn ? 'Diastolic' : 'Diastólica'}</th>
+          <th style="padding: 8px 10px; border-bottom: 2px solid #cbd5e1;">${isEn ? 'Pulse' : 'Pulso'}</th>
+          <th style="padding: 8px 10px; border-bottom: 2px solid #cbd5e1;">${isEn ? 'Arm' : 'Brazo'}</th>
+          <th style="padding: 8px 10px; border-bottom: 2px solid #cbd5e1;">${isEn ? 'WHO Category' : 'Categoría OMS'}</th>
+          <th style="padding: 8px 10px; border-bottom: 2px solid #cbd5e1;">${isEn ? 'Notes / Session' : 'Notas / Sesión'}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered
+          .map((s, index) => {
+            const d = new Date(s.timestamp);
+            const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+            const cat = getHealthCategory(s.averageSystolic, s.averageDiastolic, lang);
+            const armLabel = s.arm === 'left' ? (isEn ? 'Left' : 'Izq') : (isEn ? 'Right' : 'Der');
+            const sessionTag = s.readings.length > 1 ? (isEn ? ` (Avg of ${s.readings.length} readings)` : ` (Media de ${s.readings.length} tomas)`) : '';
+            const bg = index % 2 === 0 ? '#ffffff' : '#f8fafc';
 
-      <table>
-        <thead>
-          <tr>
-            <th>${isEn ? 'Date & Time' : 'Fecha y Hora'}</th>
-            <th>${isEn ? 'Systolic' : 'Sistólica'}</th>
-            <th>${isEn ? 'Diastolic' : 'Diastólica'}</th>
-            <th>${isEn ? 'Pulse' : 'Pulso'}</th>
-            <th>${isEn ? 'Arm' : 'Brazo'}</th>
-            <th>${isEn ? 'WHO/AHA Category' : 'Clasificación OMS/AHA'}</th>
-            <th>${isEn ? 'Notes / Session' : 'Notas / Sesión'}</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filtered
-            .map((s) => {
-              const d = new Date(s.timestamp);
-              const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
-              const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-              const cat = getHealthCategory(s.averageSystolic, s.averageDiastolic, lang);
-              const armLabel = s.arm === 'left' ? (isEn ? 'Left' : 'Izq') : (isEn ? 'Right' : 'Der');
-              const sessionTag = s.readings.length > 1 ? (isEn ? ` (Avg of ${s.readings.length} readings)` : ` (Media de ${s.readings.length} tomas)`) : '';
+            return `
+            <tr style="background-color: ${bg};">
+              <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>${dateStr}</strong> ${timeStr}</td>
+              <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong style="font-size:13px; color:#ef4444;">${s.averageSystolic}</strong> mmHg</td>
+              <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong style="font-size:13px; color:#3b82f6;">${s.averageDiastolic}</strong> mmHg</td>
+              <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong style="font-size:12px; color:#64748b;">${s.averageHeartRate}</strong> ${isEn ? 'BPM' : 'ppm'}</td>
+              <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">${armLabel}</td>
+              <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">
+                <span style="display:inline-block; padding:2px 8px; border-radius:9999px; font-size:10px; font-weight:600; background:${cat.badgeBg}; color:${cat.badgeText};">
+                  ${cat.name}
+                </span>
+              </td>
+              <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">${(s.notes || '') + sessionTag}</td>
+            </tr>
+          `;
+          })
+          .join('')}
+      </tbody>
+    </table>
 
-              return `
-              <tr>
-                <td><strong>${dateStr}</strong> ${timeStr}</td>
-                <td><strong style="font-size:14px; color:#ef4444;">${s.averageSystolic}</strong> mmHg</td>
-                <td><strong style="font-size:14px; color:#3b82f6;">${s.averageDiastolic}</strong> mmHg</td>
-                <td><strong style="font-size:13px; color:#64748b;">${s.averageHeartRate}</strong> ${isEn ? 'BPM' : 'ppm'}</td>
-                <td>${armLabel}</td>
-                <td>
-                  <span class="badge" style="background:${cat.badgeBg}; color:${cat.badgeText};">
-                    ${cat.name}
-                  </span>
-                </td>
-                <td>${(s.notes || '') + sessionTag}</td>
-              </tr>
-            `;
-            })
-            .join('')}
-        </tbody>
-      </table>
-
-      <div class="footer">
-        ${isEn ? 'This document was generated locally and 100% privately.' : 'Este documento ha sido generado localmente de forma 100% privada.'}
-      </div>
-    </body>
-    </html>
+    <div style="margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 10px; color: #94a3b8; text-align: center;">
+      ${isEn ? 'Self-monitoring document generated locally and 100% privately. Does not constitute a medical diagnosis.' : 'Documento de autocontrol generado localmente de forma 100% privada. No constituye diagnóstico médico.'}
+    </div>
   `;
 
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
+  document.body.appendChild(container);
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const dateTimeStr = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+  const filenamePrefix = isEn ? 'blood_pressure_report' : 'informe_tension_arterial';
+  const filename = `${filenamePrefix}_${dateTimeStr}.pdf`;
+
+  const opt = {
+    margin: 8,
+    filename: filename,
+    image: { type: 'jpeg' as const, quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
+    pagebreak: { mode: ['avoid-all' as const, 'css' as const, 'legacy' as const] },
+  };
+
+  try {
+    await html2pdf().set(opt).from(container).save();
+  } catch (error) {
+    console.error('Error al generar PDF:', error);
+    alert(isEn ? 'Error generating PDF report.' : 'Error al generar el informe PDF.');
+  } finally {
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+  }
 }
 
-/**
- * Genera el código SVG vectorial del gráfico con doble eje Y (Tensión a la izq. y Pulsaciones a la der.)
- */
-function generateChartSVG(chronologicalSessions: BloodPressureSession[], locale = 'es-ES'): string {
+export function printPDFReport(
+  sessions: BloodPressureSession[],
+  dateRange: DateRange,
+  options: ExportReportOptions = {},
+  lang: LanguageOption = 'es'
+): void {
+  downloadPDFReport(sessions, dateRange, options, lang);
+}
+
+function generateChartSVG(chronologicalSessions: BloodPressureSession[], locale = 'es-ES', isEn = false): string {
   if (chronologicalSessions.length === 0) {
-    return '<p style="text-align:center; color:#94a3b8; font-size:12px;">Sin datos para graficar en este periodo</p>';
+    return `<p style="text-align:center; color:#94a3b8; font-size:12px;">${isEn ? 'No data to chart in this period' : 'Sin datos para graficar en este periodo'}</p>`;
   }
 
   const width = 720;
-  const height = 200;
+  const height = 180;
   const paddingLeft = 40;
   const paddingRight = 45;
   const paddingTop = 15;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { BloodPressureSession, DateFilterPreset, DateRange, BloodPressureReading, AppSettings, ExportReportOptions } from '../types/bloodPressure';
 import { exportToCSV } from '../utils/exportCsv';
-import { printPDFReport } from '../utils/pdfGenerator';
+import { downloadPDFReport } from '../utils/pdfGenerator';
 import { parseCSVData } from '../utils/importCsv';
 import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -49,8 +49,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     onClose();
   };
 
-  const handlePrintPDF = () => {
-    printPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
+  const handlePrintPDF = async () => {
+    await downloadPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
     onClose();
   };
 
