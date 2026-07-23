@@ -15,6 +15,8 @@ export const Header: React.FC<HeaderProps> = ({
   isDarkMode,
   onToggleDarkMode,
 }) => {
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.2.5';
+
   return (
     <header className="app-header">
       <div className="header-brand">
@@ -25,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="brand-title">Control Tensión Arterial</h1>
           <div className="brand-badge">
             <ShieldCheck size={13} className="shield-icon" />
-            <span>Privado &amp; Offline &bull; v1.2.0</span>
+            <span>Privado &amp; Offline &bull; {appVersion}</span>
           </div>
         </div>
       </div>
