@@ -4,19 +4,25 @@ import type { BloodPressureSession, DateRange, ExportReportOptions, LanguageOpti
 import { filterSessionsByDateRange } from './exportCsv';
 import { getHealthCategory } from './healthClassification';
 
+export interface PDFGenerationResult {
+  success: boolean;
+  blobUrl?: string;
+  filename?: string;
+}
+
 export async function downloadPDFReport(
   sessions: BloodPressureSession[],
   dateRange: DateRange,
   options: ExportReportOptions = {},
   lang: LanguageOption = 'es'
-): Promise<boolean> {
+): Promise<PDFGenerationResult> {
   const isEn = lang === 'en';
   const locale = isEn ? 'en-US' : 'es-ES';
   const filtered = filterSessionsByDateRange(sessions, dateRange);
 
   if (filtered.length === 0) {
     alert(isEn ? 'No blood pressure records found for selected period.' : 'No hay registros de tensión en el periodo seleccionado.');
-    return false;
+    return { success: false };
   }
 
   // Ordenar de más antiguo a más reciente para el gráfico
@@ -246,12 +252,19 @@ export async function downloadPDFReport(
       heightLeft -= (pdfHeight - 16);
     }
 
+    const pdfBlob = pdf.output('blob');
+    const blobUrl = URL.createObjectURL(pdfBlob);
+
     pdf.save(filename);
-    return true;
+    return {
+      success: true,
+      blobUrl,
+      filename,
+    };
   } catch (error) {
     console.error('Error al generar PDF:', error);
     alert(isEn ? 'Error generating PDF report.' : 'Error al generar el informe PDF.');
-    return false;
+    return { success: false };
   } finally {
     if (document.body.contains(container)) {
       document.body.removeChild(container);

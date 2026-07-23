@@ -19,11 +19,12 @@ import { ReadingForm } from './components/ReadingForm';
 import { WhiteCoatBanner } from './components/WhiteCoatBanner';
 import { TrendChart } from './components/TrendChart';
 import { ReadingList } from './components/ReadingList';
-import { ExportModal } from './components/ExportModal';
+import { ExportModal, type ToastNotification } from './components/ExportModal';
 import { SettingsModal } from './components/SettingsModal';
 import { LegalNoticeModal } from './components/LegalNoticeModal';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { getTranslation } from './i18n/translations';
+import { Eye } from 'lucide-react';
 
 export function App() {
   const [readings, setReadings] = useState<BloodPressureReading[]>(() => getStoredReadings());
@@ -33,7 +34,7 @@ export function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isLegalNoticeOpen, setIsLegalNoticeOpen] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<DateRange>({ preset: '30days' });
-  const [notificationMsg, setNotificationMsg] = useState<string | null>(null);
+  const [notificationMsg, setNotificationMsg] = useState<string | ToastNotification | null>(null);
 
   const { sessions } = processReadingsIntoSessions(readings, settings);
 
@@ -164,8 +165,20 @@ export function App() {
       <div className="app-container">
         {notificationMsg && (
           <div className="toast-notification">
-            <span>{notificationMsg}</span>
-            <button onClick={() => setNotificationMsg(null)}>×</button>
+            <span>{typeof notificationMsg === 'string' ? notificationMsg : notificationMsg.message}</span>
+            {typeof notificationMsg === 'object' && notificationMsg.actionLabel && notificationMsg.onAction && (
+              <button
+                type="button"
+                className="toast-action-btn"
+                onClick={() => {
+                  notificationMsg.onAction?.();
+                }}
+              >
+                <Eye size={14} />
+                <span>{notificationMsg.actionLabel}</span>
+              </button>
+            )}
+            <button className="toast-close-btn" onClick={() => setNotificationMsg(null)}>×</button>
           </div>
         )}
 

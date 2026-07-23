@@ -6,13 +6,19 @@ import { parseCSVData } from '../utils/importCsv';
 import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
+export interface ToastNotification {
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   sessions: BloodPressureSession[];
   settings: AppSettings;
   onImportReadings: (readings: Omit<BloodPressureReading, 'id'>[]) => void;
-  onNotify?: (msg: string) => void;
+  onNotify?: (toast: string | ToastNotification) => void;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -59,9 +65,20 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     if (onNotify) {
       onNotify(t('toast.pdfDownloadStarting'));
     }
-    const success = await downloadPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
-    if (success && onNotify) {
-      onNotify(t('toast.pdfDownloadSuccess'));
+    const result = await downloadPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
+    if (result.success && onNotify) {
+      onNotify({
+        message: t('toast.pdfDownloadSuccess'),
+        actionLabel: t('export.openPdfBtn'),
+        onAction: () => {
+          if (result.blobUrl) {
+            const win = window.open(result.blobUrl, '_blank');
+            if (!win) {
+              window.location.href = result.blobUrl;
+            }
+          }
+        },
+      });
     }
   };
 
