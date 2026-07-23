@@ -1,4 +1,5 @@
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import type { BloodPressureSession, DateRange, ExportReportOptions, LanguageOption } from '../types/bloodPressure';
 import { filterSessionsByDateRange } from './exportCsv';
 import { getHealthCategory } from './healthClassification';
@@ -72,15 +73,13 @@ export async function downloadPDFReport(
     patientInfoStr = `<strong>${isEn ? 'Patient Data:' : 'Datos de Paciente:'}</strong> ${isEn ? 'Hidden / Anonymous' : 'Ocultos / Anónimos'}`;
   }
 
-  // Crear contenedor fijo en viewport pero detrás de capas de UI para que html2canvas capture todos los píxeles
+  // Crear contenedor temporal visible en capas superiores para que html2canvas compute y capture perfectamente todos los píxeles
   const container = document.createElement('div');
-  container.style.position = 'fixed';
+  container.style.position = 'absolute';
   container.style.top = '0';
   container.style.left = '0';
   container.style.width = '794px'; // Ancho A4 estándar a 96 DPI
-  container.style.zIndex = '-99999';
-  container.style.opacity = '0.99';
-  container.style.pointerEvents = 'none';
+  container.style.zIndex = '999999';
   container.style.backgroundColor = '#ffffff';
   container.style.color = '#1e293b';
   container.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -197,8 +196,8 @@ export async function downloadPDFReport(
 
   document.body.appendChild(container);
 
-  // Esperar a que el motor de renderizado del navegador compute todos los elementos del lienzo y SVG
-  await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 350)));
+  // Esperar a que el motor del navegador renderice el DOM y los gráficos SVG
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   const now = new Date();
   const year = now.getFullYear();
@@ -211,25 +210,43 @@ export async function downloadPDFReport(
   const filenamePrefix = isEn ? 'blood_pressure_report' : 'informe_tension_arterial';
   const filename = `${filenamePrefix}_${dateTimeStr}.pdf`;
 
-  const opt = {
-    margin: [8, 8, 8, 8] as [number, number, number, number],
-    filename: filename,
-    image: { type: 'jpeg' as const, quality: 0.98 },
-    html2canvas: {
+  try {
+    const canvas = await html2canvas(container, {
       scale: 2,
       useCORS: true,
       logging: false,
-      width: 794,
-      windowWidth: 794,
-      scrollX: 0,
-      scrollY: 0,
-    },
-    jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
-    pagebreak: { mode: ['avoid-all' as const, 'css' as const, 'legacy' as const] },
-  };
+      backgroundColor: '#ffffff',
+      windowWidth: 800,
+    });
 
-  try {
-    await html2pdf().set(opt).from(container).save();
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth(); // 210 mm
+    const pdfHeight = pdf.internal.pageSize.getHeight(); // 297 mm
+
+    const imgWidth = pdfWidth - 16; // 8mm margen cada lado
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 8;
+
+    pdf.addImage(imgData, 'JPEG', 8, position, imgWidth, imgHeight);
+    heightLeft -= (pdfHeight - 16);
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 8;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 8, position, imgWidth, imgHeight);
+      heightLeft -= (pdfHeight - 16);
+    }
+
+    pdf.save(filename);
     return true;
   } catch (error) {
     console.error('Error al generar PDF:', error);
