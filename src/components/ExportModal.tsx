@@ -12,6 +12,7 @@ interface ExportModalProps {
   sessions: BloodPressureSession[];
   settings: AppSettings;
   onImportReadings: (readings: Omit<BloodPressureReading, 'id'>[]) => void;
+  onNotify?: (msg: string) => void;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -20,6 +21,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   sessions,
   settings,
   onImportReadings,
+  onNotify,
 }) => {
   const { t, language } = useLanguage();
   const [preset, setPreset] = useState<DateFilterPreset>('30days');
@@ -47,11 +49,20 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const handleExportCSV = () => {
     exportToCSV(sessions, getCurrentRange(), 'tension_arterial', getExportOptions(), language);
     onClose();
+    if (onNotify) {
+      onNotify(t('toast.manualBackupSuccess'));
+    }
   };
 
   const handlePrintPDF = async () => {
-    await downloadPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
     onClose();
+    if (onNotify) {
+      onNotify(t('toast.pdfDownloadStarting'));
+    }
+    const success = await downloadPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
+    if (success && onNotify) {
+      onNotify(t('toast.pdfDownloadSuccess'));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

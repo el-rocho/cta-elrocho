@@ -213,6 +213,7 @@ export function App() {
           sessions={sessions}
           settings={settings}
           onImportReadings={handleImportReadings}
+          onNotify={(msg) => setNotificationMsg(msg)}
         />
 
         <SettingsModal

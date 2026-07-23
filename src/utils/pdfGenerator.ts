@@ -8,14 +8,14 @@ export async function downloadPDFReport(
   dateRange: DateRange,
   options: ExportReportOptions = {},
   lang: LanguageOption = 'es'
-): Promise<void> {
+): Promise<boolean> {
   const isEn = lang === 'en';
   const locale = isEn ? 'en-US' : 'es-ES';
   const filtered = filterSessionsByDateRange(sessions, dateRange);
 
   if (filtered.length === 0) {
     alert(isEn ? 'No blood pressure records found for selected period.' : 'No hay registros de tensión en el periodo seleccionado.');
-    return;
+    return false;
   }
 
   // Ordenar de más antiguo a más reciente para el gráfico
@@ -72,12 +72,15 @@ export async function downloadPDFReport(
     patientInfoStr = `<strong>${isEn ? 'Patient Data:' : 'Datos de Paciente:'}</strong> ${isEn ? 'Hidden / Anonymous' : 'Ocultos / Anónimos'}`;
   }
 
-  // Crear contenedor temporal fuera de pantalla para renderizar el PDF
+  // Crear contenedor fijo en viewport pero detrás de capas de UI para que html2canvas capture todos los píxeles
   const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
+  container.style.position = 'fixed';
   container.style.top = '0';
-  container.style.width = '794px'; // Ancho A4 estándar en píxeles
+  container.style.left = '0';
+  container.style.width = '794px'; // Ancho A4 estándar a 96 DPI
+  container.style.zIndex = '-99999';
+  container.style.opacity = '0.99';
+  container.style.pointerEvents = 'none';
   container.style.backgroundColor = '#ffffff';
   container.style.color = '#1e293b';
   container.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -194,6 +197,9 @@ export async function downloadPDFReport(
 
   document.body.appendChild(container);
 
+  // Esperar a que el motor de renderizado del navegador compute todos los elementos del lienzo y SVG
+  await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 350)));
+
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -206,19 +212,29 @@ export async function downloadPDFReport(
   const filename = `${filenamePrefix}_${dateTimeStr}.pdf`;
 
   const opt = {
-    margin: 8,
+    margin: [8, 8, 8, 8] as [number, number, number, number],
     filename: filename,
     image: { type: 'jpeg' as const, quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      width: 794,
+      windowWidth: 794,
+      scrollX: 0,
+      scrollY: 0,
+    },
     jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
     pagebreak: { mode: ['avoid-all' as const, 'css' as const, 'legacy' as const] },
   };
 
   try {
     await html2pdf().set(opt).from(container).save();
+    return true;
   } catch (error) {
     console.error('Error al generar PDF:', error);
     alert(isEn ? 'Error generating PDF report.' : 'Error al generar el informe PDF.');
+    return false;
   } finally {
     if (document.body.contains(container)) {
       document.body.removeChild(container);
@@ -276,7 +292,7 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[], locale 
   const idealDiaY = getY(80);
 
   return `
-    <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; overflow:visible;">
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; overflow:visible;">
       <!-- Banda Rango Saludable -->
       <rect x="${paddingLeft}" y="${idealSysY}" width="${chartWidth}" height="${Math.max(0, idealDiaY - idealSysY)}" fill="rgba(16, 185, 129, 0.1)" rx="3" />
       <line x1="${paddingLeft}" y1="${idealSysY}" x2="${width - paddingRight}" y2="${idealSysY}" stroke="rgba(16, 185, 129, 0.4)" stroke-dasharray="3 3" />
