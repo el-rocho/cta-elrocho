@@ -40,11 +40,11 @@ jobs:
       - name: Sincronizar Capacitor con Android
         run: npx cap sync android
 
-      - name: Configurar JDK 17 (Java)
+      - name: Configurar JDK 21 (Java)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Dar permisos de ejecución a Gradle Wrapper
         run: chmod +x android/gradlew
@@ -56,8 +56,14 @@ jobs:
         run: |
           TAG="${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.2.0' }}"
           VERSION="${TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          MAJOR=${MAJOR:-1}
+          MINOR=${MINOR:-2}
+          PATCH=${PATCH:-0}
+          VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+          echo "Compilando APK versión $VERSION (versionCode: $VERSION_CODE)..."
           cd android
-          ./gradlew assembleDebug -PappVersionName="$VERSION" --stacktrace --info
+          ./gradlew assembleDebug -PappVersionName="$VERSION" -PappVersionCode="$VERSION_CODE" --stacktrace
 
       - name: Preparar APK con nombre amigable
         run: |
@@ -77,8 +83,8 @@ jobs:
           name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.2.0' }}
           body: |
             Release ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.2.0' }}
-            - Nuevos ajustes de interfaz y legibilidad.
-            - Correcciones en ruleta, notas, exportación y configuración.
+            - Aplicación nativa Android (APK) para Control Tensión Arterial.
+            - Compatible con Obtainium y GrapheneOS.
           files: |
             android/app/build/outputs/apk/debug/control-tension-arterial.apk
           make_latest: true
