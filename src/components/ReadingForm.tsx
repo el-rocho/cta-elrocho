@@ -267,7 +267,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Añadir nota opcional (ej. en ayunas, reposo, sensaciones...)"
+              placeholder="Añadir nota opcional (ej. en ayunas)"
               className="input-notes"
             />
           </div>

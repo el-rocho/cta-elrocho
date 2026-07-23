@@ -35,8 +35,8 @@ export const LegalNoticeModal: React.FC<LegalNoticeModalProps> = ({ isOpen, onCl
             <p style={{ margin: '0 0 8px 0', lineHeight: '1.5' }}>
               No constituye un producto sanitario, no realiza diagnósticos y no sustituye la valoración, el consejo ni el tratamiento indicado por un profesional sanitario cualificado.
             </p>
-            <p style={{ margin: 0, lineHeight: '1.5' }}>
-              No modifique su medicación ni tome decisiones médicas basándose únicamente en los datos de la aplicación. Consulte siempre con su médico.
+            <p style={{ margin: 0, lineHeight: '1.5', fontStyle: 'italic' }}>
+              <em>No modifique su medicación ni tome decisiones médicas basándose en los datos de la aplicación. Consulte siempre con su médico.</em>
             </p>
           </div>
 

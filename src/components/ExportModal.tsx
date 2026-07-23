@@ -212,7 +212,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 <textarea
                   value={reportNotes}
                   onChange={(e) => setReportNotes(e.target.value)}
-                  placeholder="Ej. Paciente en tratamiento con antihipertensivo. Síntomas de mareo leve por las mañanas..."
+                  placeholder="En tratamiento con hipertensivo"
                   className="modal-input"
                   rows={2}
                   style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: '13px' }}
@@ -228,7 +228,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
                 <button type="button" className="btn-export-pdf" onClick={handlePrintPDF}>
                   <Printer size={22} />
-                  <span>Generar Informe PDF</span>
+                  <span>Informe PDF</span>
                 </button>
               </div>
             </>

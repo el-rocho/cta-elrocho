@@ -206,8 +206,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span>
                   <CalendarCheck size={12} className="inline-icon" /> Última copia: <strong>{lastBackupStr}</strong>
                 </span>
-                <button type="button" className="btn-subtle-reset" onClick={onTriggerManualBackup}>
-                  Descargar copia ahora
+                <button
+                  type="button"
+                  className="btn-download-backup"
+                  onClick={onTriggerManualBackup}
+                  style={{
+                    backgroundColor: 'var(--primary-color, #6d28d9)',
+                    color: '#ffffff',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  Descargar copia
                 </button>
               </div>
             </div>
