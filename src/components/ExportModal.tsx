@@ -6,6 +6,8 @@ import { parseCSVData } from '../utils/importCsv';
 import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
+import { Share } from '@capacitor/share';
+
 export interface ToastNotification {
   message: string;
   actionLabel?: string;
@@ -67,11 +69,26 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
     const result = await downloadPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
     if (result.success && onNotify) {
+      const actionLabel = result.isNative
+        ? (language === 'en' ? 'Open / Share PDF' : 'Abrir / Compartir PDF')
+        : (t('export.openPdfBtn') || (language === 'en' ? 'Open PDF' : 'Abrir PDF'));
+
       onNotify({
         message: t('toast.pdfDownloadSuccess'),
-        actionLabel: t('export.openPdfBtn'),
-        onAction: () => {
-          if (result.blobUrl) {
+        actionLabel,
+        onAction: async () => {
+          if (result.isNative && result.fileUri) {
+            try {
+              await Share.share({
+                title: result.filename,
+                text: language === 'en' ? 'Blood Pressure Clinical Report' : 'Informe Clínico de Tensión Arterial',
+                url: result.fileUri,
+                dialogTitle: language === 'en' ? 'Open or Share PDF' : 'Abrir o Compartir PDF',
+              });
+            } catch (err) {
+              console.error('Error al abrir/compartir archivo en Android:', err);
+            }
+          } else if (result.blobUrl) {
             const win = window.open(result.blobUrl, '_blank');
             if (!win) {
               window.location.href = result.blobUrl;

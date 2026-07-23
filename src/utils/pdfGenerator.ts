@@ -1,13 +1,17 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import type { BloodPressureSession, DateRange, ExportReportOptions, LanguageOption } from '../types/bloodPressure';
 import { filterSessionsByDateRange } from './exportCsv';
 import { getHealthCategory } from './healthClassification';
 
 export interface PDFGenerationResult {
   success: boolean;
+  fileUri?: string;
   blobUrl?: string;
   filename?: string;
+  isNative?: boolean;
 }
 
 export async function downloadPDFReport(
@@ -252,14 +256,33 @@ export async function downloadPDFReport(
       heightLeft -= (pdfHeight - 16);
     }
 
-    const pdfBlob = pdf.output('blob');
-    const blobUrl = URL.createObjectURL(pdfBlob);
+    const isNative = Capacitor.isNativePlatform();
+    let fileUri = '';
+    let blobUrl = '';
 
-    pdf.save(filename);
+    if (isNative) {
+      // En APK Nativa (Android), guardar directamente mediante Capacitor Filesystem
+      const base64Data = pdf.output('datauristring').split(',')[1];
+      const writeResult = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Documents,
+        recursive: true,
+      });
+      fileUri = writeResult.uri;
+    } else {
+      // En Navegador / PWA, guardar con descarga de navegador estándar
+      const pdfBlob = pdf.output('blob');
+      blobUrl = URL.createObjectURL(pdfBlob);
+      pdf.save(filename);
+    }
+
     return {
       success: true,
+      fileUri,
       blobUrl,
       filename,
+      isNative,
     };
   } catch (error) {
     console.error('Error al generar PDF:', error);
