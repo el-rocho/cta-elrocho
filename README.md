@@ -15,6 +15,15 @@ Aplicación Nativa **Android (APK)** y web offline para el registro, seguimiento
 
 ---
 
+## 💡 ¿Qué versión elegir? (Individual vs. Autoalojada)
+
+Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y PWA offline)**.
+
+- 📱 **Versión Individual (Este Repositorio)**: Ideal para uso personal en un único dispositivo móvil o tablet. Funciona **100% offline**, sin cuentas, sin servidor y guardando todos los datos en el almacenamiento interno privado del dispositivo.
+- 🐳 **[Versión Autoalojada Multi-usuario (Docker / NAS)](https://github.com/el-rocho/cta-elrocho-selhosted)**: Ideal si deseas desplegar la app en tu servidor privado o NAS (Synology, Unraid, Docker Compose) para gestionar **varios perfiles familiares (hasta 10 usuarios)** con almacenamiento en base de datos SQLite y **autenticación de doble factor (2FA TOTP)**.
+
+---
+
 ## 📱 Instalación y Actualizaciones (Obtainium & Releases)
 
 Las publicaciones oficiales y compilaciones del APK se generan automáticamente mediante **GitHub Actions** al publicar un Tag o Release en el repositorio.
