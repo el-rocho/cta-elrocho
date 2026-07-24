@@ -52,8 +52,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
   };
 
-  const currentComputedAge = settings.patientAge || (settings.patientBirthDate ? calculateAge(settings.patientBirthDate) : '');
-
   const handleToggleWhiteCoat = () => {
     onUpdateSettings({
       ...settings,
@@ -160,20 +158,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>
                   {t('settings.birthDate')}
                 </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <input
-                    type="date"
-                    value={settings.patientBirthDate || ''}
-                    onChange={(e) => handlePatientBirthDateChange(e.target.value)}
-                    className="modal-input"
-                    style={{ padding: '6px 10px', fontSize: '13px' }}
-                  />
-                  {currentComputedAge !== '' && (
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#3b82f6' }}>
-                      ({currentComputedAge} {settings.language === 'en' ? 'years old' : 'años'})
-                    </span>
-                  )}
-                </div>
+                <input
+                  type="date"
+                  value={settings.patientBirthDate || ''}
+                  onChange={(e) => handlePatientBirthDateChange(e.target.value)}
+                  className="modal-input"
+                  style={{ padding: '6px 10px', fontSize: '13px' }}
+                />
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
