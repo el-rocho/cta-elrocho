@@ -5,8 +5,8 @@
 # Control Tensión Arterial & Pulsaciones 🩺
 
 ![Built with Vibe Coding](https://img.shields.io/badge/Built%20with-Vibe%20Coding%20%26%20AI-7c3aed?style=for-the-badge&logo=sparkles)
-![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.4.4-3DDC84?style=for-the-badge&logo=android)
-![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.4.4-2563eb?style=for-the-badge&logo=github)
+![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.5.0-3DDC84?style=for-the-badge&logo=android)
+![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.5.0-2563eb?style=for-the-badge&logo=github)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge)
 
 Aplicación Nativa **Android (APK)** y web offline para el registro, seguimiento y análisis de la tensión arterial (sistólica y diastólica) y ritmo cardíaco (pulsaciones). Diseñada para ofrecer máxima privacidad en el dispositivo (compatible con **GrapheneOS** y Android estándar), **sin barra de navegador** y con funcionalidad 100% local sin envío de datos a servidores externos.

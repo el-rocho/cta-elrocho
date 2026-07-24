@@ -304,16 +304,18 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
+  padding: 12px 18px;
+  min-height: 46px;
   border-radius: var(--radius-sm);
   border: none;
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: #ffffff;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .btn-primary-gradient:hover {
@@ -682,20 +684,21 @@ body {
 
 .btn-submit-reading {
   width: 100%;
-  padding: 14px;
+  padding: 16px 20px;
+  min-height: 54px;
   border: none;
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, #10b981, #059669);
   color: #ffffff;
   font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
   transition: all 0.2s ease;
 }
 

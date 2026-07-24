@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleDarkMode,
 }) => {
   const { t } = useLanguage();
-  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.4.4';
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.5.0';
 
   return (
     <header className="app-header">
@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <button onClick={onOpenExportModal} className="btn-primary-gradient" title={t('header.exportTooltip')}>
-          <Download size={16} />
+          <Download size={18} />
           <span>{t('header.exportBtn')}</span>
         </button>
       </div>

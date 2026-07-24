@@ -272,7 +272,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
         </div>
 
         <button type="submit" className="btn-submit-reading">
-          <PlusCircle size={18} />
+          <PlusCircle size={20} />
           <span>{t('form.submit')}</span>
         </button>
       </form>
