@@ -69,9 +69,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
     const result = await downloadPDFReport(sessions, getCurrentRange(), getExportOptions(), language);
     if (result.success && onNotify) {
-      const actionLabel = result.isNative
-        ? (language === 'en' ? 'Open / Share PDF' : 'Abrir / Compartir PDF')
-        : (t('export.openPdfBtn') || (language === 'en' ? 'Open PDF' : 'Abrir PDF'));
+      const actionLabel = language === 'en' ? 'View / Share' : 'Ver / Compartir';
 
       onNotify({
         message: t('toast.pdfDownloadSuccess'),

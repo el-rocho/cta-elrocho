@@ -24,7 +24,6 @@ import { SettingsModal } from './components/SettingsModal';
 import { LegalNoticeModal } from './components/LegalNoticeModal';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { getTranslation } from './i18n/translations';
-import { Eye } from 'lucide-react';
 
 export function App() {
   const [readings, setReadings] = useState<BloodPressureReading[]>(() => getStoredReadings());
@@ -165,20 +164,33 @@ export function App() {
       <div className="app-container">
         {notificationMsg && (
           <div className="toast-notification">
-            <span>{typeof notificationMsg === 'string' ? notificationMsg : notificationMsg.message}</span>
-            {typeof notificationMsg === 'object' && notificationMsg.actionLabel && notificationMsg.onAction && (
+            <div className="toast-top-row">
+              <span className="toast-message-text">
+                {typeof notificationMsg === 'string' ? notificationMsg : notificationMsg.message}
+              </span>
               <button
                 type="button"
-                className="toast-action-btn"
-                onClick={() => {
-                  notificationMsg.onAction?.();
-                }}
+                className="toast-close-btn"
+                onClick={() => setNotificationMsg(null)}
+                aria-label="Cerrar notificación"
               >
-                <Eye size={14} />
-                <span>{notificationMsg.actionLabel}</span>
+                ×
               </button>
+            </div>
+
+            {typeof notificationMsg === 'object' && notificationMsg.actionLabel && notificationMsg.onAction && (
+              <div className="toast-bottom-row">
+                <button
+                  type="button"
+                  className="toast-action-btn"
+                  onClick={() => {
+                    notificationMsg.onAction?.();
+                  }}
+                >
+                  {notificationMsg.actionLabel}
+                </button>
+              </div>
             )}
-            <button className="toast-close-btn" onClick={() => setNotificationMsg(null)}>×</button>
           </div>
         )}
 
