@@ -4,6 +4,7 @@ import {
   getStoredReadings,
   saveStoredReadings,
   addReadingToStorage,
+  updateReadingInStorage,
   deleteSessionFromStorage,
   deleteReadingFromStorage,
   getStoredSettings,
@@ -19,6 +20,7 @@ import { ReadingForm } from './components/ReadingForm';
 import { WhiteCoatBanner } from './components/WhiteCoatBanner';
 import { TrendChart } from './components/TrendChart';
 import { ReadingList } from './components/ReadingList';
+import { EditReadingModal } from './components/EditReadingModal';
 import { ExportModal, type ToastNotification } from './components/ExportModal';
 import { SettingsModal } from './components/SettingsModal';
 import { LegalNoticeModal } from './components/LegalNoticeModal';
@@ -33,6 +35,7 @@ export function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isLegalNoticeOpen, setIsLegalNoticeOpen] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<DateRange>({ preset: '30days' });
+  const [readingToEdit, setReadingToEdit] = useState<BloodPressureReading | null>(null);
   const [notificationMsg, setNotificationMsg] = useState<string | ToastNotification | null>(null);
 
   const { sessions } = processReadingsIntoSessions(readings, settings);
@@ -154,6 +157,11 @@ export function App() {
     }
   };
 
+  const handleSaveReadingEdit = (updatedReading: BloodPressureReading) => {
+    const updated = updateReadingInStorage(updatedReading);
+    setReadings(updated);
+  };
+
   const lastReading = readings.length > 0 ? readings[0] : null;
 
   return (
@@ -219,6 +227,7 @@ export function App() {
           sessions={sessions}
           onDeleteSession={handleDeleteSession}
           onDeleteSingleReading={handleDeleteSingleReading}
+          onEditReading={(reading) => setReadingToEdit(reading)}
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
         />
@@ -234,6 +243,15 @@ export function App() {
             {getTranslation(settings.language, 'legal.footerLink')}
           </button>
         </footer>
+
+        <EditReadingModal
+          isOpen={Boolean(readingToEdit)}
+          reading={readingToEdit}
+          settings={settings}
+          onUpdateInputMode={handleUpdateInputMode}
+          onClose={() => setReadingToEdit(null)}
+          onSaveReading={handleSaveReadingEdit}
+        />
 
         <ExportModal
           isOpen={isExportModalOpen}

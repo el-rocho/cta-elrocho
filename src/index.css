@@ -1715,6 +1715,28 @@ input:checked + .toggle-slider:before {
     max-width: 220px;
   }
 
+  .metrics-inputs-grid .input-group:nth-child(3) label {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .edit-fields-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .edit-fields-grid .edit-field-group:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: 70%;
+    max-width: 220px;
+  }
+
+  .edit-fields-grid .edit-field-group:nth-child(3) label {
+    justify-content: center;
+    text-align: center;
+  }
+
   /* Ruleta Tactil Compacta en Moviles */
   .card.form-card {
     padding: 16px 10px;
@@ -1799,4 +1821,234 @@ input:checked + .toggle-slider:before {
     min-width: 24px;
     min-height: 24px;
   }
+}
+
+/* ==========================================
+   ESTILOS PARA EDICIÓN DE TOMAS (SENIOR FRIENDLY)
+   ========================================== */
+
+.list-title-container {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.list-edit-hint {
+  font-size: 12px;
+  color: var(--text-muted, #6b7280);
+  font-style: italic;
+  margin: 0;
+}
+
+.btn-icon-edit {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon-edit:hover {
+  color: var(--primary-color, #2563eb);
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.table-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-text-edit {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.btn-text-edit:hover {
+  background: rgba(37, 99, 235, 0.1);
+  text-decoration: underline;
+}
+
+.edit-reading-modal {
+  max-width: 540px;
+  width: 95%;
+}
+
+.modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-title-row h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.edit-header-toggle {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 580px) {
+  .edit-modal-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .edit-header-toggle {
+    order: 3;
+    width: 100%;
+    margin-top: 6px;
+    justify-content: center;
+  }
+
+  .edit-header-toggle .btn-mode-chip {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+.readonly-timestamp-banner {
+  background: var(--bg-input, #f3f4f6);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.readonly-timestamp-banner .timestamp-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: var(--text-primary, #111827);
+  text-transform: capitalize;
+}
+
+.edit-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.edit-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-field-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.edit-field-group label .unit-label {
+  font-weight: normal;
+  color: var(--text-muted);
+}
+
+.edit-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-color, #d1d5db);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, #111827);
+  font-size: 16px;
+  font-weight: 600;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.notes-textarea {
+  font-weight: normal;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 70px;
+}
+
+.dot-sys { background-color: #ef4444; }
+.dot-dia { background-color: #3b82f6; }
+.dot-bpm { background-color: #10b981; }
+
+.modal-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.btn-primary-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-primary-large:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-secondary-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: var(--bg-input, #e5e7eb);
+  color: var(--text-primary, #374151);
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary-large:hover {
+  background-color: #d1d5db;
 }

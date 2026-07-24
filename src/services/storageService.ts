@@ -142,6 +142,13 @@ export function addReadingToStorage(newReading: Omit<BloodPressureReading, 'id'>
   return created;
 }
 
+export function updateReadingInStorage(updatedReading: BloodPressureReading): BloodPressureReading[] {
+  const current = getStoredReadings();
+  const updated = current.map((r) => (r.id === updatedReading.id ? updatedReading : r));
+  saveStoredReadings(updated);
+  return updated;
+}
+
 export function deleteReadingFromStorage(id: string): BloodPressureReading[] {
   const current = getStoredReadings();
   const updated = current.filter((r) => r.id !== id);

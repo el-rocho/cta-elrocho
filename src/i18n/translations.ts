@@ -4,7 +4,7 @@ export const translations = {
   es: {
     // Header
     header: {
-      title: 'Control de Tensión Arterial',
+      title: 'Control Tensión Arterial',
       subtitle: 'Registro diario y análisis de presión sanguínea',
       exportBtn: 'Exportar / Imprimir',
       badgePrivate: 'Privado & Offline',
@@ -19,9 +19,9 @@ export const translations = {
       title: 'Nueva Lectura de Tensión',
       modeKeyboard: 'Teclado',
       modeWheel: 'Rueda',
-      systolic: 'Sistólica (SYS)',
-      diastolic: 'Diastólica (DIA)',
-      heartRate: 'Pulsaciones (PPM)',
+      systolic: 'Sistólica',
+      diastolic: 'Diastólica',
+      heartRate: 'Pulsaciones',
       armLabel: 'Brazo:',
       armLeft: 'Izquierdo',
       armRight: 'Derecho',
@@ -46,9 +46,9 @@ export const translations = {
       avgDiastolic: 'Promedio Diastólica',
       avgHeartRate: 'Promedio Pulsaciones',
       totalSessions: 'Total Sesiones',
-      sysShort: 'SYS',
-      diaShort: 'DIA',
-      bpmShort: 'PPM',
+      sysShort: 'Sistólica',
+      diaShort: 'Diastólica',
+      bpmShort: 'Pulsaciones',
       sessionAverage: 'Promedio sesión',
       noData: 'Sin datos en el rango seleccionado',
       categories: {
@@ -64,6 +64,7 @@ export const translations = {
     // Lista de lecturas
     list: {
       title: 'Historial de Mediciones',
+      editHint: 'Para modificar datos mantener pulsado',
       preset7Days: '7 Días',
       preset30Days: '30 Días',
       preset90Days: '90 Días',
@@ -73,9 +74,21 @@ export const translations = {
       arm: 'Brazo',
       armLeft: 'Izquierdo',
       armRight: 'Derecho',
+      editBtn: 'Editar',
       deleteSessionConfirm: '¿Seguro que deseas eliminar esta sesión de medición?',
       deleteReadingConfirm: '¿Seguro que deseas eliminar esta toma individual?',
       emptyState: 'No hay mediciones registradas en el periodo seleccionado.',
+    },
+
+    // Modal de Edición
+    editModal: {
+      title: 'Editar',
+      systolic: 'Sistólica',
+      diastolic: 'Diastólica',
+      heartRate: 'Pulsaciones',
+      notesPlaceholder: 'Añadir o corregir observaciones...',
+      save: 'Guardar Cambios',
+      cancel: 'Cancelar',
     },
 
     // Configuración
@@ -155,6 +168,7 @@ export const translations = {
       resetDemoSuccess: '✓ Se han restaurado los datos de ejemplo.',
       clearAllConfirm: '¿Seguro que deseas ELIMINAR TODOS los datos? Esta acción borrará permanentemente todo tu historial.',
       clearAllSuccess: '✓ Se han eliminado todos los datos de la aplicación.',
+      updateSuccess: '✓ Toma de tensión actualizada correctamente.',
     },
 
     // Generador de PDF e Informes
@@ -182,7 +196,7 @@ export const translations = {
   en: {
     // Header
     header: {
-      title: 'Blood Pressure Tracker',
+      title: 'Control Tensión Arterial',
       subtitle: 'Daily blood pressure logging and analysis',
       exportBtn: 'Export / Print',
       badgePrivate: 'Private & Offline',
@@ -197,9 +211,9 @@ export const translations = {
       title: 'New Pressure Reading',
       modeKeyboard: 'Keyboard',
       modeWheel: 'Wheel',
-      systolic: 'Systolic (SYS)',
-      diastolic: 'Diastolic (DIA)',
-      heartRate: 'Pulse (BPM)',
+      systolic: 'Systolic',
+      diastolic: 'Diastolic',
+      heartRate: 'Pulse',
       armLabel: 'Arm:',
       armLeft: 'Left',
       armRight: 'Right',
@@ -224,9 +238,9 @@ export const translations = {
       avgDiastolic: 'Avg Diastolic',
       avgHeartRate: 'Avg Pulse',
       totalSessions: 'Total Sessions',
-      sysShort: 'SYS',
-      diaShort: 'DIA',
-      bpmShort: 'BPM',
+      sysShort: 'Systolic',
+      diaShort: 'Diastolic',
+      bpmShort: 'Pulse',
       sessionAverage: 'Session average',
       noData: 'No data in selected range',
       categories: {
@@ -242,6 +256,7 @@ export const translations = {
     // Reading List
     list: {
       title: 'Measurement History',
+      editHint: 'To modify data hold press',
       preset7Days: '7 Days',
       preset30Days: '30 Days',
       preset90Days: '90 Days',
@@ -251,9 +266,21 @@ export const translations = {
       arm: 'Arm',
       armLeft: 'Left',
       armRight: 'Right',
+      editBtn: 'Edit',
       deleteSessionConfirm: 'Are you sure you want to delete this measurement session?',
       deleteReadingConfirm: 'Are you sure you want to delete this single reading?',
       emptyState: 'No readings recorded in the selected period.',
+    },
+
+    // Edit Modal
+    editModal: {
+      title: 'Edit',
+      systolic: 'Systolic',
+      diastolic: 'Diastolic',
+      heartRate: 'Pulse',
+      notesPlaceholder: 'Add or correct observations...',
+      save: 'Save Changes',
+      cancel: 'Cancel',
     },
 
     // Settings
@@ -333,6 +360,7 @@ export const translations = {
       resetDemoSuccess: '✓ Default example data restored.',
       clearAllConfirm: 'Are you sure you want to DELETE ALL data? This action will permanently erase all your history.',
       clearAllSuccess: '✓ All application data has been deleted.',
+      updateSuccess: '✓ Pressure reading updated successfully.',
     },
 
     // PDF Report Generator

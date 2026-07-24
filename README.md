@@ -41,7 +41,7 @@ La aplicación es totalmente compatible con **[Obtainium](https://github.com/Imr
 
 ---
 
-## 🛡️ Filtro de Síndrome de Bata Blanca (Algoritmo Médico)
+## 🛡️ Filtro de Síndrome de Bata Blanca
 
 El **Filtro de Síndrome de Bata Blanca** mitiga la distorsión generada por el sesgo de alerta o ansiedad inicial del paciente al colocarse el manguito de tensión.
 
