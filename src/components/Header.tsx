@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShieldCheck, Download, Moon, Sun, Settings } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { AppLogo } from './AppLogo';
 
 interface HeaderProps {
   onOpenExportModal: () => void;
@@ -22,11 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-brand">
         <div className="brand-logo">
-          <img
-            src={isDarkMode ? './logo-night.png' : './logo-day.png'}
-            alt={t('header.title')}
-            className="brand-logo-img"
-          />
+          <AppLogo className="brand-logo-img" />
         </div>
         <div>
           <h1 className="brand-title">{t('header.title')}</h1>

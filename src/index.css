@@ -238,6 +238,7 @@ body {
   justify-content: center;
   background: transparent;
   flex-shrink: 0;
+  color: var(--text-primary);
 }
 
 .brand-logo-img {
