@@ -43,6 +43,7 @@ export interface AppSettings {
   patientName?: string;
   patientSex?: PatientSex;
   patientAge?: number | '';
+  patientBirthDate?: string; // Formato YYYY-MM-DD
 
   // Copias de seguridad automáticas CSV
   backupFrequency: BackupFrequency;
@@ -54,6 +55,7 @@ export interface ExportReportOptions {
   patientName?: string;
   patientSex?: PatientSex;
   patientAge?: number | '';
+  patientBirthDate?: string;
   reportNotes?: string;
   hidePatientData?: boolean;
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import type { AppSettings, BackupFrequency, PatientSex, LanguageOption } from '../types/bloodPressure';
 import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck, User, Trash2, Globe } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { calculateAge } from '../utils/pdfGenerator';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -42,10 +43,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onUpdateSettings({ ...settings, patientSex: sex });
   };
 
-  const handlePatientAgeChange = (ageStr: string) => {
-    const ageVal = ageStr === '' ? '' : parseInt(ageStr, 10);
-    onUpdateSettings({ ...settings, patientAge: isNaN(ageVal as number) ? '' : ageVal });
+  const handlePatientBirthDateChange = (val: string) => {
+    const computedAge = val ? calculateAge(val) : '';
+    onUpdateSettings({
+      ...settings,
+      patientBirthDate: val,
+      patientAge: computedAge,
+    });
   };
+
+  const currentComputedAge = settings.patientAge || (settings.patientBirthDate ? calculateAge(settings.patientBirthDate) : '');
 
   const handleToggleWhiteCoat = () => {
     onUpdateSettings({
@@ -149,6 +156,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </div>
 
+              <div>
+                <label className="settings-desc" style={{ display: 'block', marginBottom: '4px' }}>
+                  {t('settings.birthDate')}
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="date"
+                    value={settings.patientBirthDate || ''}
+                    onChange={(e) => handlePatientBirthDateChange(e.target.value)}
+                    className="modal-input"
+                    style={{ padding: '6px 10px', fontSize: '13px' }}
+                  />
+                  {currentComputedAge !== '' && (
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#3b82f6' }}>
+                      ({currentComputedAge} {settings.language === 'en' ? 'years old' : 'años'})
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                 <div className="chip-options-row">
                   <button
@@ -167,22 +194,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   >
                     {t('settings.sexFemale')}
                   </button>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label className="settings-desc" style={{ margin: 0, whiteSpace: 'nowrap' }}>
-                    {t('settings.age')}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={120}
-                    value={settings.patientAge ?? ''}
-                    onChange={(e) => handlePatientAgeChange(e.target.value)}
-                    placeholder={t('settings.agePlaceholder')}
-                    className="modal-input"
-                    style={{ width: '70px', padding: '6px 8px', fontSize: '13px', textAlign: 'center' }}
-                  />
                 </div>
               </div>
             </div>

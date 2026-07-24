@@ -50,6 +50,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     patientName: settings.patientName,
     patientSex: settings.patientSex,
     patientAge: settings.patientAge,
+    patientBirthDate: settings.patientBirthDate,
     reportNotes: reportNotes.trim() ? reportNotes.trim() : undefined,
     hidePatientData,
   });

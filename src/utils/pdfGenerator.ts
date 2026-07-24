@@ -14,6 +14,19 @@ export interface PDFGenerationResult {
   isNative?: boolean;
 }
 
+export function calculateAge(birthDateStr?: string): number | '' {
+  if (!birthDateStr) return '';
+  const birthDate = new Date(birthDateStr);
+  if (isNaN(birthDate.getTime())) return '';
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age >= 0 ? age : '';
+}
+
 export async function downloadPDFReport(
   sessions: BloodPressureSession[],
   dateRange: DateRange,
@@ -51,7 +64,7 @@ export async function downloadPDFReport(
   const avgPulse = total > 0 ? Math.round(sumPulse / total) : 0;
   const avgCategory = getHealthCategory(avgSys, avgDia, lang);
 
-  // Generar SVG del gráfico
+  // Generar SVG del gráfico en formato horizontal de alta resolución
   const svgChartHtml = generateChartSVG(chronological, locale, isEn);
 
   // Calcular periodo de fechas real
@@ -63,32 +76,40 @@ export async function downloadPDFReport(
   const maxDStr = new Date(maxT).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
   realPeriodStr = minDStr === maxDStr ? minDStr : isEn ? `From ${minDStr} to ${maxDStr}` : `Del ${minDStr} al ${maxDStr}`;
 
-  // Formatear metadatos de paciente
+  // Formatear metadatos de paciente (Nombre, Edad dinámica y Genero M/F si se han indicado)
   let patientInfoStr = '';
   if (!options.hidePatientData) {
     const parts: string[] = [];
-    if (options.patientName) parts.push(`<strong>${isEn ? 'Patient:' : 'Paciente:'}</strong> ${options.patientName}`);
-    if (options.patientSex) {
-      const sexCap = options.patientSex.charAt(0).toUpperCase() + options.patientSex.slice(1);
-      parts.push(`<strong>${isEn ? 'Sex:' : 'Sexo:'}</strong> ${sexCap}`);
-    }
-    if (options.patientAge) {
-      parts.push(`<strong>${isEn ? 'Age:' : 'Edad:'}</strong> ${options.patientAge} ${isEn ? 'years' : 'años'}`);
-    } else {
-      parts.push(`<strong>${isEn ? 'Age:' : 'Edad:'}</strong> ${isEn ? 'Not specified' : 'No especificada'}`);
+    if (options.patientName) {
+      parts.push(`<strong>${isEn ? 'Patient:' : 'Paciente:'}</strong> ${options.patientName}`);
     }
 
-    patientInfoStr = parts.length > 0 ? parts.join(' | ') : `<strong>${isEn ? 'Patient:' : 'Paciente:'}</strong> ${isEn ? 'Not specified' : 'No especificado'}`;
-  } else {
-    patientInfoStr = `<strong>${isEn ? 'Patient Data:' : 'Datos de Paciente:'}</strong> ${isEn ? 'Hidden / Anonymous' : 'Ocultos / Anónimos'}`;
+    const computedAge = options.patientAge || (options.patientBirthDate ? calculateAge(options.patientBirthDate) : '');
+    if (computedAge !== '' && computedAge !== undefined && computedAge !== null) {
+      parts.push(`<strong>${isEn ? 'Age:' : 'Edad:'}</strong> ${computedAge} ${isEn ? 'years' : 'años'}`);
+    }
+
+    if (options.patientSex) {
+      const s = options.patientSex.toLowerCase();
+      let sexLetter = '';
+      if (s === 'masculino' || s === 'male' || s === 'm') sexLetter = 'M';
+      else if (s === 'femenino' || s === 'female' || s === 'f') sexLetter = 'F';
+      else if (s === 'otro' || s === 'other' || s === 'o') sexLetter = 'O';
+
+      if (sexLetter) {
+        parts.push(`<strong>${sexLetter}</strong>`);
+      }
+    }
+
+    patientInfoStr = parts.length > 0 ? parts.join(' | ') : '';
   }
 
-  // Crear contenedor temporal visible en capas superiores para que html2canvas compute y capture perfectamente todos los píxeles
+  // Crear contenedor temporal visible horizontal A4 en capa superior (1050px aprox 297mm a 96DPI)
   const container = document.createElement('div');
   container.style.position = 'absolute';
   container.style.top = '0';
   container.style.left = '0';
-  container.style.width = '794px'; // Ancho A4 estándar a 96 DPI
+  container.style.width = '1050px'; // Ancho A4 Horizontal a 96 DPI
   container.style.zIndex = '999999';
   container.style.backgroundColor = '#ffffff';
   container.style.color = '#1e293b';
@@ -99,12 +120,11 @@ export async function downloadPDFReport(
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px;">
       <div>
-        <h1 style="margin: 0; font-size: 22px; color: #0f172a;">${isEn ? 'Blood Pressure & Pulse Clinical Report' : 'Informe de Tensión Arterial y Pulsaciones'}</h1>
-        <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b;">${patientInfoStr} | <strong>${isEn ? 'Period:' : 'Periodo:'}</strong> ${realPeriodStr}</p>
+        <h1 style="margin: 0; font-size: 22px; color: #0f172a;">${isEn ? 'Blood Pressure Report' : 'Informe de Tensión Arterial'}</h1>
+        <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b;">${patientInfoStr ? patientInfoStr + ' | ' : ''}<strong>${isEn ? 'Period:' : 'Periodo:'}</strong> ${realPeriodStr}</p>
       </div>
       <div style="text-align: right; font-size: 12px; color: #64748b;">
         <p style="margin:0;">${isEn ? 'Generated:' : 'Generado:'} ${new Date().toLocaleDateString(locale)} ${new Date().toLocaleTimeString(locale)}</p>
-        <p style="margin:4px 0 0 0; color:#10b981; font-weight:600;">✓ ${isEn ? 'Private Document' : 'Documento Privado'}</p>
       </div>
     </div>
 
@@ -140,7 +160,7 @@ export async function downloadPDFReport(
       </div>
     </div>
 
-    <!-- Gráfico vectorial del informe -->
+    <!-- Gráfico vectorial del informe horizontal amplio -->
     <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
       <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
         <span>${isEn ? 'Blood Pressure Evolution' : 'Evolución Tensión Arterial'}</span>
@@ -226,19 +246,20 @@ export async function downloadPDFReport(
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: 800,
+      windowWidth: 1050,
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
+    // Formato horizontal A4 (297mm x 210mm)
     const pdf = new jsPDF({
-      orientation: 'portrait',
+      orientation: 'landscape',
       unit: 'mm',
       format: 'a4',
     });
 
-    const pdfWidth = pdf.internal.pageSize.getWidth(); // 210 mm
-    const pdfHeight = pdf.internal.pageSize.getHeight(); // 297 mm
+    const pdfWidth = pdf.internal.pageSize.getWidth(); // 297 mm
+    const pdfHeight = pdf.internal.pageSize.getHeight(); // 210 mm
 
     const imgWidth = pdfWidth - 16; // 8mm margen cada lado
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -309,8 +330,8 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[], locale 
     return `<p style="text-align:center; color:#94a3b8; font-size:12px;">${isEn ? 'No data to chart in this period' : 'Sin datos para graficar en este periodo'}</p>`;
   }
 
-  const width = 720;
-  const height = 180;
+  const width = 1000;
+  const height = 210;
   const paddingLeft = 40;
   const paddingRight = 45;
   const paddingTop = 15;
@@ -372,23 +393,23 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[], locale 
 
       <!-- Puntos Sistólica -->
       ${sysPoints
-        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#ef4444" stroke="#ffffff" stroke-width="0.75" />`)
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="#ef4444" stroke="#ffffff" stroke-width="0.75" />`)
         .join('')}
 
       <!-- Puntos Diastólica -->
       ${diaPoints
-        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#3b82f6" stroke="#ffffff" stroke-width="0.75" />`)
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="#3b82f6" stroke="#ffffff" stroke-width="0.75" />`)
         .join('')}
 
       <!-- Puntos Pulsaciones (Gris) -->
       ${pulsePoints
-        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="1.5" fill="#64748b" stroke="#ffffff" stroke-width="0.75" />`)
+        .map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#64748b" stroke="#ffffff" stroke-width="0.75" />`)
         .join('')}
 
       <!-- Eje X (Fechas) -->
       ${chronologicalSessions
         .map((s, i) => {
-          if (chronologicalSessions.length > 10 && i % Math.ceil(chronologicalSessions.length / 8) !== 0) return '';
+          if (chronologicalSessions.length > 15 && i % Math.ceil(chronologicalSessions.length / 12) !== 0) return '';
           const x = getX(i);
           const dateLabel = new Date(s.timestamp).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
           return `<text x="${x}" y="${height - 8}" text-anchor="middle" fill="#64748b" font-size="9">${dateLabel}</text>`;
