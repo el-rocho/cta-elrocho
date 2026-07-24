@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleDarkMode,
 }) => {
   const { t } = useLanguage();
-  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.4.2';
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.4.3';
 
   return (
     <header className="app-header">
@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="brand-title">{t('header.title')}</h1>
           <div className="brand-badge">
             <ShieldCheck size={13} className="shield-icon" />
-            <span>Privado &amp; Offline &bull; {appVersion}</span>
+            <span>{t('header.badgePrivate')} &bull; {appVersion}</span>
           </div>
         </div>
       </div>
@@ -54,9 +54,9 @@ export const Header: React.FC<HeaderProps> = ({
           <Settings size={22} />
         </button>
 
-        <button onClick={onOpenExportModal} className="btn-primary-gradient">
+        <button onClick={onOpenExportModal} className="btn-primary-gradient" title={t('header.exportTooltip')}>
           <Download size={16} />
-          <span>Exportar / Imprimir</span>
+          <span>{t('header.exportBtn')}</span>
         </button>
       </div>
     </header>

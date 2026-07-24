@@ -6,6 +6,8 @@ export const translations = {
     header: {
       title: 'Control de Tensión Arterial',
       subtitle: 'Registro diario y análisis de presión sanguínea',
+      exportBtn: 'Exportar / Imprimir',
+      badgePrivate: 'Privado & Offline',
       exportTooltip: 'Exportar e Importar datos (CSV / PDF)',
       settingsTooltip: 'Configuración',
       darkMode: 'Modo Oscuro',
@@ -182,6 +184,8 @@ export const translations = {
     header: {
       title: 'Blood Pressure Tracker',
       subtitle: 'Daily blood pressure logging and analysis',
+      exportBtn: 'Export / Print',
+      badgePrivate: 'Private & Offline',
       exportTooltip: 'Export & Import data (CSV / PDF)',
       settingsTooltip: 'Settings',
       darkMode: 'Dark Mode',
