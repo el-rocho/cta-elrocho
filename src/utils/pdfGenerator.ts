@@ -220,7 +220,7 @@ export async function downloadPDFReport(
     </table>
 
     <div style="margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 10px; color: #94a3b8; text-align: center;">
-      ${isEn ? 'Self-monitoring document generated locally and 100% privately. Does not constitute a medical diagnosis.' : 'Documento de autocontrol generado localmente de forma 100% privada. No constituye diagnóstico médico.'}
+      ${isEn ? 'Personal and private log document. Does not constitute a medical diagnosis.' : 'Documento de registro personal y privado. No constituye diagnóstico médico.'}
     </div>
   `;
 

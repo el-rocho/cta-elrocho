@@ -175,7 +175,7 @@ export const translations = {
       thCategory: 'Categoría OMS',
       thArm: 'Brazo',
       thNotes: 'Notas',
-      footerNotice: 'Documento de autocontrol generado para presentación médica. No constituye diagnóstico médico por sí solo.',
+      footerNotice: 'Documento de registro personal y privado. No constituye diagnóstico médico.',
     },
   },
 
@@ -353,7 +353,7 @@ export const translations = {
       thCategory: 'WHO Category',
       thArm: 'Arm',
       thNotes: 'Notes',
-      footerNotice: 'Self-monitoring document generated for medical review. Does not constitute a medical diagnosis by itself.',
+      footerNotice: 'Personal and private log document. Does not constitute a medical diagnosis.',
     },
   },
 } as const;
