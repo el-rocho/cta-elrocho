@@ -163,34 +163,37 @@ export function App() {
     >
       <div className="app-container">
         {notificationMsg && (
-          <div className="toast-notification">
-            <div className="toast-top-row">
-              <span className="toast-message-text">
-                {typeof notificationMsg === 'string' ? notificationMsg : notificationMsg.message}
-              </span>
-              <button
-                type="button"
-                className="toast-close-btn"
-                onClick={() => setNotificationMsg(null)}
-                aria-label="Cerrar notificación"
-              >
-                ×
-              </button>
-            </div>
-
-            {typeof notificationMsg === 'object' && notificationMsg.actionLabel && notificationMsg.onAction && (
-              <div className="toast-bottom-row">
+          <div className="toast-modal-overlay" onClick={() => setNotificationMsg(null)}>
+            <div className="toast-notification" onClick={(e) => e.stopPropagation()}>
+              <div className="toast-top-row">
+                <span className="toast-message-text">
+                  {typeof notificationMsg === 'string' ? notificationMsg : notificationMsg.message}
+                </span>
                 <button
                   type="button"
-                  className="toast-action-btn"
-                  onClick={() => {
-                    notificationMsg.onAction?.();
-                  }}
+                  className="toast-close-btn"
+                  onClick={() => setNotificationMsg(null)}
+                  aria-label="Cerrar notificación"
                 >
-                  {notificationMsg.actionLabel}
+                  ×
                 </button>
               </div>
-            )}
+
+              {typeof notificationMsg === 'object' && notificationMsg.actionLabel && notificationMsg.onAction && (
+                <div className="toast-bottom-row">
+                  <button
+                    type="button"
+                    className="toast-action-btn"
+                    onClick={() => {
+                      notificationMsg.onAction?.();
+                      setNotificationMsg(null);
+                    }}
+                  >
+                    {notificationMsg.actionLabel}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

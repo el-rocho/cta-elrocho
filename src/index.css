@@ -69,25 +69,41 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Toast Notification (Centrada en pantalla, azul médico con botón de cierre rojo) */
-.toast-notification {
+/* Toast Modal Notification (Overlay modal completo centrado en pantalla) */
+.toast-modal-overlay {
   position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
   z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.toast-notification {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  z-index: 10001;
   background: #2563eb;
   color: #ffffff;
-  padding: 16px 20px;
-  border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.45);
+  padding: 18px 22px;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: 330px;
+  gap: 14px;
+  width: 340px;
   max-width: 92vw;
-  animation: slideInCentered 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toast-top-row {
@@ -158,9 +174,9 @@ body {
   transform: translateY(-1px);
 }
 
-@keyframes slideInCentered {
-  from { transform: translate(-50%, -20px); opacity: 0; }
-  to { transform: translate(-50%, 0); opacity: 1; }
+@keyframes modalPopIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 /* Layout Principal */
