@@ -30,7 +30,7 @@ Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y 
 Si en algún momento decides pasar de esta app móvil individual al servidor familiar:
 1. Exporta tus registros pulsando **Exportar** &rarr; Descargar copia `.csv`.
 2. Entra en tu cuenta de la [Versión Autoalojada](https://github.com/el-rocho/cta-elrocho-selhosted).
-3. Ve a **Exportar / Imprimir** &rarr; pestaña **Importar** y sube el archivo `.csv`. Todas tus mediciones se asociarán a tu usuario de forma privada e inmune a duplicados.
+3. Ve a **Exportar / Imprimir** &rarr; pestaña **Importar** y sube el archivo `.csv`. Todas tus mediciones se asociarán a tu usuario.
 
 ---
 
