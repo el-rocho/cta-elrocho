@@ -39,7 +39,7 @@ Si en algún momento decides pasar de esta app móvil individual al servidor fam
 Las publicaciones oficiales y compilaciones del APK se generan automáticamente mediante **GitHub Actions** al publicar un Tag o Release en el repositorio.
 
 ### 📲 Actualización Automática con Obtainium:
-La aplicación es totalmente compatible con **[Obtainium](https://github.com/ImranRaja1/Obtainium)**. Al añadir la URL del repositorio de GitHub (`https://github.com/el-rocho/cta-elrocho`), Obtainium detectará automáticamente las nuevas versiones (`v1.3.2`, etc.) y actualizará la App directamente en tu dispositivo Android.
+La aplicación es totalmente compatible con **[Obtainium](https://github.com/ImranR98/Obtainium)**. Al añadir la URL del repositorio de GitHub (`https://github.com/el-rocho/cta-elrocho`), Obtainium detectará automáticamente las nuevas versiones (`v1.3.2`, etc.) y actualizará la App directamente en tu dispositivo Android.
 
 ### 📥 Descarga Manual de Releases:
 1. Accede a la sección **[Releases del Repositorio](https://github.com/el-rocho/cta-elrocho/releases)**.
