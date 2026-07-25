@@ -9,7 +9,11 @@
 ![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.5.3-2563eb?style=for-the-badge&logo=github)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge)
 
-Aplicación Nativa **Android (APK)** y web offline para el registro, seguimiento y análisis de la tensión arterial (sistólica y diastólica) y ritmo cardíaco (pulsaciones). Diseñada para ofrecer máxima privacidad en el dispositivo (compatible con **GrapheneOS** y Android estándar), **sin barra de navegador** y con funcionalidad 100% local sin envío de datos a servidores externos.
+Aplicación nativa Android (PWA y APK) para el registro, seguimiento y análisis de la tensión arterial. Diseñada para ofrecer máxima privacidad en dispositivos Android (sin servicios de Google, compatible con GrapheneOS). 
+
+100% control de tus datos: privados, offline y sin comunicación con servidores externos.
+
+Si necesitas gestionar varios usuarios puedes utilizar la "[versión autoalojada](https://github.com/el-rocho/cta-elrocho-selfhosted)".
 
 > ✨ **Metodología de Desarrollo**: Este proyecto ha sido conceptualizado, diseñado y guiado mediante **Vibe Coding**, utilizando asistencia avanzada de Inteligencia Artificial para la generación de código y arquitectura.
 
