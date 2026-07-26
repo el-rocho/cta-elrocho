@@ -5,8 +5,8 @@
 # Control Tensión Arterial 🩺
 
 ![Built with Vibe Coding](https://img.shields.io/badge/Built%20with-Vibe%20Coding%20%26%20AI-7c3aed?style=for-the-badge&logo=sparkles)
-![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.5.3-3DDC84?style=for-the-badge&logo=android)
-![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.5.3-2563eb?style=for-the-badge&logo=github)
+![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.5.4-3DDC84?style=for-the-badge&logo=android)
+![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.5.4-2563eb?style=for-the-badge&logo=github)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge)
 
 Aplicación nativa Android (PWA y APK) para el registro, seguimiento y análisis de la tensión arterial. Diseñada para ofrecer máxima privacidad en dispositivos Android (sin servicios de Google, compatible con GrapheneOS). 
@@ -23,9 +23,9 @@ Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y 
 
 | Aplicación | Repositorio GitHub | Descripción y Uso |
 | :--- | :--- | :--- |
-| 📱 **Versión Individual Móvil (Offline)** | **[cta-elrocho](https://github.com/el-rocho/cta-elrocho)** *(Este repo)* | Ideal para uso personal en un único teléfono. Funciona **100% offline**, sin cuentas, sin servidor y guardando todos los datos en el almacenamiento interno privado del dispositivo. |
-| 🐳 **Servidor Autoalojado (Docker)** | [**cta-elrocho-selfhosted**](https://github.com/el-rocho/cta-elrocho-selfhosted) | Ideal si deseas desplegar la app en tu servidor privado o NAS para gestionar **varios perfiles familiares (~10 usuarios)** con base de datos SQLite y **2FA TOTP**. |
-| 🚀 **Cliente Servidor (Android & PWA)** | [**cta-elrocho-client-app**](https://github.com/el-rocho/cta-elrocho-client-app) | App cliente para conectar al servidor autoalojado introduciendo la IP (`http://192.168.1.x:3000`), con interfaz nativa Android y exportación PDF/CSV. |
+| 📱 **Versión Individual Móvil (Offline)** | **[cta-elrocho](https://github.com/el-rocho/cta-elrocho)** *(Este repo)* | App nativa 100% offline para uso personal en un único teléfono. Sin cuentas, sin servidor y sin conexión a red. |
+| 🐳 **Servidor Autoalojado (Docker)** | [**cta-elrocho-selfhosted**](https://github.com/el-rocho/cta-elrocho-selfhosted) | Servidor para instalar en tu NAS doméstico o Docker. Multiusuario (~10 perfiles), base de datos SQLite y 2FA TOTP. |
+| 🚀 **Cliente Servidor (Android & PWA)** | [**cta-elrocho-client-app**](https://github.com/el-rocho/cta-elrocho-client-app) | App cliente para conectar al servidor autoalojado introduciendo su IP/URL de red local (`http://192.168.1.x:3000`). |
 
 ### 🔄 Migración de Datos a la Versión Autoalojada:
 Si en algún momento decides pasar de esta app móvil individual al servidor familiar:
