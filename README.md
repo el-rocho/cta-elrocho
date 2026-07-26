@@ -13,23 +13,24 @@ Aplicación nativa Android (PWA y APK) para el registro, seguimiento y análisis
 
 100% control de tus datos: privados, offline y sin comunicación con servidores externos.
 
-Si necesitas gestionar varios usuarios puedes utilizar la "[versión autoalojada](https://github.com/el-rocho/cta-elrocho-selfhosted)".
-
 > ✨ **Metodología de Desarrollo**: Este proyecto ha sido conceptualizado, diseñado y guiado mediante **Vibe Coding**, utilizando asistencia avanzada de Inteligencia Artificial para la generación de código y arquitectura.
 
 ---
 
-## 💡 ¿Qué versión elegir? (Individual vs. Autoalojada)
+## 💡 Ecosistema de Aplicaciones: ¿Qué versión elegir?
 
-Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y PWA offline)**.
+Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y PWA offline)**. El proyecto cuenta con tres aplicaciones según tus necesidades:
 
-- 📱 **Versión Individual**: Ideal para uso personal en un único dispositivo móvil o tablet. Funciona **100% offline**, sin cuentas, sin servidor y guardando todos los datos en el almacenamiento interno privado del dispositivo.
-- 🐳 **[Versión Autoalojada Multi-usuario (Docker)](https://github.com/el-rocho/cta-elrocho-selhosted)**: Ideal si deseas desplegar la app en tu servidor privado o NAS para gestionar **varios perfiles familiares (hasta 10 usuarios)** con almacenamiento en base de datos SQLite y **autenticación de doble factor (2FA TOTP)**.
+| Aplicación | Repositorio GitHub | Descripción y Uso |
+| :--- | :--- | :--- |
+| 📱 **Versión Individual Móvil (Offline)** | **[cta-elrocho](https://github.com/el-rocho/cta-elrocho)** *(Este repo)* | Ideal para uso personal en un único teléfono. Funciona **100% offline**, sin cuentas, sin servidor y guardando todos los datos en el almacenamiento interno privado del dispositivo. |
+| 🐳 **Servidor Autoalojado (Docker)** | [**cta-elrocho-selfhosted**](https://github.com/el-rocho/cta-elrocho-selfhosted) | Ideal si deseas desplegar la app en tu servidor privado o NAS para gestionar **varios perfiles familiares (~10 usuarios)** con base de datos SQLite y **2FA TOTP**. |
+| 🚀 **Cliente Servidor (Android & PWA)** | [**cta-elrocho-client-app**](https://github.com/el-rocho/cta-elrocho-client-app) | App cliente para conectar al servidor autoalojado introduciendo la IP (`http://192.168.1.x:3000`), con interfaz nativa Android y exportación PDF/CSV. |
 
 ### 🔄 Migración de Datos a la Versión Autoalojada:
 Si en algún momento decides pasar de esta app móvil individual al servidor familiar:
 1. Exporta tus registros pulsando **Exportar** &rarr; Descargar copia `.csv`.
-2. Entra en tu cuenta de la [Versión Autoalojada](https://github.com/el-rocho/cta-elrocho-selhosted).
+2. Entra en tu cuenta de la [Versión Autoalojada (cta-elrocho-selfhosted)](https://github.com/el-rocho/cta-elrocho-selfhosted).
 3. Ve a **Exportar / Imprimir** &rarr; pestaña **Importar** y sube el archivo `.csv`. Todas tus mediciones se asociarán a tu usuario.
 
 ---
@@ -67,7 +68,7 @@ El **Filtro de Síndrome de Bata Blanca** mitiga la distorsión generada por el 
 ### 🔬 Cómo funciona el algoritmo:
 1. **Agrupación Consecutiva**: Se agrupan dentro de una misma sesión las tomas donde el intervalo entre una toma y la anterior sea menor al margen configurado (**3, 5 o 10 minutos**).
 2. **Sesiones de 2 tomas**: Si la 1ª toma es significativamente superior a la 2ª ($\ge 8$ mmHg sistólica / $\ge 4$ mmHg diastólica), se descarta la 1ª toma reteniendo la 2ª. En caso contrario, se promedian ambas.
-3. **Sesiones de 3 tomas**: Se descarta siempre la 1ª toma (por su bajo valor diagnóstico de aclimatación al manguito) y se calcula la media con las 2 tomas restantes.
+3. **Sesiones de 3 tomas**: Se descarta siempre la 1ª toma y se calcula la media con las 2 tomas restantes.
 4. **Sesiones de 4 o más tomas**: Se descarta la 1ª toma y se continúan descartando las siguientes tomas iniciales elevadas ($\ge 8$ mmHg sistólica / $\ge 4$ mmHg diastólica) respecto a la media de las restantes, siempre y cuando queden al menos 3 tomas válidas para calcular la media definitiva.
 
 ---
