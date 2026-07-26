@@ -40,7 +40,13 @@ Si en algún momento decides pasar de esta app móvil individual al servidor fam
 Las publicaciones oficiales y compilaciones del APK se generan automáticamente mediante **GitHub Actions** al publicar un Tag o Release en el repositorio.
 
 ### 📲 Actualización Automática con Obtainium:
-La aplicación es totalmente compatible con **[Obtainium](https://github.com/ImranR98/Obtainium)**. Al añadir la URL del repositorio de GitHub (`https://github.com/el-rocho/cta-elrocho`), Obtainium detectará automáticamente las nuevas versiones y actualizará la App directamente en tu dispositivo Android.
+La aplicación es totalmente compatible con **[Obtainium](https://github.com/ImranR98/Obtainium)**. Escanea este código QR desde Obtainium en tu teléfono Android o añade manualmente la URL del repositorio (`https://github.com/el-rocho/cta-elrocho`):
+
+<p align="center">
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://github.com/el-rocho/cta-elrocho" alt="Código QR para Obtainium - cta-elrocho" width="160" height="160" />
+  <br />
+  <sub><b>Escanea desde Obtainium para instalar y recibir actualizaciones</b></sub>
+</p>
 
 ### 📥 Descarga Manual de Releases:
 1. Accede a la sección **[Releases del Repositorio](https://github.com/el-rocho/cta-elrocho/releases)**.
