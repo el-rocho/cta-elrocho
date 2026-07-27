@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="public/logo-day.png" alt="Logo Control Tensión Arterial - Modo Día" width="160" height="160" />
+  <img src="public/logo-day.png" alt="Logo Control Tensión Arterial Offline" width="160" height="160" />
 </p>
 
 # Control Tensión Arterial 🩺
 
 ![Built with Vibe Coding](https://img.shields.io/badge/Built%20with-Vibe%20Coding%20%26%20AI-7c3aed?style=for-the-badge&logo=sparkles)
-![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.5.4-3DDC84?style=for-the-badge&logo=android)
-![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.5.4-2563eb?style=for-the-badge&logo=github)
+![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.5.5-3DDC84?style=for-the-badge&logo=android)
+![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.5.5-2563eb?style=for-the-badge&logo=github)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge)
 
 Aplicación nativa Android (PWA y APK) para el registro, seguimiento y análisis de la tensión arterial. Diseñada para ofrecer máxima privacidad en dispositivos Android (sin servicios de Google, compatible con GrapheneOS). 
@@ -59,7 +59,7 @@ La aplicación es totalmente compatible con **[Obtainium](https://github.com/Imr
 
 - **Soporte Bilingüe Completo (Español / Inglés)**: Selección de idioma desde la pantalla de **Configuración** (🇪🇸 Español / 🇬🇧 English). Interfaz, ruletas, gráficos, notificaciones e informes exportados se adaptan al instante.
 - **Experiencia Nativa Android**: Funciona como una App independiente a pantalla completa.
-- **100% Offline y Privada (RGPD / GrapheneOS)**: Todos los datos residen exclusivamente en el almacenamiento interno de tu teléfono (`localStorage` / `IndexedDB`).
+- **100% Offline y Privada (RGPD / GrapheneOS)**: Todos los datos residen exclusivamente en el almacenamiento interno de tu teléfono (`localStorage`). Las fuentes tipográficas están incluidas en la aplicación y no se descargan desde servicios externos.
 - **Sistema Dual de Entrada**: Elige entre teclado numérico tradicional o **Ruleta Táctil de Selección Rápida** centrada en la última medición realizada.
 - **Filtro de Síndrome de Bata Blanca**: Algoritmo inteligente que descarta tomas iniciales elevadas producidas por la ansiedad del momento (intervalos de 3, 5 o 10 minutos entre tomas consecutivas).
 - **Informes PDF**: Gráfico temporal con doble eje Y (tensión arterial + línea de pulsaciones en el eje derecho) y tabla detallada de registros.
