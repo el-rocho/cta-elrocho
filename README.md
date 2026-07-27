@@ -5,8 +5,8 @@
 # Control Tensión Arterial 🩺
 
 ![Built with Vibe Coding](https://img.shields.io/badge/Built%20with-Vibe%20Coding%20%26%20AI-7c3aed?style=for-the-badge&logo=sparkles)
-![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.5.5-3DDC84?style=for-the-badge&logo=android)
-![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.5.5-2563eb?style=for-the-badge&logo=github)
+![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.5.6-3DDC84?style=for-the-badge&logo=android)
+![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.5.6-2563eb?style=for-the-badge&logo=github)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge)
 
 Aplicación nativa Android (PWA y APK) para el registro, seguimiento y análisis de la tensión arterial. Diseñada para ofrecer máxima privacidad en dispositivos Android (sin servicios de Google, compatible con GrapheneOS). 
@@ -35,11 +35,12 @@ Si en algún momento decides pasar de esta app móvil individual al servidor fam
 
 ---
 
-## 📱 Instalación y Actualizaciones (Obtainium & Releases)
+## 📲 Instalación y Actualizaciones (Obtainium, APK y PWA)
 
-Las publicaciones oficiales y compilaciones del APK se generan automáticamente mediante **GitHub Actions** al publicar un Tag o Release en el repositorio.
+Las compilaciones oficiales del APK y el despliegue de la PWA se generan automáticamente mediante **GitHub Actions**.
 
-### 📲 Actualización Automática con Obtainium:
+### 1. 📱 Instalación con Obtainium (recomendada en Android)
+
 La aplicación es totalmente compatible con **[Obtainium](https://github.com/ImranR98/Obtainium)**. Escanea este código QR desde Obtainium en tu teléfono Android o añade manualmente la URL del repositorio (`https://github.com/el-rocho/cta-elrocho`):
 
 <p align="center">
@@ -48,10 +49,17 @@ La aplicación es totalmente compatible con **[Obtainium](https://github.com/Imr
   <sub><b>Escanea desde Obtainium para instalar y recibir actualizaciones</b></sub>
 </p>
 
-### 📥 Descarga Manual de Releases:
+### 2. 📥 Descarga manual del APK (GitHub Releases)
+
 1. Accede a la sección **[Releases del Repositorio](https://github.com/el-rocho/cta-elrocho/releases)**.
 2. Descarga la última versión del archivo `control-tension-arterial.apk`.
 3. Instala el paquete `.apk` en tu dispositivo Android.
+
+### 3. 🌐 Uso como PWA (navegador web / pantalla de inicio)
+
+- Accede a la **[PWA de Control Tensión Arterial](https://el-rocho.github.io/cta-elrocho/)** desde el navegador de tu dispositivo.
+- Puedes instalarla en la pantalla de inicio desde las opciones del navegador para utilizarla como una aplicación.
+- Los datos se almacenan exclusivamente en el propio dispositivo y navegador; no se envían a ningún servidor.
 
 ---
 
