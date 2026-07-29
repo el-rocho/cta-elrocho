@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { BloodPressureReading, ArmPosition, DateRange, AppSettings, InputMode } from './types/bloodPressure';
 import {
   getStoredReadings,
   saveStoredReadings,
   addReadingToStorage,
   updateReadingInStorage,
+  updateMedicationContextForAllReadings,
   deleteSessionFromStorage,
   deleteReadingFromStorage,
   getStoredSettings,
@@ -38,7 +39,10 @@ export function App() {
   const [readingToEdit, setReadingToEdit] = useState<BloodPressureReading | null>(null);
   const [notificationMsg, setNotificationMsg] = useState<string | ToastNotification | null>(null);
 
-  const { sessions } = processReadingsIntoSessions(readings, settings);
+  const { sessions } = useMemo(
+    () => processReadingsIntoSessions(readings, settings),
+    [readings, settings]
+  );
 
   useEffect(() => {
     saveStoredReadings(readings);
@@ -50,16 +54,27 @@ export function App() {
 
   useEffect(() => {
     if (sessions.length > 0) {
-      const result = checkAndExecuteAutoBackup(sessions, settings, handleUpdateSettings);
+      const result = checkAndExecuteAutoBackup(sessions, settings, setSettings);
       if (result.backupExecuted) {
         setNotificationMsg(getTranslation(settings.language, 'toast.autoBackup', { date: result.dateStr ?? '' }));
         setTimeout(() => setNotificationMsg(null), 6000);
       }
     }
-  }, [readings.length, settings.backupFrequency]);
+  }, [sessions, settings]);
 
   const handleUpdateSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
+  };
+
+  const handleMedicationContextChange = (
+    takesMedication: boolean,
+    recalculateHistory: boolean
+  ): boolean => {
+    if (recalculateHistory) {
+      setReadings(updateMedicationContextForAllReadings(takesMedication));
+    }
+    setSettings({ ...settings, takesAntihypertensiveMedication: takesMedication });
+    return true;
   };
 
   const handleUpdateInputMode = (mode: InputMode) => {
@@ -84,6 +99,7 @@ export function App() {
       patientName: settings.patientName,
       patientSex: settings.patientSex,
       patientAge: settings.patientAge,
+      takesAntihypertensiveMedication: settings.takesAntihypertensiveMedication,
     }, settings.language);
     const updatedSettings = {
       ...settings,
@@ -131,6 +147,7 @@ export function App() {
     heartRate: number;
     arm: ArmPosition;
     notes?: string;
+    pulsePressureWarningConfirmed?: boolean;
   }) => {
     const created = addReadingToStorage({
       timestamp: new Date().toISOString(),
@@ -139,6 +156,8 @@ export function App() {
       heartRate: data.heartRate,
       arm: data.arm,
       notes: data.notes,
+      pulsePressureWarningConfirmed: data.pulsePressureWarningConfirmed,
+      takesAntihypertensiveMedication: settings.takesAntihypertensiveMedication,
     });
     setReadings((prev) => [created, ...prev]);
   };
@@ -217,6 +236,7 @@ export function App() {
           settings={settings}
           onUpdateInputMode={handleUpdateInputMode}
           lastReading={lastReading}
+          readings={readings}
         />
 
         <WhiteCoatBanner settings={settings} onOpenSettings={() => setIsSettingsModalOpen(true)} />
@@ -230,6 +250,7 @@ export function App() {
           onEditReading={(reading) => setReadingToEdit(reading)}
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
+          takesMedication={settings.takesAntihypertensiveMedication}
         />
 
         <footer className="app-footer">
@@ -251,6 +272,7 @@ export function App() {
           onUpdateInputMode={handleUpdateInputMode}
           onClose={() => setReadingToEdit(null)}
           onSaveReading={handleSaveReadingEdit}
+          readings={readings}
         />
 
         <ExportModal
@@ -267,6 +289,7 @@ export function App() {
           onClose={() => setIsSettingsModalOpen(false)}
           settings={settings}
           onUpdateSettings={handleUpdateSettings}
+          onMedicationContextChange={handleMedicationContextChange}
           onResetDemoData={handleResetDemoData}
           onClearAllData={handleClearAllData}
           onTriggerManualBackup={handleTriggerManualBackup}

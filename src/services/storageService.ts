@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   patientName: '',
   patientSex: '',
   patientAge: '',
+  takesAntihypertensiveMedication: false,
   backupFrequency: 'disabled', // Por defecto DESACTIVADAS según preferencia del usuario
   backupFolder: 'Descargas/Copias_Tension_Arterial',
   lastBackupTimestamp: undefined,
@@ -72,14 +73,32 @@ const INITIAL_DEMO_DATA: BloodPressureReading[] = [
   },
 ];
 
+function migrateMedicationContext(
+  readings: BloodPressureReading[],
+  fallback: boolean
+): { readings: BloodPressureReading[]; changed: boolean } {
+  let changed = false;
+  const migrated = readings.map((reading) => {
+    if (typeof reading.takesAntihypertensiveMedication === 'boolean') return reading;
+    changed = true;
+    return { ...reading, takesAntihypertensiveMedication: fallback };
+  });
+  return { readings: migrated, changed };
+}
+
 export function getStoredReadings(): BloodPressureReading[] {
   try {
+    const medicationFallback = getStoredSettings().takesAntihypertensiveMedication;
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      saveStoredReadings(INITIAL_DEMO_DATA);
-      return INITIAL_DEMO_DATA;
+      const initial = migrateMedicationContext(INITIAL_DEMO_DATA, medicationFallback).readings;
+      saveStoredReadings(initial);
+      return initial;
     }
-    return JSON.parse(raw) as BloodPressureReading[];
+    const parsed = JSON.parse(raw) as BloodPressureReading[];
+    const migration = migrateMedicationContext(parsed, medicationFallback);
+    if (migration.changed) saveStoredReadings(migration.readings);
+    return migration.readings;
   } catch (error) {
     console.error('Error al leer de localStorage:', error);
     return INITIAL_DEMO_DATA;
@@ -149,6 +168,17 @@ export function updateReadingInStorage(updatedReading: BloodPressureReading): Bl
   return updated;
 }
 
+export function updateMedicationContextForAllReadings(
+  takesMedication: boolean
+): BloodPressureReading[] {
+  const updated = getStoredReadings().map((reading) => ({
+    ...reading,
+    takesAntihypertensiveMedication: takesMedication,
+  }));
+  saveStoredReadings(updated);
+  return updated;
+}
+
 export function deleteReadingFromStorage(id: string): BloodPressureReading[] {
   const current = getStoredReadings();
   const updated = current.filter((r) => r.id !== id);
@@ -169,6 +199,7 @@ export function importReadingsIntoStorage(imported: Omit<BloodPressureReading, '
   addedCount: number;
 } {
   const current = getStoredReadings();
+  const currentMedicationContext = getStoredSettings().takesAntihypertensiveMedication;
   const existingSignatures = new Set(
     current.map((r) => `${new Date(r.timestamp).toISOString().slice(0, 16)}_${r.systolic}_${r.diastolic}_${r.heartRate}`)
   );
@@ -183,6 +214,10 @@ export function importReadingsIntoStorage(imported: Omit<BloodPressureReading, '
       addedCount++;
       newItems.push({
         ...item,
+        takesAntihypertensiveMedication:
+          typeof item.takesAntihypertensiveMedication === 'boolean'
+            ? item.takesAntihypertensiveMedication
+            : currentMedicationContext,
         id: `imp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       });
     }

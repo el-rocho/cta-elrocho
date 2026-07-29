@@ -4,7 +4,7 @@ import { exportToCSV } from '../utils/exportCsv';
 import { downloadPDFReport } from '../utils/pdfGenerator';
 import { parseCSVData } from '../utils/importCsv';
 import { FileSpreadsheet, Printer, X, Calendar, User, Upload, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
-import { useLanguage } from '../i18n/LanguageContext';
+import { useLanguage } from '../i18n/useLanguage';
 
 import { Share } from '@capacitor/share';
 
@@ -51,6 +51,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     patientSex: settings.patientSex,
     patientAge: settings.patientAge,
     patientBirthDate: settings.patientBirthDate,
+    takesAntihypertensiveMedication: settings.takesAntihypertensiveMedication,
     reportNotes: reportNotes.trim() ? reportNotes.trim() : undefined,
     hidePatientData,
   });
