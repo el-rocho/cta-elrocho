@@ -6,7 +6,7 @@ const SETTINGS_KEY = 'graphene_bp_settings_v1';
 export const DEFAULT_SETTINGS: AppSettings = {
   language: 'es', // Por defecto Español
   enableWhiteCoatFilter: false, // Por defecto DESACTIVADO
-  whiteCoatIntervalMinutes: 5, // Por defecto 5 minutos (opciones: 5, 10, 15 min)
+  whiteCoatIntervalMinutes: 5, // Por defecto 5 minutos (opciones: 3, 5, 10 min)
   defaultArm: 'left',
   preferredInputMode: 'keyboard', // Por defecto teclado ('keyboard' / 'wheel')
   guidelineProfile: 'esc-2024',

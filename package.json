@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
+    "test:editions": "node scripts/compare-editions.mjs",
     "preview": "vite preview",
     "cap:sync": "cap sync",
     "cap:open": "cap open android"

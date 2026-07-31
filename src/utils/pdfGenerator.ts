@@ -9,12 +9,10 @@ import {
   getHealthAssessment,
   getHealthCategories,
   getHealthCategory,
-  getCulpritLabel,
-  getConfirmedPulsePressureAlerts,
   getGuidelineName,
   getHealthDisclaimer,
 } from './healthClassification';
-import { getEffectiveSessionReadings } from './whiteCoatAlgorithm';
+import { buildPDFMeasurementRowsHTML } from './pdfReportContent';
 
 export interface PDFGenerationResult {
   success: boolean;
@@ -124,17 +122,6 @@ export async function downloadPDFReport(
     .replace('aria-labelledby="title desc"', '')
     .trim()
     || `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 1254" style="width: 42px; height: 42px; flex-shrink: 0; color: #1f2937;" aria-hidden="true"><path d="${logoPath}" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"/></svg>`;
-
-  const renderAlertBadges = (alerts: ReturnType<typeof getHealthAssessment>['alerts']) =>
-    alerts
-      .map(
-        (alert) => `
-          <span title="${alert.description}" style="display:inline-block; padding:2px 6px; border-radius:9999px; font-size:8.5px; line-height:1.2; font-weight:600; background:${alert.badgeBg}; color:${alert.badgeText};">
-            ${alert.name}
-          </span>
-        `
-      )
-      .join('');
 
   // Los avisos pueden ocupar más de una línea; se reduce el número de filas para evitar cortes.
   const ROWS_PER_PAGE = 10;
@@ -265,53 +252,7 @@ export async function downloadPDFReport(
     pageContainer.style.padding = '20px';
     pageContainer.style.boxSizing = 'border-box';
 
-    const rowsHtml = pageSessions
-      .map((s, index) => {
-        const d = new Date(s.timestamp);
-        const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
-        const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-        const assessment = getHealthAssessment(
-          s.averageSystolic,
-          s.averageDiastolic,
-          s.averageHeartRate,
-          lang,
-          guidelineProfile
-        );
-        const sessionAlerts = [
-          ...assessment.safetyAlerts,
-          ...assessment.alerts,
-          ...getConfirmedPulsePressureAlerts(getEffectiveSessionReadings(s), lang),
-        ];
-        const cat = assessment.category;
-        const armLabel = s.arm === 'left' ? (isEn ? 'Left' : 'Izq') : (isEn ? 'Right' : 'Der');
-        const sessionTag = s.readings.length > 1 ? (isEn ? ` (Avg of ${s.readings.length} readings)` : ` (Media de ${s.readings.length} tomas)`) : '';
-        const bg = index % 2 === 0 ? '#ffffff' : '#f8fafc';
-
-        return `
-        <tr style="background-color: ${bg};">
-          <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0;"><strong>${dateStr}</strong> ${timeStr}</td>
-          <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0;"><strong style="font-size:12px; color:#ef4444;">${s.averageSystolic}</strong> mmHg</td>
-          <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0;"><strong style="font-size:12px; color:#3b82f6;">${s.averageDiastolic}</strong> mmHg</td>
-          <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0;"><strong style="font-size:12px; color:#64748b;">${s.averageHeartRate}</strong> ${isEn ? 'BPM' : 'ppm'}</td>
-          <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0;">${armLabel}</td>
-          <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0;">
-            <span style="display:inline-block; padding:2px 8px; border-radius:9999px; font-size:10px; font-weight:600; background:${cat.badgeBg}; color:${cat.badgeText};">
-              ${cat.name}
-            </span>
-            ${assessment.culprit !== 'none'
-              ? `<div style="font-size:8.5px; color:#475569; margin-top:3px;">${getCulpritLabel(assessment.culprit, assessment.category.direction, lang)}</div>`
-              : ''}
-            ${
-              sessionAlerts.length > 0
-                ? `<div style="display:flex; flex-wrap:wrap; gap:3px; margin-top:4px;">${renderAlertBadges(sessionAlerts)}</div>`
-                : ''
-            }
-          </td>
-          <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0;">${(s.notes || '') + sessionTag}</td>
-        </tr>
-      `;
-      })
-      .join('');
+    const rowsHtml = buildPDFMeasurementRowsHTML(pageSessions, lang, guidelineProfile);
 
     pageContainer.innerHTML = `
       ${buildPageHeader(isEn ? 'Measurement History' : 'Historial de Mediciones', pageNum)}

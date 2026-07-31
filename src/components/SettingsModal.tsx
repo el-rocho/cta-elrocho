@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import type { AppSettings, BackupFrequency, GuidelineProfile, PatientSex, LanguageOption } from '../types/bloodPressure';
-import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck, User, Trash2, Globe, BookOpenCheck, Target } from 'lucide-react';
+import { Settings, X, ShieldAlert, Clock, Armchair, RotateCcw, Save, Folder, CalendarCheck, User, Trash2, Globe, BookOpenCheck, Target, Info, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../i18n/useLanguage';
 import { calculateAge } from '../utils/pdfGenerator';
 import { FlagES, FlagGB } from './FlagIcons';
 import { getTreatmentTarget } from '../utils/treatmentTarget';
+import { getGuidelineSourceUrl } from '../utils/healthClassification';
+
+type SettingsInfoTopic = GuidelineProfile | 'white-coat';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -30,6 +33,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const { t } = useLanguage();
   const [pendingMedicationValue, setPendingMedicationValue] = useState<boolean | null>(null);
   const [isUpdatingMedication, setIsUpdatingMedication] = useState(false);
+  const [infoTopic, setInfoTopic] = useState<SettingsInfoTopic | null>(null);
 
   if (!isOpen) return null;
 
@@ -226,19 +230,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </p>
             <div className="guideline-options">
               {([
-                ['esc-2024', 'settings.guidelineEsc', 'settings.guidelineEscDesc'],
-                ['aha-acc-2025', 'settings.guidelineAha', 'settings.guidelineAhaDesc'],
-                ['ish-2020', 'settings.guidelineIsh', 'settings.guidelineIshDesc'],
-              ] as const).map(([profile, labelKey, descKey]) => (
-                <button
+                ['esc-2024', 'settings.guidelineEsc'],
+                ['aha-acc-2025', 'settings.guidelineAha'],
+                ['ish-2020', 'settings.guidelineIsh'],
+              ] as const).map(([profile, labelKey]) => (
+                <div
                   key={profile}
-                  type="button"
                   className={`guideline-option ${settings.guidelineProfile === profile ? 'active' : ''}`}
-                  onClick={() => handleGuidelineChange(profile)}
                 >
-                  <strong>{t(labelKey)}</strong>
-                  <span>{t(descKey)}</span>
-                </button>
+                  <button
+                    type="button"
+                    className="guideline-select-button"
+                    onClick={() => handleGuidelineChange(profile)}
+                  >
+                    <strong>{t(labelKey)}</strong>
+                  </button>
+                  <button
+                    type="button"
+                    className="settings-info-button"
+                    onClick={() => setInfoTopic(profile)}
+                    aria-label={`${t('settings.info')} — ${t(labelKey)}`}
+                  >
+                    <Info size={14} /> {t('settings.info')}
+                  </button>
+                </div>
               ))}
             </div>
           </div>
@@ -310,7 +325,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <strong>{t('settings.targetTitle')}</strong>
                     </div>
                     <div className="chip-options-row treatment-target-modes">
-                      <button type="button" className="chip-select treatment-target-reset" onClick={handleResetTreatmentTarget}>
+                      <button type="button" className="btn-subtle-reset treatment-target-reset" onClick={handleResetTreatmentTarget}>
                         <RotateCcw size={13} /> {t('settings.targetGuideline')}
                       </button>
                     </div>
@@ -420,20 +435,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <ShieldAlert size={22} className="text-blue settings-field-icon" />
                 <div>
                   <h3 style={{ fontWeight: 400 }}>{t('settings.whiteCoatTitle')}</h3>
-                  <p className="settings-desc" style={{ marginTop: '4px', lineHeight: '1.4' }}>
-                    {t('settings.whiteCoatDesc')}
-                  </p>
                 </div>
               </div>
 
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={settings.enableWhiteCoatFilter}
-                  onChange={handleToggleWhiteCoat}
-                />
-                <span className="toggle-slider"></span>
-              </label>
+              <div className="settings-toggle-actions">
+                <button
+                  type="button"
+                  className="settings-info-button"
+                  onClick={() => setInfoTopic('white-coat')}
+                >
+                  <Info size={14} /> {t('settings.info')}
+                </button>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.enableWhiteCoatFilter}
+                    onChange={handleToggleWhiteCoat}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
             </div>
 
             {settings.enableWhiteCoatFilter && (
@@ -558,6 +579,61 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               >
                 {t('settings.medicationKeepButton')}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {infoTopic !== null && (
+        <div
+          className="modal-overlay settings-info-overlay"
+          onClick={(event) => {
+            event.stopPropagation();
+            setInfoTopic(null);
+          }}
+        >
+          <div
+            className="modal-content settings-info-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-info-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div className="modal-title-group">
+                {infoTopic === 'white-coat'
+                  ? <ShieldAlert size={24} className="modal-icon legal-icon-main" />
+                  : <BookOpenCheck size={24} className="modal-icon legal-icon-main" />}
+                <h2 id="settings-info-title" className="settings-info-title">
+                  {infoTopic === 'white-coat'
+                    ? t('settings.whiteCoatInfoTitle')
+                    : t(`settings.guidelineInfo.${infoTopic}.title`)}
+                </h2>
+              </div>
+              <button className="btn-close-modal" onClick={() => setInfoTopic(null)} aria-label={t('settings.close')}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body settings-info-body">
+              {infoTopic === 'white-coat' ? (
+                <>
+                  <p>{t('settings.whiteCoatDesc')}</p>
+                  <p>{t('settings.whiteCoatInfoUsage')}</p>
+                </>
+              ) : (
+                <>
+                  <p>{t(`settings.guidelineInfo.${infoTopic}.classification`)}</p>
+                  <p>{t(`settings.guidelineInfo.${infoTopic}.target`)}</p>
+                  <p className="settings-info-note">{t('settings.guidelineInfoDisclaimer')}</p>
+                  <a
+                    className="settings-info-source"
+                    href={getGuidelineSourceUrl(infoTopic)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t('settings.guidelineSource')} <ExternalLink size={14} />
+                  </a>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -71,9 +71,12 @@ Antes de instalar una nueva versión, consulta la **[guía de actualización](UP
 - **Experiencia Nativa Android**: Funciona como una App independiente a pantalla completa.
 - **100% Offline y Privada (RGPD / GrapheneOS)**: Todos los datos residen exclusivamente en el almacenamiento interno de tu teléfono (`localStorage`). Las fuentes tipográficas están incluidas en la aplicación y no se descargan desde servicios externos.
 - **Sistema Dual de Entrada**: Elige entre teclado numérico tradicional o **Ruleta Táctil de Selección Rápida** centrada en la última medición realizada.
-- **Filtro de Síndrome de Bata Blanca**: Algoritmo inteligente que descarta tomas iniciales elevadas producidas por la ansiedad del momento (intervalos de 3, 5 o 10 minutos entre tomas consecutivas).
-- **Informes PDF**: Gráfico temporal con doble eje Y (tensión arterial + línea de pulsaciones en el eje derecho) y tabla detallada de registros.
-- **Exportación e Importación CSV**: Copias de seguridad automáticas con cabeceras y metadatos en el idioma seleccionado.
+- **Tres referencias clínicas**: Etiquetas y avisos configurables según `ESC 2024`, `AHA/ACC 2025` o `ISH 2020`, sin modificar las mediciones.
+- **Objetivos terapéuticos**: Valores recomendados por guía y edad para usuarios medicados, siempre visibles y editables según la indicación del facultativo.
+- **Evolución y tendencias**: Comparación de medias diarias en cuatro semanas y gráficas de `4 semanas`, `3 meses`, `6 meses` o `1 año`.
+- **Filtro opcional de acomodación**: Agrupa tomas consecutivas y calcula un único resultado efectivo tras descartar, cuando corresponde, las tomas iniciales elevadas.
+- **Informes PDF**: Gráfico temporal, tabla detallada, guía seleccionada y desglose de tomas efectivas y descartadas.
+- **Exportación e Importación CSV**: Copias nativas con metadatos clínicos e importación transparente de archivos de MyTherapy.
 
 ---
 
@@ -82,10 +85,12 @@ Antes de instalar una nueva versión, consulta la **[guía de actualización](UP
 El **Filtro de Síndrome de Bata Blanca** mitiga la distorsión generada por el sesgo de alerta o ansiedad inicial del paciente al colocarse el manguito de tensión.
 
 ### 🔬 Cómo funciona el algoritmo:
-1. **Agrupación Consecutiva**: Se agrupan dentro de una misma sesión las tomas donde el intervalo entre una toma y la anterior sea menor al margen configurado (**3, 5 o 10 minutos**).
+1. **Agrupación Consecutiva**: Se agrupan dentro de una misma sesión las tomas donde el intervalo entre una toma y la anterior sea menor o igual al margen configurado (**3, 5 o 10 minutos**).
 2. **Sesiones de 2 tomas**: Si la 1ª toma es significativamente superior a la 2ª ($\ge 8$ mmHg sistólica / $\ge 4$ mmHg diastólica), se descarta la 1ª toma reteniendo la 2ª. En caso contrario, se promedian ambas.
 3. **Sesiones de 3 tomas**: Se descarta siempre la 1ª toma y se calcula la media con las 2 tomas restantes.
-4. **Sesiones de 4 o más tomas**: Se descarta la 1ª toma y se continúan descartando las siguientes tomas iniciales elevadas ($\ge 8$ mmHg sistólica / $\ge 4$ mmHg diastólica) respecto a la media de las restantes, siempre y cuando queden al menos 3 tomas válidas para calcular la media definitiva.
+4. **Sesiones de 4 o más tomas**: Se compara cada toma inicial con la media de todas las posteriores y se descarta mientras sea superior en al menos $8$ mmHg de sistólica o $4$ mmHg de diastólica. El proceso se detiene en la primera toma estable; puede conservar todas las tomas o una única toma final.
+
+El semáforo, los objetivos, los avisos, las tendencias y las exportaciones utilizan la media de las tomas efectivas. Las descartadas siguen visibles en el desglose de la sesión, pero no determinan esos resultados. Consulta la [matriz clínica de la versión 1.6.0](docs/reglas-clinicas-v1.6.0.md) para conocer las reglas completas y sus fuentes.
 
 ---
 
