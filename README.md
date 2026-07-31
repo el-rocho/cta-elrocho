@@ -55,6 +55,8 @@ La aplicación es totalmente compatible con **[Obtainium](https://github.com/Imr
 2. Descarga la última versión del archivo `control-tension-arterial.apk`.
 3. Instala el paquete `.apk` en tu dispositivo Android.
 
+Antes de instalar una nueva versión, consulta la **[guía de actualización](UPGRADING.md)** y las notas de la versión correspondiente.
+
 ### 3. 🌐 Uso como PWA (navegador web / pantalla de inicio)
 
 - Accede a la **[PWA de Control Tensión Arterial](https://el-rocho.github.io/cta-elrocho/)** desde el navegador de tu dispositivo.

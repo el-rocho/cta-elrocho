@@ -1,9 +1,12 @@
 import React, { useState, useRef } from 'react';
-import type { BloodPressureReading, BloodPressureSession, DateRange, LanguageOption } from '../types/bloodPressure';
+import type { AppSettings, BloodPressureReading, BloodPressureSession, DateRange, LanguageOption } from '../types/bloodPressure';
 import { getConfirmedPulsePressureAlerts, getCulpritLabel, getHealthAssessment, getReadingMedicationContext, getSessionMedicationContext } from '../utils/healthClassification';
+import { getEffectiveSessionReadings } from '../utils/whiteCoatAlgorithm';
 import { filterSessionsByDateRange } from '../utils/exportCsv';
 import { History, Trash2, ChevronDown, ChevronUp, Clock, Armchair, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../i18n/useLanguage';
+import { assessTreatmentTarget } from '../utils/treatmentTarget';
+import { TreatmentTargetBadge } from './TreatmentTargetBadge';
 
 interface ReadingListProps {
   sessions: BloodPressureSession[];
@@ -12,7 +15,7 @@ interface ReadingListProps {
   onEditReading: (reading: BloodPressureReading) => void;
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
-  takesMedication: boolean;
+  settings: AppSettings;
 }
 
 // Subcomponente con useRef para manejar tomas individuales en tabla desglosada
@@ -22,10 +25,10 @@ const BreakdownRow: React.FC<{
   isDiscarded: boolean;
   rTime: string;
   language: LanguageOption;
-  takesMedication: boolean;
+  settings: AppSettings;
   onEditReading: (reading: BloodPressureReading) => void;
   onDeleteSingleReading: (id: string) => void;
-}> = ({ reading, index, isDiscarded, rTime, language, takesMedication, onEditReading, onDeleteSingleReading }) => {
+}> = ({ reading, index, isDiscarded, rTime, language, settings, onEditReading, onDeleteSingleReading }) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const readingAssessment = getHealthAssessment(
@@ -33,10 +36,19 @@ const BreakdownRow: React.FC<{
     reading.diastolic,
     reading.heartRate,
     language,
-    getReadingMedicationContext(reading, takesMedication),
+    settings.guidelineProfile,
     reading.pulsePressureWarningConfirmed === true
   );
-  const { category: readingCategory, alerts: readingAlerts, culprit: readingCulprit } = readingAssessment;
+  const {
+    category: readingCategory,
+    alerts: readingAlerts,
+    safetyAlerts: readingSafetyAlerts,
+    culprit: readingCulprit,
+  } = readingAssessment;
+  const treatmentTargetAssessment = getReadingMedicationContext(
+    reading,
+    settings.takesAntihypertensiveMedication
+  ) ? assessTreatmentTarget(reading.systolic, reading.diastolic, settings) : null;
 
   const startTimer = (x: number, y: number) => {
     touchStartPosRef.current = { x, y };
@@ -92,12 +104,13 @@ const BreakdownRow: React.FC<{
             {readingCategory.name}
           </span>
           {readingCulprit !== 'none' && (
-            <span className="culprit-pill">{getCulpritLabel(readingCulprit, readingCategory.key, language)}</span>
+            <span className="culprit-pill">{getCulpritLabel(readingCulprit, readingCategory.direction, language)}</span>
           )}
+          {treatmentTargetAssessment && <TreatmentTargetBadge assessment={treatmentTargetAssessment} compact />}
         </div>
-        {readingAlerts.length > 0 && (
+        {(readingSafetyAlerts.length > 0 || readingAlerts.length > 0) && (
           <div className="breakdown-alerts">
-            {readingAlerts.map((alert) => (
+            {[...readingSafetyAlerts, ...readingAlerts].map((alert) => (
               <span
                 key={alert.key}
                 className="clinical-alert-pill compact"
@@ -150,7 +163,7 @@ const SessionCardItem: React.FC<{
   t: (key: string, params?: Record<string, any>) => string;
   language: LanguageOption;
   locale: string;
-  takesMedication: boolean;
+  settings: AppSettings;
 }> = ({
   session,
   isExpanded,
@@ -161,25 +174,29 @@ const SessionCardItem: React.FC<{
   t,
   language,
   locale,
-  takesMedication,
+  settings,
 }) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
   const primaryReading = session.readings[0];
+  const effectiveReadings = getEffectiveSessionReadings(session);
   const isMulti = session.readings.length > 1;
-  const sessionTakesMedication = getSessionMedicationContext(session.readings, takesMedication);
   const sessionAssessment = getHealthAssessment(
     session.averageSystolic,
     session.averageDiastolic,
     session.averageHeartRate,
     language,
-    sessionTakesMedication
+    settings.guidelineProfile
   );
-  const { category, culprit } = sessionAssessment;
+  const treatmentTargetAssessment = getSessionMedicationContext(
+    session.readings,
+    settings.takesAntihypertensiveMedication
+  ) ? assessTreatmentTarget(session.averageSystolic, session.averageDiastolic, settings) : null;
+  const { category, culprit, safetyAlerts } = sessionAssessment;
   const healthAlerts = [
     ...sessionAssessment.alerts,
-    ...getConfirmedPulsePressureAlerts(session.readings, language),
+    ...getConfirmedPulsePressureAlerts(effectiveReadings, language),
   ];
 
   const dateObj = new Date(session.timestamp);
@@ -267,8 +284,9 @@ const SessionCardItem: React.FC<{
             {category.name}
           </span>
           {culprit !== 'none' && (
-            <span className="culprit-pill">{getCulpritLabel(culprit, category.key, language)}</span>
+            <span className="culprit-pill">{getCulpritLabel(culprit, category.direction, language)}</span>
           )}
+          {treatmentTargetAssessment && <TreatmentTargetBadge assessment={treatmentTargetAssessment} />}
 
           {healthAlerts.length > 0 && (
             <div className="session-health-alerts">
@@ -284,6 +302,13 @@ const SessionCardItem: React.FC<{
               ))}
             </div>
           )}
+
+          {safetyAlerts.map((alert) => (
+            <div key={alert.key} className="session-safety-alert" role="alert">
+              <strong>{alert.name}</strong>
+              <span>{alert.description}</span>
+            </div>
+          ))}
 
           {/* Badge de Bata Blanca */}
           {isMulti && (
@@ -361,9 +386,7 @@ const SessionCardItem: React.FC<{
                   minute: '2-digit',
                   second: '2-digit',
                 });
-                const isDiscarded =
-                  session.discardedCount > 0 &&
-                  (index === 0 || (session.discardedCount === 2 && index === 1));
+                const isDiscarded = index < session.discardedCount;
 
                 return (
                   <BreakdownRow
@@ -373,7 +396,7 @@ const SessionCardItem: React.FC<{
                     isDiscarded={isDiscarded}
                     rTime={rTime}
                     language={language}
-                    takesMedication={takesMedication}
+                    settings={settings}
                     onEditReading={onEditReading}
                     onDeleteSingleReading={onDeleteSingleReading}
                   />
@@ -394,7 +417,7 @@ export const ReadingList: React.FC<ReadingListProps> = ({
   onEditReading,
   dateRange,
   onDateRangeChange,
-  takesMedication,
+  settings,
 }) => {
   const { t, language } = useLanguage();
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
@@ -470,7 +493,7 @@ export const ReadingList: React.FC<ReadingListProps> = ({
               t={t}
               language={language}
               locale={locale}
-              takesMedication={takesMedication}
+              settings={settings}
             />
           ))}
         </div>

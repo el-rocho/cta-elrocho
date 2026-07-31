@@ -9,6 +9,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
   whiteCoatIntervalMinutes: 5, // Por defecto 5 minutos (opciones: 5, 10, 15 min)
   defaultArm: 'left',
   preferredInputMode: 'keyboard', // Por defecto teclado ('keyboard' / 'wheel')
+  guidelineProfile: 'esc-2024',
+  treatmentTargetMode: 'guideline',
+  customTargetSystolicMin: 120,
+  customTargetSystolicMax: 129,
+  customTargetDiastolicMin: 70,
+  customTargetDiastolicMax: 79,
   patientName: '',
   patientSex: '',
   patientAge: '',
@@ -18,60 +24,124 @@ export const DEFAULT_SETTINGS: AppSettings = {
   lastBackupTimestamp: undefined,
 };
 
-// Datos iniciales de demostración centrados en valores medios habituales (120/80 mmHg - 72 ppm)
-const INITIAL_DEMO_DATA: BloodPressureReading[] = [
+const DAY_MS = 1000 * 60 * 60 * 24;
+
+// Mismos diez ejemplos utilizados por las versiones individual, cliente y autoalojada.
+function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
+  const demoTimestamp = (daysAgo: number) => new Date(referenceMs - DAY_MS * daysAgo).toISOString();
+  return [
   {
-    id: 'demo-100',
-    timestamp: new Date().toISOString(),
-    systolic: 120,
-    diastolic: 80,
+    id: 'demo-optimal-unmedicated',
+    timestamp: demoTimestamp(0),
+    systolic: 115,
+    diastolic: 75,
     heartRate: 72,
     arm: 'left',
-    notes: 'Medición habitual de control',
+    notes: 'Ejemplo verde: óptima sin medicación',
+    pulsePressureWarningConfirmed: false,
+    takesAntihypertensiveMedication: false,
   },
   {
-    id: 'demo-5',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-    systolic: 124,
-    diastolic: 81,
-    heartRate: 70,
-    arm: 'left',
-    notes: 'Mañana en ayunas',
-  },
-  {
-    id: 'demo-4',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    systolic: 118,
-    diastolic: 78,
-    heartRate: 69,
-    arm: 'left',
-    notes: 'Tras reposo',
-  },
-  {
-    id: 'demo-3',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-    systolic: 122,
-    diastolic: 80,
-    heartRate: 71,
-    arm: 'right',
-  },
-  {
-    id: 'demo-2',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-    systolic: 126,
-    diastolic: 82,
-    heartRate: 73,
-    arm: 'left',
-  },
-  {
-    id: 'demo-1',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-    systolic: 119,
-    diastolic: 79,
+    id: 'demo-optimal-medicated',
+    timestamp: demoTimestamp(2),
+    systolic: 120,
+    diastolic: 70,
     heartRate: 68,
-    arm: 'left',
+    arm: 'right',
+    notes: 'Ejemplo verde: óptima con medicación',
+    pulsePressureWarningConfirmed: false,
+    takesAntihypertensiveMedication: true,
   },
-];
+  {
+    id: 'demo-hypotension',
+    timestamp: demoTimestamp(6),
+    systolic: 88,
+    diastolic: 58,
+    heartRate: 105,
+    arm: 'left',
+    notes: 'Ejemplo azul: hipotensión con taquicardia',
+    pulsePressureWarningConfirmed: false,
+    takesAntihypertensiveMedication: false,
+  },
+  {
+    id: 'demo-suboptimal-medicated',
+    timestamp: demoTimestamp(10),
+    systolic: 110,
+    diastolic: 62,
+    heartRate: 66,
+    arm: 'right',
+    notes: 'Ejemplo turquesa: subóptima con medicación',
+    pulsePressureWarningConfirmed: false,
+    takesAntihypertensiveMedication: true,
+  },
+  {
+    id: 'demo-elevated-unmedicated',
+    timestamp: demoTimestamp(20),
+    systolic: 130,
+    diastolic: 82,
+    heartRate: 74,
+    arm: 'left',
+    notes: 'Ejemplo naranja: presión elevada sin medicación',
+    pulsePressureWarningConfirmed: false,
+    takesAntihypertensiveMedication: false,
+  },
+  {
+    id: 'demo-elevated-medicated',
+    timestamp: demoTimestamp(45),
+    systolic: 128,
+    diastolic: 78,
+    heartRate: 76,
+    arm: 'right',
+    notes: 'Ejemplo naranja: franja elevada con medicación',
+    pulsePressureWarningConfirmed: false,
+    takesAntihypertensiveMedication: true,
+  },
+  {
+    id: 'demo-hypertension-systolic',
+    timestamp: demoTimestamp(75),
+    systolic: 138,
+    diastolic: 82,
+    heartRate: 72,
+    arm: 'left',
+    notes: 'Ejemplo rojo: sistólica elevada',
+    pulsePressureWarningConfirmed: false,
+    takesAntihypertensiveMedication: false,
+  },
+  {
+    id: 'demo-hypertension-diastolic',
+    timestamp: demoTimestamp(100),
+    systolic: 125,
+    diastolic: 88,
+    heartRate: 106,
+    arm: 'right',
+    notes: 'Ejemplo rojo: diastólica elevada con taquicardia',
+    pulsePressureWarningConfirmed: false,
+    takesAntihypertensiveMedication: true,
+  },
+  {
+    id: 'demo-narrow-pulse-pressure',
+    timestamp: demoTimestamp(180),
+    systolic: 100,
+    diastolic: 78,
+    heartRate: 48,
+    arm: 'left',
+    notes: 'Ejemplo: presión de pulso estrecha y bradicardia',
+    pulsePressureWarningConfirmed: true,
+    takesAntihypertensiveMedication: false,
+  },
+  {
+    id: 'demo-wide-pulse-pressure',
+    timestamp: demoTimestamp(365),
+    systolic: 150,
+    diastolic: 85,
+    heartRate: 70,
+    arm: 'right',
+    notes: 'Ejemplo rojo: ambos valores elevados y presión de pulso amplia',
+    pulsePressureWarningConfirmed: true,
+    takesAntihypertensiveMedication: false,
+  },
+  ];
+}
 
 function migrateMedicationContext(
   readings: BloodPressureReading[],
@@ -91,7 +161,7 @@ export function getStoredReadings(): BloodPressureReading[] {
     const medicationFallback = getStoredSettings().takesAntihypertensiveMedication;
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const initial = migrateMedicationContext(INITIAL_DEMO_DATA, medicationFallback).readings;
+      const initial = migrateMedicationContext(createDemoReadings(), medicationFallback).readings;
       saveStoredReadings(initial);
       return initial;
     }
@@ -101,7 +171,7 @@ export function getStoredReadings(): BloodPressureReading[] {
     return migration.readings;
   } catch (error) {
     console.error('Error al leer de localStorage:', error);
-    return INITIAL_DEMO_DATA;
+    return createDemoReadings();
   }
 }
 
@@ -134,6 +204,9 @@ export function getStoredSettings(): AppSettings {
     }
     if (!['keyboard', 'wheel'].includes(parsed.preferredInputMode)) {
       parsed.preferredInputMode = 'keyboard';
+    }
+    if (!['esc-2024', 'aha-acc-2025', 'ish-2020'].includes(parsed.guidelineProfile)) {
+      parsed.guidelineProfile = 'esc-2024';
     }
     return parsed;
   } catch (error) {

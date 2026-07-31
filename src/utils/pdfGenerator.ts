@@ -2,18 +2,19 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import type { BloodPressureSession, DateRange, ExportReportOptions, LanguageOption, HealthSeverity } from '../types/bloodPressure';
+import type { BloodPressureSession, DateRange, ExportReportOptions, GuidelineProfile, LanguageOption } from '../types/bloodPressure';
 import logoSvgRaw from '../assets/app-logo.svg?raw';
 import { filterSessionsByDateRange } from './exportCsv';
 import {
   getHealthAssessment,
-  getHealthCategoriesMap,
+  getHealthCategories,
   getHealthCategory,
   getCulpritLabel,
   getConfirmedPulsePressureAlerts,
+  getGuidelineName,
   getHealthDisclaimer,
-  getSessionMedicationContext,
 } from './healthClassification';
+import { getEffectiveSessionReadings } from './whiteCoatAlgorithm';
 
 export interface PDFGenerationResult {
   success: boolean;
@@ -44,6 +45,7 @@ export async function downloadPDFReport(
 ): Promise<PDFGenerationResult> {
   const isEn = lang === 'en';
   const locale = isEn ? 'en-US' : 'es-ES';
+  const guidelineProfile = options.guidelineProfile ?? 'esc-2024';
   const filtered = filterSessionsByDateRange(sessions, dateRange);
 
   if (filtered.length === 0) {
@@ -72,7 +74,7 @@ export async function downloadPDFReport(
   const avgDia = total > 0 ? Math.round(sumDia / total) : 0;
   const avgPulse = total > 0 ? Math.round(sumPulse / total) : 0;
   const takesMedication = options.takesAntihypertensiveMedication === true;
-  const avgAssessment = getHealthAssessment(avgSys, avgDia, avgPulse, lang, takesMedication);
+  const avgAssessment = getHealthAssessment(avgSys, avgDia, avgPulse, lang, guidelineProfile);
   const avgCategory = avgAssessment.category;
 
   // Calcular periodo de fechas real
@@ -141,7 +143,7 @@ export async function downloadPDFReport(
 
   // Generar HTML de los gráficos para la Página 1
   const svgLineChartHtml = generateChartSVG(chronological, locale, isEn);
-  const categoryDistributionHtml = generateCategoryDistributionHTML(filtered, lang, takesMedication);
+  const categoryDistributionHtml = generateCategoryDistributionHTML(filtered, lang, guidelineProfile);
 
   // Función para construir la cabecera estándar de cualquier página
   const buildPageHeader = (pageTitle: string, pageNum: number) => `
@@ -150,7 +152,7 @@ export async function downloadPDFReport(
         ${reportLogoMarkup}
         <div>
           <h1 style="margin: 0; font-size: 20px; color: #0f172a; font-weight: 700;">${pageTitle}</h1>
-          <p style="margin: 3px 0 0 0; font-size: 12px; color: #64748b;">${patientInfoStr ? patientInfoStr + ' | ' : ''}<strong>${isEn ? 'Period:' : 'Periodo:'}</strong> ${realPeriodStr}</p>
+          <p style="margin: 3px 0 0 0; font-size: 12px; color: #64748b;">${patientInfoStr ? patientInfoStr + ' | ' : ''}<strong>${isEn ? 'Reference:' : 'Referencia:'}</strong> ${getGuidelineName(guidelineProfile, lang)} | <strong>${isEn ? 'Period:' : 'Periodo:'}</strong> ${realPeriodStr}</p>
         </div>
       </div>
       <div style="text-align: right; font-size: 11px; color: #64748b;">
@@ -163,7 +165,7 @@ export async function downloadPDFReport(
   // Pie de página estándar
   const buildPageFooter = () => `
     <div style="margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 10px; color: #94a3b8; text-align: center;">
-      ${isEn ? 'Personal and private log document.' : 'Documento de registro personal y privado.'} ${getHealthDisclaimer(lang)}
+      ${isEn ? 'Personal and private log document.' : 'Documento de registro personal y privado.'} ${getHealthDisclaimer(lang, guidelineProfile)}
     </div>
   `;
 
@@ -268,15 +270,18 @@ export async function downloadPDFReport(
         const d = new Date(s.timestamp);
         const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
         const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-        const sessionTakesMedication = getSessionMedicationContext(s.readings, takesMedication);
         const assessment = getHealthAssessment(
           s.averageSystolic,
           s.averageDiastolic,
           s.averageHeartRate,
           lang,
-          sessionTakesMedication
+          guidelineProfile
         );
-        const sessionAlerts = [...assessment.alerts, ...getConfirmedPulsePressureAlerts(s.readings, lang)];
+        const sessionAlerts = [
+          ...assessment.safetyAlerts,
+          ...assessment.alerts,
+          ...getConfirmedPulsePressureAlerts(getEffectiveSessionReadings(s), lang),
+        ];
         const cat = assessment.category;
         const armLabel = s.arm === 'left' ? (isEn ? 'Left' : 'Izq') : (isEn ? 'Right' : 'Der');
         const sessionTag = s.readings.length > 1 ? (isEn ? ` (Avg of ${s.readings.length} readings)` : ` (Media de ${s.readings.length} tomas)`) : '';
@@ -294,7 +299,7 @@ export async function downloadPDFReport(
               ${cat.name}
             </span>
             ${assessment.culprit !== 'none'
-              ? `<div style="font-size:8.5px; color:#475569; margin-top:3px;">${getCulpritLabel(assessment.culprit, assessment.category.key, lang)}</div>`
+              ? `<div style="font-size:8.5px; color:#475569; margin-top:3px;">${getCulpritLabel(assessment.culprit, assessment.category.direction, lang)}</div>`
               : ''}
             ${
               sessionAlerts.length > 0
@@ -521,36 +526,27 @@ function generateChartSVG(chronologicalSessions: BloodPressureSession[], locale 
   `;
 }
 
-// Gráfico de barras verticales por categorías europeas ESC 2024
+// Gráfico de barras verticales por categorías de la referencia seleccionada
 function generateCategoryDistributionHTML(
   sessions: BloodPressureSession[],
   lang: LanguageOption = 'es',
-  takesMedication = false
+  guidelineProfile: GuidelineProfile = 'esc-2024'
 ): string {
   const isEn = lang === 'en';
   const total = sessions.length;
+  const categories = getHealthCategories(guidelineProfile, lang);
+  const counts = new Map(categories.map((category) => [category.key, 0]));
 
-  const counts: Record<HealthSeverity, number> = {
-    hypotension: 0,
-    overtreatment: 0,
-    optimal: 0,
-    elevated: 0,
-    hypertension: 0,
-  };
-
-  let hasMedicatedSessions = false;
   sessions.forEach((s) => {
-    const sessionTakesMedication = getSessionMedicationContext(s.readings, takesMedication);
-    hasMedicatedSessions ||= sessionTakesMedication;
-    const cat = getHealthCategory(s.averageSystolic, s.averageDiastolic, lang, sessionTakesMedication);
-    counts[cat.key]++;
+    const category = getHealthCategory(
+      s.averageSystolic,
+      s.averageDiastolic,
+      lang,
+      guidelineProfile
+    );
+    counts.set(category.key, (counts.get(category.key) ?? 0) + 1);
   });
-  const categoriesMap = getHealthCategoriesMap(lang, hasMedicatedSessions || takesMedication);
-
-  const keys: HealthSeverity[] = hasMedicatedSessions
-    ? ['hypotension', 'overtreatment', 'optimal', 'elevated', 'hypertension']
-    : ['hypotension', 'optimal', 'elevated', 'hypertension'];
-  const maxCount = Math.max(1, ...Object.values(counts));
+  const maxCount = Math.max(1, ...counts.values());
 
   const svgWidth = 720;
   const svgHeight = 135;
@@ -562,14 +558,13 @@ function generateCategoryDistributionHTML(
   const chartWidth = svgWidth - paddingLeft - paddingRight;
   const chartHeight = svgHeight - paddingTop - paddingBottom;
 
-  const barGroupWidth = chartWidth / keys.length;
+  const barGroupWidth = chartWidth / categories.length;
   const barWidth = Math.min(38, barGroupWidth * 0.52);
 
-  const barsSvgHtml = keys
-    .map((key, idx) => {
-      const count = counts[key];
+  const barsSvgHtml = categories
+    .map((category, idx) => {
+      const count = counts.get(category.key) ?? 0;
       const pct = total > 0 ? (count / total) * 100 : 0;
-      const cat = categoriesMap[key];
 
       const groupCenterX = paddingLeft + (idx + 0.5) * barGroupWidth;
       const barX = groupCenterX - barWidth / 2;
@@ -579,17 +574,17 @@ function generateCategoryDistributionHTML(
 
       const labelText = count > 0 ? `${count} (${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)}%)` : '0';
       const labelY = Math.max(12, barY - 4);
-      const xLabel = cat.name;
+      const xLabel = category.name;
 
       return `
         <g>
-          <!-- Barra vertical por categoría ESC 2024 -->
+          <!-- Barra vertical por categoría de la referencia seleccionada -->
           <rect
             x="${barX}"
             y="${barY}"
             width="${barWidth}"
             height="${barH}"
-            fill="${count > 0 ? cat.colorHex : '#e2e8f0'}"
+            fill="${count > 0 ? category.colorHex : '#e2e8f0'}"
             rx="4"
           />
 
@@ -620,7 +615,7 @@ function generateCategoryDistributionHTML(
   return `
     <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin: 0 auto; width: 780px; box-sizing: border-box; text-align: center;">
       <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-        <span>${isEn ? 'Distribution by BP Category' : 'Distribución por Categorías de PA'}</span>
+        <span>${isEn ? 'Distribution by BP Category' : 'Distribución por Categorías de PA'} · ${getGuidelineName(guidelineProfile, lang)}</span>
         <span style="font-size: 10px; color: #64748b; font-weight: 500;">${total} ${isEn ? 'readings total' : 'tomas totales'}</span>
       </div>
 

@@ -11,6 +11,8 @@ import {
 } from '../utils/readingValidation';
 import { WheelPicker } from './WheelPicker';
 import { useLanguage } from '../i18n/useLanguage';
+import { assessTreatmentTarget } from '../utils/treatmentTarget';
+import { TreatmentTargetBadge } from './TreatmentTargetBadge';
 
 interface ReadingFormProps {
   onAddReading: (reading: {
@@ -76,13 +78,16 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
   const liveSystolic = typeof systolic === 'number' ? systolic : 120;
   const liveDiastolic = typeof diastolic === 'number' ? diastolic : 80;
   const liveHeartRate = typeof heartRate === 'number' ? heartRate : 72;
-  const { category, alerts: healthAlerts } = getHealthAssessment(
+  const { category, alerts: healthAlerts, safetyAlerts } = getHealthAssessment(
     liveSystolic,
     liveDiastolic,
     liveHeartRate,
     language,
-    settings.takesAntihypertensiveMedication
+    settings.guidelineProfile
   );
+  const treatmentTargetAssessment = settings.takesAntihypertensiveMedication
+    ? assessTreatmentTarget(liveSystolic, liveDiastolic, settings)
+    : null;
 
   // Auto-seleccionar todo el texto al tocar/enfocar un campo numérico
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -150,13 +155,16 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
           </div>
 
           {/* Badge de clasificación en tiempo real */}
-          <div
-            className="live-category-badge"
-            style={{ backgroundColor: category.badgeBg, color: category.badgeText }}
-            title={category.description}
-          >
-            <span className="dot" style={{ backgroundColor: category.colorHex }}></span>
-            {category.name}
+          <div className="classification-badges">
+            <div
+              className="live-category-badge"
+              style={{ backgroundColor: category.badgeBg, color: category.badgeText }}
+              title={category.description}
+            >
+              <span className="dot" style={{ backgroundColor: category.colorHex }}></span>
+              {category.name}
+            </div>
+            {treatmentTargetAssessment && <TreatmentTargetBadge assessment={treatmentTargetAssessment} live />}
           </div>
         </div>
 
@@ -208,6 +216,16 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
       </div>
 
       {errorMsg && <div className="alert-danger">{errorMsg}</div>}
+
+      {safetyAlerts.map((alert) => (
+        <div key={alert.key} className="safety-alert-card" role="alert" aria-live="assertive">
+          <div className="safety-alert-title">
+            <AlertCircle size={18} />
+            <strong>{alert.name}</strong>
+          </div>
+          <p>{alert.description}</p>
+        </div>
+      ))}
 
       {healthAlerts.length > 0 && (
         <div className="health-alerts-strip" aria-live="polite">
@@ -354,7 +372,12 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
         <div className="reading-submit-row">
           <button type="submit" className="btn-submit-reading">
             <PlusCircle size={20} />
-            <span>{t('form.submit')}</span>
+            <span className="submit-reading-label">
+              <span>{t('form.submit')}</span>
+              {settings.enableWhiteCoatFilter && (
+                <small>{t('form.whiteCoatFilterActive', { minutes: settings.whiteCoatIntervalMinutes })}</small>
+              )}
+            </span>
           </button>
           <button
             type="button"

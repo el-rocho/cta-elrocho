@@ -2,6 +2,30 @@ import type { BloodPressureReading, BloodPressureSession, AppSettings } from '..
 import { DEFAULT_SETTINGS } from '../services/storageService';
 import { getReadingMedicationContext } from './healthClassification';
 
+export function getEffectiveSessionReadings(
+  session: BloodPressureSession
+): BloodPressureReading[] {
+  return session.readings.slice(session.discardedCount);
+}
+
+export function getSessionSummaryReading(
+  session: BloodPressureSession
+): BloodPressureReading | null {
+  const effectiveReadings = getEffectiveSessionReadings(session);
+  const representativeReading =
+    effectiveReadings[effectiveReadings.length - 1] ??
+    session.readings[session.readings.length - 1];
+
+  if (!representativeReading) return null;
+
+  return {
+    ...representativeReading,
+    systolic: session.averageSystolic,
+    diastolic: session.averageDiastolic,
+    heartRate: session.averageHeartRate,
+  };
+}
+
 /**
  * Agrupa una lista de lecturas en sesiones de medición continua respetando las opciones configuradas.
  * Aplica el filtro médico de bata blanca para descartar picos de ansiedad iniciales (15-25 mmHg Sistólica / 5-10 mmHg Diastólica).
@@ -99,19 +123,12 @@ export function processReadingsIntoSessions(
       validReadingsForAvg = group.slice(1);
       discardedCount = 1;
     } else if (group.length >= 4) {
-      // En 4 o más tomas consecutivas:
-      // 1. La 1ª toma se descarta SIEMPRE
-      validReadingsForAvg = group.slice(1);
-      discardedCount = 1;
-
-      // 2. Evaluar progresivamente tomas iniciales elevadas (2ª, 3ª...) MIENTRAS sigan quedando al menos 3 tomas válidas para la media
-      for (let i = 1; i < group.length; i++) {
+      // En usuarios muy sensibles el descenso puede prolongarse hasta la cuarta
+      // toma o más. Se elimina únicamente el prefijo que siga claramente por
+      // encima de las tomas posteriores. Puede quedar una sola toma estable:
+      // el resultado de toda la sesión seguirá siendo una única medición.
+      for (let i = 0; i < group.length - 1; i++) {
         const remainingIfDiscarded = group.slice(i + 1);
-        if (remainingIfDiscarded.length < 3) {
-          // Garantizar que siempre queden 3 o más tomas para calcular la media definitiva
-          break;
-        }
-
         const avgSysRemaining = remainingIfDiscarded.reduce((acc, r) => acc + r.systolic, 0) / remainingIfDiscarded.length;
         const avgDiaRemaining = remainingIfDiscarded.reduce((acc, r) => acc + r.diastolic, 0) / remainingIfDiscarded.length;
 

@@ -1,5 +1,6 @@
 import type { BloodPressureSession, DateRange, ExportReportOptions, LanguageOption } from '../types/bloodPressure';
-import { getConfirmedPulsePressureAlerts, getCulpritLabel, getHealthAssessment, getHealthDisclaimer, getSessionMedicationContext } from './healthClassification';
+import { getConfirmedPulsePressureAlerts, getCulpritLabel, getGuidelineName, getHealthAssessment, getHealthDisclaimer, getSessionMedicationContext } from './healthClassification';
+import { getEffectiveSessionReadings } from './whiteCoatAlgorithm';
 
 export function filterSessionsByDateRange(
   sessions: BloodPressureSession[],
@@ -51,6 +52,7 @@ export function exportToCSV(
   const filtered = filterSessionsByDateRange(sessions, dateRange);
 
   const isEn = lang === 'en';
+  const guidelineProfile = options.guidelineProfile ?? 'esc-2024';
 
   const headers = isEn
     ? [
@@ -98,7 +100,8 @@ export function exportToCSV(
     metadataHeader += `# ${isEn ? 'Remarks' : 'Observaciones'}: ${options.reportNotes}\n`;
   }
   metadataHeader += `# ${isEn ? 'Antihypertensive medication' : 'Medicación antihipertensiva'}: ${options.takesAntihypertensiveMedication ? (isEn ? 'Yes' : 'Sí') : 'No'}\n`;
-  metadataHeader += `# ${isEn ? 'Notice' : 'Aviso'}: ${getHealthDisclaimer(lang)}\n`;
+  metadataHeader += `# ${isEn ? 'Classification reference' : 'Referencia de clasificación'}: ${getGuidelineName(guidelineProfile, lang)}\n`;
+  metadataHeader += `# ${isEn ? 'Notice' : 'Aviso'}: ${getHealthDisclaimer(lang, guidelineProfile)}\n`;
 
   const locale = isEn ? 'en-US' : 'es-ES';
 
@@ -124,9 +127,13 @@ export function exportToCSV(
       s.averageDiastolic,
       s.averageHeartRate,
       lang,
-      sessionTakesMedication
+      guidelineProfile
     );
-    const sessionAlerts = [...assessment.alerts, ...getConfirmedPulsePressureAlerts(s.readings, lang)];
+    const sessionAlerts = [
+      ...assessment.safetyAlerts,
+      ...assessment.alerts,
+      ...getConfirmedPulsePressureAlerts(getEffectiveSessionReadings(s), lang),
+    ];
     const armStr = s.arm === 'left' ? (isEn ? 'Left' : 'Izquierdo') : (isEn ? 'Right' : 'Derecho');
     const notesClean = s.notes ? `"${s.notes.replace(/"/g, '""')}"` : '';
     const alertsClean = sessionAlerts.length > 0
@@ -146,7 +153,7 @@ export function exportToCSV(
       s.discardedCount,
       notesClean,
       assessment.pulsePressure,
-      assessment.culprit === 'none' ? '' : `"${getCulpritLabel(assessment.culprit, assessment.category.key, lang)}"`,
+      assessment.culprit === 'none' ? '' : `"${getCulpritLabel(assessment.culprit, assessment.category.direction, lang)}"`,
       pulsePressureConfirmed ? 'true' : 'false',
       alertsClean,
     ].join(';');
