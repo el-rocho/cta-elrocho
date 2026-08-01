@@ -19,9 +19,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   patientSex: '',
   patientAge: '',
   takesAntihypertensiveMedication: false,
-  backupFrequency: 'disabled', // Por defecto DESACTIVADAS según preferencia del usuario
+  backupFrequency: 'disabled', // Recordatorios desactivados por defecto
   backupFolder: 'Descargas/Copias_Tension_Arterial',
   lastBackupTimestamp: undefined,
+  lastFullBackupTimestamp: undefined,
 };
 
 const DAY_MS = 1000 * 60 * 60 * 24;
@@ -300,4 +301,47 @@ export function importReadingsIntoStorage(imported: Omit<BloodPressureReading, '
   saveStoredReadings(updated);
 
   return { updated, addedCount };
+}
+
+function getExactReadingSignature(reading: Omit<BloodPressureReading, 'id'>): string {
+  return [
+    new Date(reading.timestamp).toISOString(),
+    reading.systolic,
+    reading.diastolic,
+    reading.heartRate,
+    reading.arm,
+    reading.sessionId ?? '',
+  ].join('_');
+}
+
+export function mergeBackupReadingsIntoStorage(imported: BloodPressureReading[]): {
+  updated: BloodPressureReading[];
+  addedCount: number;
+} {
+  const current = getStoredReadings();
+  const existingIds = new Set(current.map((reading) => reading.id));
+  const existingSignatures = new Set(current.map(getExactReadingSignature));
+  const newItems: BloodPressureReading[] = [];
+
+  for (const reading of imported) {
+    const signature = getExactReadingSignature(reading);
+    if (existingSignatures.has(signature)) continue;
+
+    let id = reading.id;
+    if (existingIds.has(id)) {
+      id = `restore-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    }
+    existingIds.add(id);
+    existingSignatures.add(signature);
+    newItems.push({ ...reading, id });
+  }
+
+  const updated = [...newItems, ...current];
+  saveStoredReadings(updated);
+  return { updated, addedCount: newItems.length };
+}
+
+export function replaceStoredData(readings: BloodPressureReading[], settings: AppSettings): void {
+  saveStoredReadings(readings);
+  saveStoredSettings(settings);
 }

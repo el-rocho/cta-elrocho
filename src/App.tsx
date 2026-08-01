@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { BloodPressureReading, ArmPosition, DateRange, AppSettings, InputMode } from './types/bloodPressure';
 import {
   getStoredReadings,
@@ -11,14 +11,16 @@ import {
   getStoredSettings,
   saveStoredSettings,
   importReadingsIntoStorage,
+  mergeBackupReadingsIntoStorage,
+  replaceStoredData,
   clearAllStoredData,
 } from './services/storageService';
 import {
   getSessionSummaryReading,
   processReadingsIntoSessions,
 } from './utils/whiteCoatAlgorithm';
-import { checkAndExecuteAutoBackup } from './utils/backupScheduler';
-import { exportToCSV } from './utils/exportCsv';
+import { isBackupDue } from './utils/backupScheduler';
+import { downloadBackup, type AppBackupSnapshot } from './utils/backupService';
 import { Header } from './components/Header';
 import { ReadingForm } from './components/ReadingForm';
 import { TrendChart } from './components/TrendChart';
@@ -41,6 +43,7 @@ export function App() {
   const [dateRange, setDateRange] = useState<DateRange>({ preset: '30days' });
   const [readingToEdit, setReadingToEdit] = useState<BloodPressureReading | null>(null);
   const [notificationMsg, setNotificationMsg] = useState<string | ToastNotification | null>(null);
+  const backupReminderKeyRef = useRef<string | null>(null);
 
   const { sessions } = useMemo(
     () => processReadingsIntoSessions(readings, settings),
@@ -56,14 +59,29 @@ export function App() {
   }, [settings]);
 
   useEffect(() => {
-    if (sessions.length > 0) {
-      const result = checkAndExecuteAutoBackup(sessions, settings, setSettings);
-      if (result.backupExecuted) {
-        setNotificationMsg(getTranslation(settings.language, 'toast.autoBackup', { date: result.dateStr ?? '' }));
-        setTimeout(() => setNotificationMsg(null), 6000);
-      }
-    }
-  }, [sessions, settings]);
+    const showBackupReminderIfDue = () => {
+      if (!isBackupDue(readings, settings)) return;
+      const reminderKey = `${settings.backupFrequency}:${settings.lastFullBackupTimestamp ?? 'never'}:${new Date().toDateString()}`;
+      if (backupReminderKeyRef.current === reminderKey) return;
+      backupReminderKeyRef.current = reminderKey;
+      setNotificationMsg({
+        message: getTranslation(settings.language, 'toast.backupDue'),
+        actionLabel: getTranslation(settings.language, 'toast.openBackups'),
+        onAction: () => setIsExportModalOpen(true),
+      });
+    };
+
+    showBackupReminderIfDue();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') showBackupReminderIfDue();
+    };
+    const intervalId = window.setInterval(showBackupReminderIfDue, 60 * 60 * 1000);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [readings, settings]);
 
   const handleUpdateSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
@@ -94,25 +112,38 @@ export function App() {
   };
 
   const handleTriggerManualBackup = () => {
-    if (sessions.length === 0) {
+    if (readings.length === 0) {
       alert(getTranslation(settings.language, 'toast.noDataToExport'));
       return;
     }
     const now = new Date();
-    exportToCSV(sessions, { preset: 'all' }, 'tension_arterial', {
-      patientName: settings.patientName,
-      patientSex: settings.patientSex,
-      patientAge: settings.patientAge,
-      takesAntihypertensiveMedication: settings.takesAntihypertensiveMedication,
-      guidelineProfile: settings.guidelineProfile,
-    }, settings.language);
+    downloadBackup(readings, settings, now);
     const updatedSettings = {
       ...settings,
       lastBackupTimestamp: now.toISOString(),
+      lastFullBackupTimestamp: now.toISOString(),
     };
     handleUpdateSettings(updatedSettings);
     setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupSuccess'));
     setTimeout(() => setNotificationMsg(null), 5000);
+  };
+
+  const handleRestoreBackup = (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace') => {
+    if (mode === 'replace') {
+      const restoredSettings = {
+        ...snapshot.settings,
+        lastBackupTimestamp: snapshot.createdAt,
+        lastFullBackupTimestamp: snapshot.createdAt,
+      };
+      replaceStoredData(snapshot.readings, restoredSettings);
+      setReadings(snapshot.readings);
+      setSettings(restoredSettings);
+      return snapshot.readings.length;
+    }
+
+    const result = mergeBackupReadingsIntoStorage(snapshot.readings);
+    setReadings(result.updated);
+    return result.addedCount;
   };
 
   const handleResetDemoData = () => {
@@ -293,8 +324,12 @@ export function App() {
           isOpen={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
           sessions={sessions}
+          readings={readings}
           settings={settings}
           onImportReadings={handleImportReadings}
+          onRestoreBackup={handleRestoreBackup}
+          onUpdateSettings={handleUpdateSettings}
+          onTriggerManualBackup={handleTriggerManualBackup}
           onNotify={(msg) => setNotificationMsg(msg)}
         />
 
@@ -306,7 +341,6 @@ export function App() {
           onMedicationContextChange={handleMedicationContextChange}
           onResetDemoData={handleResetDemoData}
           onClearAllData={handleClearAllData}
-          onTriggerManualBackup={handleTriggerManualBackup}
         />
 
         <LegalNoticeModal

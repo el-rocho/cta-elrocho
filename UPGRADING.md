@@ -4,7 +4,7 @@ Esta guía describe el procedimiento general para actualizar la aplicación indi
 
 ## Antes de actualizar
 
-1. Abre **Exportar** y crea una copia CSV reciente.
+1. Si tu versión muestra **Datos e informes**, abre **Copias** y selecciona **Crear copia ahora**. Si todavía muestra la pantalla antigua **Exportar**, crea una copia CSV reciente: la versión nueva podrá importarla.
 2. Conserva el archivo fuera del almacenamiento privado de la aplicación.
 3. Lee las notas de la versión que vas a instalar:
    - [Actualización a 1.6.0](docs/actualizaciones/v1.6.0.md)
@@ -25,7 +25,7 @@ La PWA actualiza su código desde el mismo dominio, pero el historial pertenece 
 
 - No borres los datos del sitio antes o después de actualizar.
 - Cambiar de navegador, perfil o dominio no traslada el historial.
-- Conserva una copia CSV independiente antes de limpiar la caché o restablecer el navegador.
+- Conserva una copia completa independiente antes de limpiar la caché o restablecer el navegador. Los CSV creados por versiones anteriores continúan siendo importables.
 
 ## Volver a una versión anterior
 

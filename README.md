@@ -29,7 +29,7 @@ Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y 
 
 ### 🔄 Migración de Datos a la Versión Autoalojada:
 Si en algún momento decides pasar de esta app móvil individual al servidor familiar:
-1. Exporta tus registros pulsando **Exportar** &rarr; Descargar copia `.csv`.
+1. Abre **Datos e informes** &rarr; **Informes**, selecciona **Todo** y descarga el informe `.csv`.
 2. Entra en tu cuenta de la [Versión Autoalojada (cta-elrocho-selfhosted)](https://github.com/el-rocho/cta-elrocho-selfhosted).
 3. Ve a **Exportar / Imprimir** &rarr; pestaña **Importar** y sube el archivo `.csv`. Todas tus mediciones se asociarán a tu usuario.
 
@@ -76,7 +76,7 @@ Antes de instalar una nueva versión, consulta la **[guía de actualización](UP
 - **Evolución y tendencias**: Comparación de medias diarias en cuatro semanas y gráficas de `4 semanas`, `3 meses`, `6 meses` o `1 año`.
 - **Filtro opcional de acomodación**: Agrupa tomas consecutivas y calcula un único resultado efectivo tras descartar, cuando corresponde, las tomas iniciales elevadas.
 - **Informes PDF**: Gráfico temporal, tabla detallada, guía seleccionada y desglose de tomas efectivas y descartadas.
-- **Exportación e Importación CSV**: Copias nativas con metadatos clínicos e importación transparente de archivos de MyTherapy.
+- **Datos, copias e informes**: copias completas versionadas, informes CSV/PDF e importación compatible con los CSV históricos de la aplicación y con MyTherapy.
 
 ---
 
