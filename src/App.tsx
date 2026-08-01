@@ -117,15 +117,27 @@ export function App() {
       return;
     }
     const now = new Date();
-    downloadBackup(readings, settings, now);
-    const updatedSettings = {
-      ...settings,
-      lastBackupTimestamp: now.toISOString(),
-      lastFullBackupTimestamp: now.toISOString(),
-    };
-    handleUpdateSettings(updatedSettings);
-    setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupSuccess'));
-    setTimeout(() => setNotificationMsg(null), 5000);
+    try {
+      downloadBackup(readings, settings, now);
+      setNotificationMsg({
+        message: getTranslation(settings.language, 'toast.manualBackupRequested'),
+        actionLabel: getTranslation(settings.language, 'toast.confirmBackupSaved'),
+        onAction: () => {
+          const updatedSettings = {
+            ...settings,
+            lastBackupTimestamp: now.toISOString(),
+            lastFullBackupTimestamp: now.toISOString(),
+          };
+          handleUpdateSettings(updatedSettings);
+          setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupSuccess'));
+          setTimeout(() => setNotificationMsg(null), 5000);
+        },
+      });
+    } catch (error) {
+      console.error('Error al solicitar la descarga de la copia:', error);
+      setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupError'));
+      setTimeout(() => setNotificationMsg(null), 5000);
+    }
   };
 
   const handleRestoreBackup = (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace') => {
@@ -251,8 +263,8 @@ export function App() {
                     type="button"
                     className="toast-action-btn"
                     onClick={() => {
-                      notificationMsg.onAction?.();
                       setNotificationMsg(null);
+                      notificationMsg.onAction?.();
                     }}
                   >
                     {notificationMsg.actionLabel}
