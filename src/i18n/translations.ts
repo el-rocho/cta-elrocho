@@ -451,9 +451,27 @@ export const translations = {
 
     // Aviso Legal
     legal: {
-      title: 'Aviso Legal & Política de Privacidad',
-      footerLink: 'Aviso Legal & Privacidad (RGPD)',
-      close: 'Entendido y Cerrar',
+      title: 'Aviso legal y privacidad',
+      footerLink: 'Aviso legal y privacidad',
+      close: 'Entendido y cerrar',
+      medicalTitle: 'Información médica y límites de uso',
+      medicalPurpose: 'La aplicación sirve para registrar y revisar mediciones domiciliarias. Las etiquetas, medias, tendencias, objetivos orientativos y avisos se calculan mediante reglas simplificadas basadas en {guideline}; no reproducen íntegramente la guía, no validan la técnica de medición y no constituyen un diagnóstico.',
+      sourceLink: 'Consultar la fuente de referencia',
+      medicalLimits: 'Una lectura aislada, una media o un aviso no permiten confirmar o descartar una enfermedad ni determinar si la medicación es adecuada.',
+      medicationWarning: 'No inicie, suspenda ni modifique un tratamiento basándose en la aplicación. Consulte a un profesional sanitario.',
+      emergencyWarning: 'Si presenta síntomas graves o cree que puede tratarse de una urgencia, contacte con los servicios de emergencia aunque la aplicación no muestre un aviso.',
+      privacyTitle: 'Privacidad y tratamiento de datos',
+      storageLabel: 'Almacenamiento local:',
+      storageText: 'En esta edición individual, las lecturas, el perfil, las notas y la configuración se procesan y guardan en el almacenamiento local del dispositivo o navegador. No se envían a un servidor propio de la aplicación.',
+      networkLabel: 'Comunicaciones:',
+      networkText: 'La aplicación no incluye publicidad ni servicios de analítica o seguimiento. Abrir una fuente oficial, instalar o actualizar la aplicación y compartir un archivo puede conectar con el proveedor, sitio o destinatario elegido por el usuario.',
+      controlLabel: 'Conservación:',
+      controlText: 'El usuario puede consultar, exportar y borrar sus datos. Limpiar el almacenamiento, desinstalar la aplicación o perder el dispositivo puede eliminar las mediciones; conviene conservar una copia independiente.',
+      filesTitle: 'Copias, importaciones y exportaciones',
+      filesText: 'Las copias completas JSON y los informes CSV o PDF pueden contener mediciones, datos de perfil y notas de salud. Al descargarlos o compartirlos salen del almacenamiento protegido por la aplicación y quedan bajo el control y la responsabilidad del usuario.',
+      restoreText: 'Las importaciones se procesan localmente. Restaurar una copia completa puede sustituir los datos actuales tras la confirmación mostrada por la aplicación.',
+      responsibilityNote: 'La seguridad del dispositivo y de los archivos descargados depende del usuario.',
+      updated: 'Actualizado: agosto de 2026',
     },
 
     // Notificaciones Toast y Alertas
@@ -945,9 +963,27 @@ export const translations = {
 
     // Legal Notice
     legal: {
-      title: 'Legal Notice & Privacy Policy',
-      footerLink: 'Legal Notice & Privacy (GDPR)',
-      close: 'Understood & Close',
+      title: 'Legal notice and privacy',
+      footerLink: 'Legal notice and privacy',
+      close: 'Understood and close',
+      medicalTitle: 'Medical information and limitations',
+      medicalPurpose: 'The application is intended to record and review home measurements. Labels, averages, trends, indicative targets, and notices are calculated using simplified rules based on {guideline}; they do not reproduce the full guideline, validate measurement technique, or constitute a diagnosis.',
+      sourceLink: 'View the reference source',
+      medicalLimits: 'A single reading, an average, or a notice cannot confirm or rule out a condition or determine whether medication is appropriate.',
+      medicationWarning: 'Do not start, stop, or change treatment based on the application. Consult a healthcare professional.',
+      emergencyWarning: 'If you have severe symptoms or believe it may be an emergency, contact emergency services even if the application shows no warning.',
+      privacyTitle: 'Privacy and data processing',
+      storageLabel: 'Local storage:',
+      storageText: 'In this individual edition, readings, profile details, notes, and settings are processed and stored in the local storage of the device or browser. They are not sent to an application-operated server.',
+      networkLabel: 'Communications:',
+      networkText: 'The application includes no advertising, analytics, or tracking services. Opening an official source, installing or updating the application, and sharing a file may connect to the provider, website, or recipient selected by the user.',
+      controlLabel: 'Retention:',
+      controlText: 'The user can view, export, and erase their data. Clearing storage, uninstalling the application, or losing the device may remove the readings; an independent backup should be kept.',
+      filesTitle: 'Backups, imports, and exports',
+      filesText: 'Complete JSON backups and CSV or PDF reports may contain readings, profile details, and health notes. Once downloaded or shared, they leave the storage protected by the application and remain under the user’s control and responsibility.',
+      restoreText: 'Imports are processed locally. Restoring a complete backup may replace current data after the confirmation shown by the application.',
+      responsibilityNote: 'The user is responsible for the security of the device and downloaded files.',
+      updated: 'Updated: August 2026',
     },
 
     // Toast Notifications & Alerts
