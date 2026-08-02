@@ -73,7 +73,7 @@ Antes de instalar una nueva versión, consulta la **[guía de actualización](UP
 - **Sistema Dual de Entrada**: Elige entre teclado numérico tradicional o **Ruleta Táctil de Selección Rápida** centrada en la última medición realizada.
 - **Tres referencias clínicas**: Etiquetas y avisos configurables según `ESC 2024`, `AHA/ACC 2025` o `ISH 2020`, sin modificar las mediciones.
 - **Objetivos terapéuticos**: Valores recomendados por guía y edad para usuarios medicados, siempre visibles y editables según la indicación del facultativo.
-- **Evolución y tendencias**: Comparación de medias diarias en cuatro semanas y gráficas de `4 semanas`, `3 meses`, `6 meses` o `1 año`.
+- **Evolución y tendencias**: Comparación de medias diarias en cuatro semanas y gráficas de `1 mes`, `3 meses`, `6 meses` o `1 año`.
 - **Filtro opcional de acomodación**: Agrupa tomas consecutivas y calcula un único resultado efectivo tras descartar, cuando corresponde, las tomas iniciales elevadas.
 - **Informes PDF**: Gráfico temporal, tabla detallada, guía seleccionada y desglose de tomas efectivas y descartadas.
 - **Datos, copias e informes**: copias completas versionadas, informes CSV/PDF e importación compatible con los CSV históricos de la aplicación y con MyTherapy.
