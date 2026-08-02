@@ -2981,6 +2981,22 @@ input:checked + .toggle-slider:before {
   margin-bottom: 0;
 }
 
+.trend-insights-block {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.trend-insights-pattern-block:empty {
+  display: none;
+}
+
+.trend-insights-meta-block {
+  gap: 8px;
+  margin-left: auto;
+}
+
 .trend-insights-heading {
   display: flex;
   align-items: center;
@@ -3047,7 +3063,7 @@ input:checked + .toggle-slider:before {
 
 .trend-guideline-badge {
   flex: 0 0 auto;
-  margin-left: auto;
+  margin-left: 0;
   padding: 5px 9px;
   border-radius: 999px;
   background: rgba(99, 102, 241, 0.1);
@@ -3143,6 +3159,22 @@ input:checked + .toggle-slider:before {
 }
 
 @media (max-width: 640px) {
+  .trend-insights-header {
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+
+  .trend-insights-block {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .trend-insights-meta-block {
+    margin-left: 0;
+  }
+
   .trend-insights-heading h2,
   .trend-pattern-row > strong {
     font-size: 17px;
