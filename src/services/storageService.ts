@@ -27,6 +27,49 @@ export const DEFAULT_SETTINGS: AppSettings = {
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
+const DEMO_READING_NOTES: Record<string, { legacy: string; current: string }> = {
+  'demo-optimal-unmedicated': {
+    legacy: 'Ejemplo verde: óptima sin medicación',
+    current: 'Ejemplo: 115/75 mmHg, sin medicación',
+  },
+  'demo-optimal-medicated': {
+    legacy: 'Ejemplo verde: óptima con medicación',
+    current: 'Ejemplo: 120/70 mmHg, con medicación',
+  },
+  'demo-hypotension': {
+    legacy: 'Ejemplo azul: hipotensión con taquicardia',
+    current: 'Ejemplo: 88/58 mmHg y pulso de 105 lpm',
+  },
+  'demo-suboptimal-medicated': {
+    legacy: 'Ejemplo turquesa: subóptima con medicación',
+    current: 'Ejemplo: 110/62 mmHg, con medicación',
+  },
+  'demo-elevated-unmedicated': {
+    legacy: 'Ejemplo naranja: presión elevada sin medicación',
+    current: 'Ejemplo: 130/82 mmHg, sin medicación',
+  },
+  'demo-elevated-medicated': {
+    legacy: 'Ejemplo naranja: franja elevada con medicación',
+    current: 'Ejemplo: 128/78 mmHg, con medicación',
+  },
+  'demo-hypertension-systolic': {
+    legacy: 'Ejemplo rojo: sistólica elevada',
+    current: 'Ejemplo: 138/82 mmHg, sin medicación',
+  },
+  'demo-hypertension-diastolic': {
+    legacy: 'Ejemplo rojo: diastólica elevada con taquicardia',
+    current: 'Ejemplo: 125/88 mmHg, con medicación y pulso de 106 lpm',
+  },
+  'demo-narrow-pulse-pressure': {
+    legacy: 'Ejemplo: presión de pulso estrecha y bradicardia',
+    current: 'Ejemplo: presión de pulso de 22 mmHg y pulso de 48 lpm',
+  },
+  'demo-wide-pulse-pressure': {
+    legacy: 'Ejemplo rojo: ambos valores elevados y presión de pulso amplia',
+    current: 'Ejemplo: presión de pulso de 65 mmHg',
+  },
+};
+
 // Mismos diez ejemplos utilizados por las versiones individual, cliente y autoalojada.
 function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
   const demoTimestamp = (daysAgo: number) => new Date(referenceMs - DAY_MS * daysAgo).toISOString();
@@ -38,7 +81,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 75,
     heartRate: 72,
     arm: 'left',
-    notes: 'Ejemplo verde: óptima sin medicación',
+    notes: DEMO_READING_NOTES['demo-optimal-unmedicated'].current,
     pulsePressureWarningConfirmed: false,
     takesAntihypertensiveMedication: false,
   },
@@ -49,7 +92,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 70,
     heartRate: 68,
     arm: 'right',
-    notes: 'Ejemplo verde: óptima con medicación',
+    notes: DEMO_READING_NOTES['demo-optimal-medicated'].current,
     pulsePressureWarningConfirmed: false,
     takesAntihypertensiveMedication: true,
   },
@@ -60,7 +103,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 58,
     heartRate: 105,
     arm: 'left',
-    notes: 'Ejemplo azul: hipotensión con taquicardia',
+    notes: DEMO_READING_NOTES['demo-hypotension'].current,
     pulsePressureWarningConfirmed: false,
     takesAntihypertensiveMedication: false,
   },
@@ -71,7 +114,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 62,
     heartRate: 66,
     arm: 'right',
-    notes: 'Ejemplo turquesa: subóptima con medicación',
+    notes: DEMO_READING_NOTES['demo-suboptimal-medicated'].current,
     pulsePressureWarningConfirmed: false,
     takesAntihypertensiveMedication: true,
   },
@@ -82,7 +125,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 82,
     heartRate: 74,
     arm: 'left',
-    notes: 'Ejemplo naranja: presión elevada sin medicación',
+    notes: DEMO_READING_NOTES['demo-elevated-unmedicated'].current,
     pulsePressureWarningConfirmed: false,
     takesAntihypertensiveMedication: false,
   },
@@ -93,7 +136,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 78,
     heartRate: 76,
     arm: 'right',
-    notes: 'Ejemplo naranja: franja elevada con medicación',
+    notes: DEMO_READING_NOTES['demo-elevated-medicated'].current,
     pulsePressureWarningConfirmed: false,
     takesAntihypertensiveMedication: true,
   },
@@ -104,7 +147,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 82,
     heartRate: 72,
     arm: 'left',
-    notes: 'Ejemplo rojo: sistólica elevada',
+    notes: DEMO_READING_NOTES['demo-hypertension-systolic'].current,
     pulsePressureWarningConfirmed: false,
     takesAntihypertensiveMedication: false,
   },
@@ -115,7 +158,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 88,
     heartRate: 106,
     arm: 'right',
-    notes: 'Ejemplo rojo: diastólica elevada con taquicardia',
+    notes: DEMO_READING_NOTES['demo-hypertension-diastolic'].current,
     pulsePressureWarningConfirmed: false,
     takesAntihypertensiveMedication: true,
   },
@@ -126,7 +169,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 78,
     heartRate: 48,
     arm: 'left',
-    notes: 'Ejemplo: presión de pulso estrecha y bradicardia',
+    notes: DEMO_READING_NOTES['demo-narrow-pulse-pressure'].current,
     pulsePressureWarningConfirmed: true,
     takesAntihypertensiveMedication: false,
   },
@@ -137,7 +180,7 @@ function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
     diastolic: 85,
     heartRate: 70,
     arm: 'right',
-    notes: 'Ejemplo rojo: ambos valores elevados y presión de pulso amplia',
+    notes: DEMO_READING_NOTES['demo-wide-pulse-pressure'].current,
     pulsePressureWarningConfirmed: true,
     takesAntihypertensiveMedication: false,
   },
@@ -157,6 +200,19 @@ function migrateMedicationContext(
   return { readings: migrated, changed };
 }
 
+function migrateDemoReadingNotes(
+  readings: BloodPressureReading[]
+): { readings: BloodPressureReading[]; changed: boolean } {
+  let changed = false;
+  const migrated = readings.map((reading) => {
+    const noteMigration = DEMO_READING_NOTES[reading.id];
+    if (!noteMigration || reading.notes !== noteMigration.legacy) return reading;
+    changed = true;
+    return { ...reading, notes: noteMigration.current };
+  });
+  return { readings: migrated, changed };
+}
+
 export function getStoredReadings(): BloodPressureReading[] {
   try {
     const medicationFallback = getStoredSettings().takesAntihypertensiveMedication;
@@ -167,9 +223,12 @@ export function getStoredReadings(): BloodPressureReading[] {
       return initial;
     }
     const parsed = JSON.parse(raw) as BloodPressureReading[];
-    const migration = migrateMedicationContext(parsed, medicationFallback);
-    if (migration.changed) saveStoredReadings(migration.readings);
-    return migration.readings;
+    const medicationMigration = migrateMedicationContext(parsed, medicationFallback);
+    const notesMigration = migrateDemoReadingNotes(medicationMigration.readings);
+    if (medicationMigration.changed || notesMigration.changed) {
+      saveStoredReadings(notesMigration.readings);
+    }
+    return notesMigration.readings;
   } catch (error) {
     console.error('Error al leer de localStorage:', error);
     return createDemoReadings();
