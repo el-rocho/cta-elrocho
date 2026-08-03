@@ -31,7 +31,7 @@ Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y 
 Si en algún momento decides pasar de esta app móvil individual al servidor familiar:
 1. Abre **Datos e informes** &rarr; **Informes**, selecciona **Todo** y descarga el informe `.csv`.
 2. Entra en tu cuenta de la [Versión Autoalojada (cta-elrocho-selfhosted)](https://github.com/el-rocho/cta-elrocho-selfhosted).
-3. Ve a **Exportar / Imprimir** &rarr; pestaña **Importar** y sube el archivo `.csv`. Todas tus mediciones se asociarán a tu usuario.
+3. Ve a **Datos e informes** &rarr; pestaña **Importar / Restaurar** y sube el archivo `.csv`. Todas tus mediciones se asociarán a tu usuario.
 
 ---
 
