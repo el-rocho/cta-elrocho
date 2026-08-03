@@ -67,30 +67,32 @@ Antes de instalar una nueva versión, consulta la **[guía de actualización](UP
 
 ## 🚀 Características Principales
 
-- **Soporte Bilingüe Completo (Español / Inglés)**: Selección de idioma desde la pantalla de **Configuración** (🇪🇸 Español / 🇬🇧 English). Interfaz, ruletas, gráficos, notificaciones e informes exportados se adaptan al instante.
+- **Soporte Bilingüe Completo (Español / Inglés)**: Selección de idioma desde la pantalla de **Configuración** (🇪🇸 Español / 🇬🇧 English). Interfaz, ruletas, gráficos, notificaciones e informes se adaptan al instante.
 - **Experiencia Nativa Android**: Funciona como una App independiente a pantalla completa.
-- **100% Offline y Privada (RGPD / GrapheneOS)**: Todos los datos residen exclusivamente en el almacenamiento interno de tu teléfono (`localStorage`). Las fuentes tipográficas están incluidas en la aplicación y no se descargan desde servicios externos.
-- **Sistema Dual de Entrada**: Elige entre teclado numérico tradicional o **Ruleta Táctil de Selección Rápida** centrada en la última medición realizada.
-- **Tres referencias clínicas**: Etiquetas y avisos configurables según `ESC 2024`, `AHA/ACC 2025` o `ISH 2020`, sin modificar las mediciones.
-- **Objetivos terapéuticos**: Valores recomendados por guía y edad para usuarios medicados, siempre visibles y editables según la indicación del facultativo.
-- **Evolución y tendencias**: Comparación de medias diarias en cuatro semanas y gráficas de `1 mes`, `3 meses`, `6 meses` o `1 año`.
-- **Filtro opcional de acomodación**: Agrupa tomas consecutivas y calcula un único resultado efectivo tras descartar, cuando corresponde, las tomas iniciales elevadas.
-- **Informes PDF**: Gráfico temporal, tabla detallada, guía seleccionada y desglose de tomas efectivas y descartadas.
-- **Datos, copias e informes**: copias completas versionadas, informes CSV/PDF e importación compatible con los CSV históricos de la aplicación y con MyTherapy.
+- **100% Offline y Privada**: Todos los datos residen exclusivamente en el almacenamiento interno de tu teléfono (`localStorage`). Las fuentes tipográficas están incluidas en la aplicación y no se descargan desde servicios externos.
+- **Sistema Dual de Entrada**: Elige entre teclado numérico tradicional o **Ruleta Táctil de Selección Rápida**.
+- **Referencias clínicas**: Etiquetas y avisos configurables según las recomendaciones de las guías `ESC 2024`, `AHA/ACC 2025` o `ISH 2020`, sin modificar las mediciones.
+- **Objetivos terapéuticos**: Para usuarios medicados, valores recomendados según guía y edad, editables para poder ajustarlos a las indicaciones de nuestro facultativo.
+- **Evolución y tendencias**: Gráficas de evolución de `1 mes`, `3 meses`, `6 meses` o `1 año`. Tendencias observadas en las medias diarias de las últimas cuatro semanas.
+- **Filtro de bata blanca**: Agrupa tomas consecutivas y calcula un único resultado efectivo tras descartar, cuando corresponde, las tomas iniciales elevadas.
+- **Informes PDF**: Valores estadísticos, gráficos temporales y tabla detallada de las medidas realizadas.
+- **Datos, copias e informes**: Copias completas versionadas, informes CSV/PDF e importación compatible con los CSV históricos de la propia aplicación y con los procedentes de MyTherapy.
 
 ---
 
 ## 🛡️ Filtro de Síndrome de Bata Blanca
 
-El **Filtro de Síndrome de Bata Blanca** mitiga la distorsión generada por el sesgo de alerta o ansiedad inicial del paciente al colocarse el manguito de tensión.
+El **Filtro de Síndrome de Bata Blanca** mitiga la distorsión generada por el sesgo de alerta o ansiedad inicial del paciente al utilizar el medidor de tensión.
 
 ### 🔬 Cómo funciona el algoritmo:
-1. **Agrupación Consecutiva**: Se agrupan dentro de una misma sesión las tomas donde el intervalo entre una toma y la anterior sea menor o igual a **5 minutos**. Este margen es fijo y no requiere configuración.
+1. **Agrupación Consecutiva**: Se agrupan dentro de una misma sesión todas las mediciones donde el intervalo entre las tomas sea menor o igual a **5 minutos**.
 2. **Sesiones de 2 tomas**: Si la 1ª toma es significativamente superior a la 2ª ($\ge 8$ mmHg sistólica / $\ge 4$ mmHg diastólica), se descarta la 1ª toma reteniendo la 2ª. En caso contrario, se promedian ambas.
 3. **Sesiones de 3 tomas**: Se descarta siempre la 1ª toma y se calcula la media con las 2 tomas restantes.
-4. **Sesiones de 4 o más tomas**: Se compara cada toma inicial con la media de todas las posteriores y se descarta mientras sea superior en al menos $8$ mmHg de sistólica o $4$ mmHg de diastólica. El proceso se detiene en la primera toma estable; puede conservar todas las tomas o una única toma final.
+4. **Sesiones de 4 o más tomas**: Se compara cada toma inicial con la media de todas las posteriores y se descarta mientras sea superior en al menos $8$ mmHg de sistólica o $4$ mmHg de diastólica. El proceso se detiene en la primera toma estable.
 
-El semáforo, los objetivos, los avisos, las tendencias y las exportaciones utilizan la media de las tomas efectivas. Las descartadas siguen visibles en el desglose de la sesión, pero no determinan esos resultados. Consulta la [matriz clínica de la versión 1.6.0](docs/reglas-clinicas-v1.6.0.md) para conocer las reglas completas y sus fuentes.
+La aplicación siempre registra y conserva todas las tomas realizadas, con el filtro activado los datos son agrupados en sesiones. Si se desactiva el filtro la aplicación recalcula la información incluyendo todos los registros individualmente.
+
+Con el filtro activado los gráficos, el semáforo de etiquetas de colores, los objetivos, los avisos, las tendencias y las exportaciones utilizan la media de las tomas efectivas. Las medidas descartadas siguen visibles en el desglose de la sesión, pero no determinan esos resultados. Consulta la [matriz clínica de la versión 1.6.0](docs/reglas-clinicas-v1.6.0.md) para conocer las reglas completas y sus fuentes.
 
 ---
 
