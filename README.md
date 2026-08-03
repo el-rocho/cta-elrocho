@@ -90,7 +90,7 @@ El **Filtro de Síndrome de Bata Blanca** mitiga la distorsión generada por el 
 3. **Sesiones de 3 tomas**: Se descarta siempre la 1ª toma y se calcula la media con las 2 tomas restantes.
 4. **Sesiones de 4 o más tomas**: Se compara cada toma inicial con la media de todas las posteriores y se descarta mientras sea superior en al menos $8$ mmHg de sistólica o $4$ mmHg de diastólica. El proceso se detiene en la primera toma estable.
 
-La aplicación siempre registra y conserva todas las tomas realizadas, con el filtro activado los datos son agrupados en sesiones. Si se desactiva el filtro la aplicación recalcula la información incluyendo todos los registros individualmente.
+La aplicación siempre registra y conserva todas las tomas realizadas, con el filtro activado los datos son agrupados en sesiones. Si se desactiva el filtro la aplicación recalcula la información y muestra todos los registros individualmente.
 
 Con el filtro activado los gráficos, el semáforo de etiquetas de colores, los objetivos, los avisos, las tendencias y las exportaciones utilizan la media de las tomas efectivas. Las medidas descartadas siguen visibles en el desglose de la sesión, pero no determinan esos resultados. Consulta la [matriz clínica de la versión 1.6.0](docs/reglas-clinicas-v1.6.0.md) para conocer las reglas completas y sus fuentes.
 
