@@ -1,7 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeCSVImport, parseCSVData } from './importCsv';
+import { analyzeCSVDateOverlap, analyzeCSVImport, parseCSVData } from './importCsv';
 
 describe('CSV import', () => {
+  it('detects imported results that fall on calendar dates already containing data', () => {
+    const timestamp = (day: number, hour: number) => new Date(2026, 6, day, hour, 0, 0).toISOString();
+    const overlap = analyzeCSVDateOverlap(
+      [
+        { timestamp: timestamp(21, 8) },
+        { timestamp: timestamp(21, 20) },
+        { timestamp: timestamp(23, 8) },
+      ],
+      [
+        { timestamp: timestamp(21, 9) },
+        { timestamp: timestamp(22, 9) },
+      ]
+    );
+
+    expect(overlap).toEqual({
+      overlappingDateCount: 1,
+      overlappingReadingCount: 2,
+    });
+  });
+
   it('keeps compatibility with the native exported format', () => {
     const csv = [
       'sep=;',
@@ -13,6 +33,10 @@ describe('CSV import', () => {
     const result = analyzeCSVImport(csv);
 
     expect(result.format).toBe('native');
+    expect(result.nativeSource).toBe('historical-report');
+    expect(result.reportedSourceReadings).toBe(1);
+    expect(result.reportedMultiReadingSessions).toBe(0);
+    expect(result.reportedDiscardedReadings).toBe(0);
     expect(result.readings).toHaveLength(1);
     expect(result.readings[0]).toMatchObject({
       systolic: 128,
@@ -23,6 +47,25 @@ describe('CSV import', () => {
       takesAntihypertensiveMedication: true,
     });
     expect(parseCSVData(csv)).toEqual(result.readings);
+  });
+
+  it('identifies current CSV reports and quantifies the original readings that cannot be rebuilt', () => {
+    const csv = [
+      'sep=;',
+      '# Tipo de archivo: informe CSV; no es una copia de seguridad',
+      'Fecha;Hora;Sistolica_mmHg;Diastolica_mmHg;Pulsaciones_ppm;Brazo;Contexto_Medicacion;Clasificacion_PA;Tomas_En_Sesion;Tomas_Descartadas;Tipo_Resultado;Notas',
+      '21/07/2026;08:30;132;82;70;Derecho;true;;3;1;"Media filtrada";"Antes del desayuno"',
+      '22/07/2026;08:35;126;76;65;Derecho;true;;1;0;"Medición individual";',
+    ].join('\n');
+
+    const result = analyzeCSVImport(csv);
+
+    expect(result.format).toBe('native');
+    expect(result.nativeSource).toBe('current-report');
+    expect(result.readings).toHaveLength(2);
+    expect(result.reportedSourceReadings).toBe(4);
+    expect(result.reportedMultiReadingSessions).toBe(1);
+    expect(result.reportedDiscardedReadings).toBe(1);
   });
 
   it('detects MyTherapy and rebuilds multiple readings from positional components', () => {

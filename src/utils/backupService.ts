@@ -22,36 +22,82 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isValidReading(value: unknown): value is BloodPressureReading {
-  if (!isObject(value)) return false;
+function normalizeNullableString(value: unknown): string | undefined | null {
+  if (value === undefined || value === null) return undefined;
+  return typeof value === 'string' ? value : null;
+}
+
+function normalizeNullableBoolean(value: unknown): boolean | undefined | null {
+  if (value === undefined || value === null) return undefined;
+  return typeof value === 'boolean' ? value : null;
+}
+
+function normalizeReading(
+  value: unknown,
+  medicationFallback: boolean
+): BloodPressureReading | null {
+  if (!isObject(value)) return null;
   const timestamp = typeof value.timestamp === 'string' ? value.timestamp : '';
   if (
     typeof value.systolic !== 'number' ||
     typeof value.diastolic !== 'number' ||
     typeof value.heartRate !== 'number'
-  ) return false;
+  ) return null;
 
-  return (
-    typeof value.id === 'string' &&
-    value.id.length > 0 &&
-    timestamp.length > 0 &&
-    Number.isFinite(new Date(timestamp).getTime()) &&
-    (value.arm === 'left' || value.arm === 'right') &&
-    !getReadingValidationError({
+  if (
+    typeof value.id !== 'string' ||
+    value.id.length === 0 ||
+    timestamp.length === 0 ||
+    !Number.isFinite(new Date(timestamp).getTime()) ||
+    (value.arm !== 'left' && value.arm !== 'right') ||
+    getReadingValidationError({
       systolic: value.systolic,
       diastolic: value.diastolic,
       heartRate: value.heartRate,
-    }) &&
-    (value.notes === undefined || typeof value.notes === 'string') &&
-    (value.sessionId === undefined || typeof value.sessionId === 'string') &&
-    (value.pulsePressureWarningConfirmed === undefined || typeof value.pulsePressureWarningConfirmed === 'boolean') &&
-    (value.takesAntihypertensiveMedication === undefined || typeof value.takesAntihypertensiveMedication === 'boolean')
-  );
+    })
+  ) return null;
+
+  const notes = normalizeNullableString(value.notes);
+  const sessionId = normalizeNullableString(value.sessionId);
+  const pulsePressureWarningConfirmed = normalizeNullableBoolean(value.pulsePressureWarningConfirmed);
+  const medicationContext = normalizeNullableBoolean(value.takesAntihypertensiveMedication);
+  if (
+    notes === null ||
+    sessionId === null ||
+    pulsePressureWarningConfirmed === null ||
+    medicationContext === null
+  ) return null;
+
+  return {
+    id: value.id,
+    timestamp,
+    systolic: value.systolic,
+    diastolic: value.diastolic,
+    heartRate: value.heartRate,
+    arm: value.arm,
+    ...(notes !== undefined ? { notes } : {}),
+    ...(sessionId !== undefined ? { sessionId } : {}),
+    ...(pulsePressureWarningConfirmed !== undefined ? { pulsePressureWarningConfirmed } : {}),
+    takesAntihypertensiveMedication: medicationContext ?? medicationFallback,
+  };
 }
 
 function normalizeSettings(value: unknown): AppSettings | null {
   if (!isObject(value)) return null;
-  const candidate = { ...DEFAULT_SETTINGS, ...value } as AppSettings;
+  // Las primeras copias serializaban algunos campos opcionales sin valor como null.
+  // En el modelo de la aplicacion null equivale a que el ajuste todavia no existia.
+  const legacyValues = Object.fromEntries(
+    Object.entries(value).filter(([, settingValue]) => settingValue !== null)
+  );
+  const candidate = { ...DEFAULT_SETTINGS, ...legacyValues } as AppSettings;
+
+  if (typeof candidate.patientAge === 'string' && candidate.patientAge.trim() !== '') {
+    const numericAge = Number(candidate.patientAge);
+    if (!Number.isFinite(numericAge)) return null;
+    candidate.patientAge = numericAge;
+  }
+  if (candidate.lastBackupTimestamp === '') candidate.lastBackupTimestamp = undefined;
+  if (candidate.lastFullBackupTimestamp === '') candidate.lastFullBackupTimestamp = undefined;
 
   if (candidate.language !== 'es' && candidate.language !== 'en') return null;
   if (typeof candidate.enableWhiteCoatFilter !== 'boolean') return null;
@@ -109,9 +155,7 @@ export function parseBackupContent(content: string): BackupParseResult {
   if (
     typeof parsed.createdAt !== 'string' ||
     !Number.isFinite(new Date(parsed.createdAt).getTime()) ||
-    !Array.isArray(parsed.readings) ||
-    !parsed.readings.every(isValidReading) ||
-    new Set(parsed.readings.map((reading) => reading.id)).size !== parsed.readings.length
+    !Array.isArray(parsed.readings)
   ) {
     return { status: 'invalid', reason: 'invalid-content' };
   }
@@ -119,13 +163,26 @@ export function parseBackupContent(content: string): BackupParseResult {
   const settings = normalizeSettings(parsed.settings);
   if (!settings) return { status: 'invalid', reason: 'invalid-content' };
 
+  const readings: BloodPressureReading[] = [];
+  for (const reading of parsed.readings) {
+    const normalizedReading = normalizeReading(
+      reading,
+      settings.takesAntihypertensiveMedication
+    );
+    if (!normalizedReading) return { status: 'invalid', reason: 'invalid-content' };
+    readings.push(normalizedReading);
+  }
+  if (new Set(readings.map((reading) => reading.id)).size !== readings.length) {
+    return { status: 'invalid', reason: 'invalid-content' };
+  }
+
   return {
     status: 'valid',
     snapshot: {
       format: BACKUP_FORMAT,
       version: BACKUP_VERSION,
       createdAt: parsed.createdAt,
-      readings: parsed.readings,
+      readings,
       settings,
     },
   };
