@@ -69,6 +69,93 @@ describe('complete application backups', () => {
     expect(result.snapshot.settings.whiteCoatIntervalMinutes).toBe(5);
   });
 
+  it('restores legacy backups that serialized optional reading fields as null', () => {
+    const snapshot = createBackupSnapshot(readings, settings, '2026-07-31T12:00:00.000Z');
+    const legacySnapshot = {
+      ...snapshot,
+      settings: {
+        ...snapshot.settings,
+        takesAntihypertensiveMedication: true,
+      },
+      readings: snapshot.readings.map((reading) => ({
+        ...reading,
+        notes: null,
+        sessionId: null,
+        pulsePressureWarningConfirmed: null,
+        takesAntihypertensiveMedication: null,
+      })),
+    };
+    const result = parseBackupContent(JSON.stringify(legacySnapshot));
+
+    expect(result.status).toBe('valid');
+    if (result.status !== 'valid') return;
+    expect(result.snapshot.readings).toEqual([
+      {
+        id: 'reading-1',
+        timestamp: '2026-07-30T08:00:00.000Z',
+        systolic: 145,
+        diastolic: 88,
+        heartRate: 72,
+        arm: 'left',
+        takesAntihypertensiveMedication: true,
+      },
+      {
+        id: 'reading-2',
+        timestamp: '2026-07-30T08:03:00.000Z',
+        systolic: 132,
+        diastolic: 82,
+        heartRate: 69,
+        arm: 'left',
+        takesAntihypertensiveMedication: true,
+      },
+    ]);
+  });
+
+  it('fills settings absent or null in older backup versions', () => {
+    const snapshot = createBackupSnapshot(readings, settings, '2026-07-31T12:00:00.000Z');
+    const legacySnapshot = {
+      ...snapshot,
+      settings: {
+        enableWhiteCoatFilter: true,
+        whiteCoatIntervalMinutes: 15,
+        defaultArm: 'left',
+        patientName: null,
+        patientAge: '66',
+        patientBirthDate: null,
+        lastBackupTimestamp: '',
+        backupFrequency: 'weekly',
+        backupFolder: 'Descargas/Copias_Tension_Arterial',
+      },
+    };
+    const result = parseBackupContent(JSON.stringify(legacySnapshot));
+
+    expect(result.status).toBe('valid');
+    if (result.status !== 'valid') return;
+    expect(result.snapshot.settings).toMatchObject({
+      language: 'es',
+      whiteCoatIntervalMinutes: 5,
+      patientName: '',
+      patientAge: 66,
+      takesAntihypertensiveMedication: false,
+    });
+    expect(result.snapshot.settings.patientBirthDate).toBeUndefined();
+    expect(result.snapshot.settings.lastBackupTimestamp).toBeUndefined();
+  });
+
+  it('still rejects invalid clinical data and unsupported optional field types', () => {
+    const snapshot = createBackupSnapshot(readings, settings, '2026-07-31T12:00:00.000Z');
+
+    expect(parseBackupContent(JSON.stringify({
+      ...snapshot,
+      readings: [{ ...snapshot.readings[0], systolic: 20 }],
+    }))).toEqual({ status: 'invalid', reason: 'invalid-content' });
+
+    expect(parseBackupContent(JSON.stringify({
+      ...snapshot,
+      readings: [{ ...snapshot.readings[0], notes: 42 }],
+    }))).toEqual({ status: 'invalid', reason: 'invalid-content' });
+  });
+
   it('rejects unsupported and incomplete native backups without treating them as CSV', () => {
     expect(parseBackupContent(JSON.stringify({ format: BACKUP_FORMAT, version: 99 }))).toEqual({
       status: 'invalid',

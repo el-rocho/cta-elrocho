@@ -129,8 +129,6 @@ export function App() {
             lastFullBackupTimestamp: now.toISOString(),
           };
           handleUpdateSettings(updatedSettings);
-          setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupSuccess'));
-          setTimeout(() => setNotificationMsg(null), 5000);
         },
       });
     } catch (error) {
@@ -292,12 +290,13 @@ export function App() {
 
         <TrendChart
           sessions={sessions}
-          guidelineProfile={settings.guidelineProfile}
+          settings={settings}
         />
 
         <TrendInsights
           sessions={sessions}
           guidelineProfile={settings.guidelineProfile}
+          settings={settings}
         />
 
         <ReadingList

@@ -2,6 +2,7 @@ import type { ArmPosition, BloodPressureReading } from '../types/bloodPressure';
 import { getReadingValidationError } from './readingValidation';
 
 export type CSVImportFormat = 'native' | 'mytherapy' | 'unknown';
+export type NativeCSVSource = 'current-report' | 'historical-report';
 
 export interface CSVImportOptions {
   defaultArm?: ArmPosition;
@@ -9,12 +10,21 @@ export interface CSVImportOptions {
 
 export interface CSVImportResult {
   format: CSVImportFormat;
+  nativeSource: NativeCSVSource | null;
   readings: Omit<BloodPressureReading, 'id'>[];
   totalRows: number;
   ignoredRows: number;
   invalidReadings: number;
   incompleteGroups: number;
   shorthandNormalized: number;
+  reportedSourceReadings: number;
+  reportedMultiReadingSessions: number;
+  reportedDiscardedReadings: number;
+}
+
+export interface CSVDateOverlap {
+  overlappingDateCount: number;
+  overlappingReadingCount: number;
 }
 
 interface ParsedCSV {
@@ -34,6 +44,41 @@ interface MyTherapyGroup {
 }
 
 const DEFAULT_IMPORT_ARM: ArmPosition = 'left';
+
+function getLocalDateKey(timestamp: string): string | null {
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return null;
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+export function analyzeCSVDateOverlap(
+  imported: ReadonlyArray<Pick<BloodPressureReading, 'timestamp'>>,
+  existing: ReadonlyArray<Pick<BloodPressureReading, 'timestamp'>>
+): CSVDateOverlap {
+  const existingDates = new Set(
+    existing
+      .map((reading) => getLocalDateKey(reading.timestamp))
+      .filter((date): date is string => date !== null)
+  );
+  const overlappingDates = new Set<string>();
+  let overlappingReadingCount = 0;
+
+  for (const reading of imported) {
+    const date = getLocalDateKey(reading.timestamp);
+    if (!date || !existingDates.has(date)) continue;
+    overlappingDates.add(date);
+    overlappingReadingCount++;
+  }
+
+  return {
+    overlappingDateCount: overlappingDates.size,
+    overlappingReadingCount,
+  };
+}
 
 function normalizeText(value: string): string {
   return value
@@ -184,6 +229,18 @@ function isMyTherapyHeader(headers: string[]): boolean {
   const nameIdx = findHeader(headers, ['name', 'nombre', 'measurement_name']);
   const valueIdx = findHeader(headers, ['value', 'valor', 'result']);
   return actualDateIdx !== -1 && typeIdx !== -1 && nameIdx !== -1 && valueIdx !== -1;
+}
+
+function detectNativeCSVSource(csvText: string, headers: string[]): NativeCSVSource {
+  const hasCurrentReportMarker = csvText
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .some((line) => {
+      const normalized = normalizeText(line);
+      return normalized.includes('tipo_de_archivo_informe_csv') || normalized.includes('file_type_csv_report');
+    });
+  const hasCurrentResultType = findHeader(headers, ['tipo_resultado', 'result_type']) !== -1;
+  return hasCurrentReportMarker || hasCurrentResultType ? 'current-report' : 'historical-report';
 }
 
 function classifyMyTherapyComponent(name: string): 'systolic' | 'diastolic' | 'pulse' | null {
@@ -339,19 +396,24 @@ function parseMyTherapyCSV(
 
   return {
     format: 'mytherapy',
+    nativeSource: null,
     readings,
     totalRows: Math.max(0, rows.length - 1),
     ignoredRows,
     invalidReadings,
     incompleteGroups,
     shorthandNormalized,
+    reportedSourceReadings: 0,
+    reportedMultiReadingSessions: 0,
+    reportedDiscardedReadings: 0,
   };
 }
 
 function parseNativeCSV(
   rows: string[][],
   headers: string[],
-  options: CSVImportOptions
+  options: CSVImportOptions,
+  nativeSource: NativeCSVSource
 ): CSVImportResult {
   let dateIdx = findHeader(headers, ['fecha', 'date', 'timestamp']);
   let timeIdx = findHeader(headers, ['hora', 'time']);
@@ -362,6 +424,8 @@ function parseNativeCSV(
   let notesIdx = findHeader(headers, ['notas', 'nota', 'notes', 'note', 'comentario']);
   let ppConfirmedIdx = findHeader(headers, ['pulse_pressure_confirmed', 'presion_pulso_confirmada']);
   let medicationContextIdx = findHeader(headers, ['medication_context', 'contexto_medicacion']);
+  const sessionReadingsIdx = findHeader(headers, ['readings_in_session', 'tomas_en_sesion']);
+  const discardedReadingsIdx = findHeader(headers, ['discarded_readings', 'tomas_descartadas']);
   const hasHeaderMatch = sysIdx !== -1 && diaIdx !== -1;
   const startLineIdx = hasHeaderMatch ? 1 : 0;
 
@@ -379,6 +443,9 @@ function parseNativeCSV(
 
   const readings: Omit<BloodPressureReading, 'id'>[] = [];
   let invalidReadings = 0;
+  let reportedSourceReadings = 0;
+  let reportedMultiReadingSessions = 0;
+  let reportedDiscardedReadings = 0;
   for (const cols of rows.slice(startLineIdx)) {
     const systolic = parseNumber(cols[sysIdx]);
     const diastolic = parseNumber(cols[diaIdx]);
@@ -406,6 +473,16 @@ function parseNativeCSV(
         ? 'left'
         : options.defaultArm ?? DEFAULT_IMPORT_ARM;
     const notes = notesIdx !== -1 && cols[notesIdx] ? cols[notesIdx].trim() : undefined;
+    const sessionReadingCount = sessionReadingsIdx !== -1 ? Math.trunc(parseNumber(cols[sessionReadingsIdx])) : 0;
+    const discardedReadingCount = discardedReadingsIdx !== -1 ? Math.trunc(parseNumber(cols[discardedReadingsIdx])) : 0;
+
+    if (Number.isFinite(sessionReadingCount) && sessionReadingCount > 0) {
+      reportedSourceReadings += sessionReadingCount;
+      if (sessionReadingCount > 1) reportedMultiReadingSessions++;
+    }
+    if (Number.isFinite(discardedReadingCount) && discardedReadingCount > 0) {
+      reportedDiscardedReadings += discardedReadingCount;
+    }
 
     readings.push({
       timestamp,
@@ -421,12 +498,16 @@ function parseNativeCSV(
 
   return {
     format: readings.length > 0 || hasHeaderMatch ? 'native' : 'unknown',
+    nativeSource: readings.length > 0 || hasHeaderMatch ? nativeSource : null,
     readings,
     totalRows: Math.max(0, rows.length - startLineIdx),
     ignoredRows: 0,
     invalidReadings,
     incompleteGroups: 0,
     shorthandNormalized: 0,
+    reportedSourceReadings,
+    reportedMultiReadingSessions,
+    reportedDiscardedReadings,
   };
 }
 
@@ -438,18 +519,22 @@ export function analyzeCSVImport(csvText: string, options: CSVImportOptions = {}
   if (rows.length === 0) {
     return {
       format: 'unknown',
+      nativeSource: null,
       readings: [],
       totalRows: 0,
       ignoredRows: 0,
       invalidReadings: 0,
       incompleteGroups: 0,
       shorthandNormalized: 0,
+      reportedSourceReadings: 0,
+      reportedMultiReadingSessions: 0,
+      reportedDiscardedReadings: 0,
     };
   }
 
   const headers = rows[0].map(normalizeText);
   if (isMyTherapyHeader(headers)) return parseMyTherapyCSV(rows, headers, options);
-  return parseNativeCSV(rows, headers, options);
+  return parseNativeCSV(rows, headers, options, detectNativeCSVSource(csvText, headers));
 }
 
 /**

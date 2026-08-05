@@ -10,7 +10,7 @@ import type {
 } from '../types/bloodPressure';
 import { exportToCSV } from '../utils/exportCsv';
 import { downloadPDFReport } from '../utils/pdfGenerator';
-import { analyzeCSVImport, type CSVImportResult } from '../utils/importCsv';
+import { analyzeCSVDateOverlap, analyzeCSVImport, type CSVImportResult } from '../utils/importCsv';
 import { parseBackupContent, type AppBackupSnapshot } from '../utils/backupService';
 import {
   AlertCircle,
@@ -71,7 +71,17 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const [activeTab, setActiveTab] = useState<DataTab>('backup');
   const [importStatus, setImportStatus] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const backupFileInputRef = React.useRef<HTMLInputElement>(null);
+  const csvFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (isOpen) return;
+
+    setImportStatus(null);
+    setPendingImport(null);
+    if (backupFileInputRef.current) backupFileInputRef.current.value = '';
+    if (csvFileInputRef.current) csvFileInputRef.current.value = '';
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -85,6 +95,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         minute: '2-digit',
       })
     : t('data.backupNever');
+  const csvDateOverlap = pendingImport?.kind === 'csv'
+    ? analyzeCSVDateOverlap(pendingImport.result.readings, readings)
+    : { overlappingDateCount: 0, overlappingReadingCount: 0 };
 
   const getCurrentRange = (): DateRange => ({ preset });
   const getExportOptions = (): ExportReportOptions => ({
@@ -94,6 +107,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     patientBirthDate: settings.patientBirthDate,
     takesAntihypertensiveMedication: settings.takesAntihypertensiveMedication,
     guidelineProfile: settings.guidelineProfile,
+    treatmentTargetMode: settings.treatmentTargetMode,
+    customTargetSystolicMin: settings.customTargetSystolicMin,
+    customTargetSystolicMax: settings.customTargetSystolicMax,
+    customTargetDiastolicMin: settings.customTargetDiastolicMin,
+    customTargetDiastolicMax: settings.customTargetDiastolicMax,
     reportNotes: reportNotes.trim() || undefined,
     hidePatientData,
   });
@@ -122,7 +140,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           try {
             await Share.share({
               title: result.filename,
-              text: language === 'en' ? 'Blood Pressure Clinical Report' : 'Informe Clínico de Tensión Arterial',
+              text: language === 'en' ? 'Home Blood Pressure Report' : 'Informe Tensión Arterial domiciliaria',
               url: result.fileUri,
               dialogTitle: language === 'en' ? 'Open or Share PDF' : 'Abrir o Compartir PDF',
             });
@@ -137,27 +155,33 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     });
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (
+    expectedType: 'backup' | 'csv',
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setImportStatus(null);
     setPendingImport(null);
+    const inputRef = expectedType === 'backup' ? backupFileInputRef : csvFileInputRef;
 
     const reader = new FileReader();
     reader.onload = (loadEvent) => {
       const content = loadEvent.target?.result;
       if (typeof content !== 'string') return;
 
-      const backupResult = parseBackupContent(content);
-      if (backupResult.status === 'valid') {
-        setPendingImport({ kind: 'backup', snapshot: backupResult.snapshot });
-      } else if (backupResult.status === 'invalid') {
-        setImportStatus({
-          kind: 'error',
-          message: backupResult.reason === 'unsupported-version'
-            ? t('data.backupUnsupported')
-            : t('data.backupInvalid'),
-        });
+      if (expectedType === 'backup') {
+        const backupResult = parseBackupContent(content);
+        if (backupResult.status === 'valid') {
+          setPendingImport({ kind: 'backup', snapshot: backupResult.snapshot });
+        } else {
+          setImportStatus({
+            kind: 'error',
+            message: backupResult.status === 'invalid' && backupResult.reason === 'unsupported-version'
+              ? t('data.backupUnsupported')
+              : t('data.backupInvalid'),
+          });
+        }
       } else {
         const result = analyzeCSVImport(content, { defaultArm: settings.defaultArm });
         if (result.format === 'unknown' || result.readings.length === 0) {
@@ -166,17 +190,24 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           setPendingImport({ kind: 'csv', result });
         }
       }
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (inputRef.current) inputRef.current.value = '';
     };
     reader.onerror = () => {
       setImportStatus({ kind: 'error', message: t('export.importReadError') });
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (inputRef.current) inputRef.current.value = '';
     };
     reader.readAsText(file, 'UTF-8');
   };
 
   const confirmCSVImport = async () => {
     if (!pendingImport || pendingImport.kind !== 'csv') return;
+    if (
+      csvDateOverlap.overlappingDateCount > 0 &&
+      !window.confirm(t('data.csvOverlapConfirm', {
+        dates: csvDateOverlap.overlappingDateCount,
+        readings: csvDateOverlap.overlappingReadingCount,
+      }))
+    ) return;
     const addedCount = await onImportReadings(pendingImport.result.readings);
     setImportStatus({ kind: 'success', message: t('toast.importedCount', { count: addedCount }) });
     setPendingImport(null);
@@ -195,7 +226,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     setPendingImport(null);
   };
 
-  const openFilePicker = () => fileInputRef.current?.click();
+  const openBackupFilePicker = () => backupFileInputRef.current?.click();
+  const openCSVFilePicker = () => csvFileInputRef.current?.click();
+  const changeTab = (tab: DataTab) => {
+    setActiveTab(tab);
+    setPendingImport(null);
+    setImportStatus(null);
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -216,7 +253,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               key={tab}
               type="button"
               className={`modal-tab ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => changeTab(tab)}
             >
               {t(`data.tab.${tab}`)}
             </button>
@@ -226,72 +263,79 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="modal-body">
           {activeTab === 'backup' && (
             <div className="data-panel">
-              <div className="data-intro-card">
-                <DatabaseBackup size={26} />
-                <div>
-                  <h3>{t('data.backupTitle')}</h3>
-                  <p>{t('data.backupDescription')}</p>
+              <section className="backup-action-card">
+                <div className="backup-action-heading">
+                  <DatabaseBackup size={24} />
+                  <div>
+                    <h3>{t('data.createBackupTitle')}</h3>
+                    <p>{t('data.createBackupDescription')}</p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="backup-status-grid">
-                <div className="backup-status-item">
-                  <span>{t('data.readingsStored')}</span>
-                  <strong>{readings.length}</strong>
+                <div className="backup-status-grid">
+                  <div className="backup-status-item">
+                    <span>{t('data.readingsStored')}</span>
+                    <strong>{readings.length}</strong>
+                  </div>
+                  <div className="backup-status-item">
+                    <span>{t('data.lastBackup')}</span>
+                    <strong>{lastBackup}</strong>
+                  </div>
                 </div>
-                <div className="backup-status-item">
-                  <span>{t('data.lastBackup')}</span>
-                  <strong>{lastBackup}</strong>
-                </div>
-              </div>
 
-              <button type="button" className="btn-create-backup" onClick={onTriggerManualBackup} disabled={readings.length === 0}>
-                <DatabaseBackup size={20} />
-                {t('data.createBackupNow')}
-              </button>
+                <button type="button" className="btn-create-backup" onClick={onTriggerManualBackup} disabled={readings.length === 0}>
+                  <DatabaseBackup size={20} />
+                  {t('data.createBackupNow')}
+                </button>
 
-              <div className="modal-field backup-schedule-card">
-                <label className="field-label">
-                  <Clock3 size={20} className="export-field-icon" />
-                  <span>{t('data.scheduleTitle')}</span>
-                </label>
-                <div className="chip-options-row">
-                  {(['disabled', 'daily', 'weekly', 'monthly'] as const).map((frequency) => (
-                    <button
-                      key={frequency}
-                      type="button"
-                      className={`chip-select ${settings.backupFrequency === frequency ? 'active' : ''}`}
-                      onClick={() => handleBackupFrequency(frequency)}
-                    >
-                      {t(`data.frequency.${frequency}`)}
-                    </button>
-                  ))}
+                <div className="modal-field backup-schedule-card">
+                  <label className="field-label">
+                    <Clock3 size={20} className="export-field-icon" />
+                    <span>{t('data.scheduleTitle')}</span>
+                  </label>
+                  <div className="chip-options-row">
+                    {(['disabled', 'daily', 'weekly', 'monthly'] as const).map((frequency) => (
+                      <button
+                        key={frequency}
+                        type="button"
+                        className={`chip-select ${settings.backupFrequency === frequency ? 'active' : ''}`}
+                        onClick={() => handleBackupFrequency(frequency)}
+                      >
+                        {t(`data.frequency.${frequency}`)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="data-caveat">
+                    <AlertCircle size={17} />
+                    <span>{t('data.scheduleNotice')}</span>
+                  </div>
                 </div>
-                <div className="data-caveat">
-                  <AlertCircle size={17} />
-                  <span>{t('data.scheduleNotice')}</span>
-                </div>
-              </div>
-            </div>
-          )}
+              </section>
 
-          {activeTab === 'import' && (
-            <div className="import-tab-content data-panel">
-              <div className="import-dropzone" onClick={openFilePicker}>
-                <Upload size={32} className="dropzone-icon" />
-                <h3>{t('data.selectFile')}</h3>
-                <p className="dropzone-sub">{t('data.importDescription')}</p>
+              <section className="backup-action-card restore-backup-card">
+                <div className="backup-action-heading">
+                  <Upload size={24} />
+                  <div>
+                    <h3>{t('data.restoreBackupTitle')}</h3>
+                    <p>{t('data.restoreBackupDescription')}</p>
+                  </div>
+                </div>
+
+                <button type="button" className="btn-select-backup" onClick={openBackupFilePicker}>
+                  <Upload size={20} />
+                  {t('data.selectBackupFile')}
+                </button>
                 <input
                   type="file"
-                  ref={fileInputRef}
-                  accept=".csv,.json,.cta-backup.json,text/csv,application/json"
-                  onChange={handleFileChange}
+                  ref={backupFileInputRef}
+                  accept=".json,.cta-backup.json,application/json"
+                  onChange={(event) => handleFileChange('backup', event)}
                   style={{ display: 'none' }}
                 />
-              </div>
+              </section>
 
               {pendingImport?.kind === 'backup' && (
-                <div className="import-preview-card">
+                <div className="import-preview-card backup-restore-preview">
                   <div className="import-preview-heading">
                     <DatabaseBackup size={21} />
                     <div>
@@ -321,12 +365,36 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     <button type="button" className="btn-replace-data" onClick={() => confirmBackupRestore('replace')}>
                       {t('data.replaceData')}
                     </button>
-                    <button type="button" className="btn-import-reselect" onClick={openFilePicker}>
+                    <button type="button" className="btn-import-reselect" onClick={openBackupFilePicker}>
                       {t('data.selectAnotherFile')}
                     </button>
                   </div>
                 </div>
               )}
+
+              {importStatus && (
+                <div className={`import-status-box ${importStatus.kind}`}>
+                  {importStatus.kind === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                  <span>{importStatus.message}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'import' && (
+            <div className="import-tab-content data-panel">
+              <div className="import-dropzone" onClick={openCSVFilePicker}>
+                <Upload size={32} className="dropzone-icon" />
+                <h3>{t('data.selectCsvFile')}</h3>
+                <p className="dropzone-sub">{t('data.csvImportDescription')}</p>
+                <input
+                  type="file"
+                  ref={csvFileInputRef}
+                  accept=".csv,text/csv"
+                  onChange={(event) => handleFileChange('csv', event)}
+                  style={{ display: 'none' }}
+                />
+              </div>
 
               {pendingImport?.kind === 'csv' && (
                 <div className="import-preview-card">
@@ -337,33 +405,82 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       <p>
                         {pendingImport.result.format === 'mytherapy'
                           ? t('export.importFormatMyTherapy')
-                          : t('data.legacyCsvDetected')}
+                          : pendingImport.result.nativeSource === 'current-report'
+                            ? t('data.nativeCsvReportDetected')
+                            : t('data.historicalCsvDetected')}
                       </p>
                     </div>
                   </div>
-                  <div className="import-summary-grid">
-                    <div className="import-summary-item">
-                      <strong>{pendingImport.result.readings.length}</strong>
-                      <span>{t('export.importReadingsReady')}</span>
+                  {pendingImport.result.format === 'native' ? (
+                    <div className="import-summary-grid">
+                      <div className="import-summary-item">
+                        <strong>{pendingImport.result.readings.length}</strong>
+                        <span>{t('data.csvResultsReady')}</span>
+                      </div>
+                      <div className="import-summary-item">
+                        <strong>{pendingImport.result.reportedMultiReadingSessions}</strong>
+                        <span>{t('data.csvMultiSessionResults')}</span>
+                      </div>
+                      {pendingImport.result.reportedSourceReadings > 0 && (
+                        <div className="import-summary-item">
+                          <strong>{pendingImport.result.reportedSourceReadings}</strong>
+                          <span>{t('data.csvSourceReadings')}</span>
+                        </div>
+                      )}
+                      {pendingImport.result.reportedSourceReadings > 0 && (
+                        <div className="import-summary-item">
+                          <strong>{pendingImport.result.reportedDiscardedReadings}</strong>
+                          <span>{t('data.csvDiscardedReadings')}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="import-summary-item">
-                      <strong>{pendingImport.result.ignoredRows}</strong>
-                      <span>{t('export.importRowsIgnored')}</span>
+                  ) : (
+                    <div className="import-summary-grid">
+                      <div className="import-summary-item">
+                        <strong>{pendingImport.result.readings.length}</strong>
+                        <span>{t('export.importReadingsReady')}</span>
+                      </div>
+                      <div className="import-summary-item">
+                        <strong>{pendingImport.result.ignoredRows}</strong>
+                        <span>{t('export.importRowsIgnored')}</span>
+                      </div>
+                      <div className="import-summary-item">
+                        <strong>{pendingImport.result.shorthandNormalized}</strong>
+                        <span>{t('export.importShorthandNormalized')}</span>
+                      </div>
+                      <div className="import-summary-item">
+                        <strong>{pendingImport.result.invalidReadings}</strong>
+                        <span>{t('export.importInvalidReadings')}</span>
+                      </div>
                     </div>
-                    <div className="import-summary-item">
-                      <strong>{pendingImport.result.shorthandNormalized}</strong>
-                      <span>{t('export.importShorthandNormalized')}</span>
-                    </div>
-                    <div className="import-summary-item">
-                      <strong>{pendingImport.result.invalidReadings}</strong>
-                      <span>{t('export.importInvalidReadings')}</span>
-                    </div>
-                  </div>
+                  )}
 
-                  {pendingImport.result.format === 'native' && (
-                    <div className="import-preview-note">
+                  {csvDateOverlap.overlappingDateCount > 0 && (
+                    <div className="import-preview-note danger">
                       <AlertCircle size={17} />
-                      <span>{t('data.legacyCsvNotice')}</span>
+                      <div>
+                        <strong>{t('data.csvOverlapWarningTitle')}</strong>
+                        <span>{t('data.csvOverlapWarning', {
+                          dates: csvDateOverlap.overlappingDateCount,
+                          readings: csvDateOverlap.overlappingReadingCount,
+                        })}</span>
+                      </div>
+                    </div>
+                  )}
+                  {pendingImport.result.format === 'native' && (
+                    <div className="import-preview-note warning">
+                      <AlertCircle size={17} />
+                      <span>{t('data.csvRecoveryNotice')}</span>
+                    </div>
+                  )}
+                  {pendingImport.result.format === 'native' && pendingImport.result.reportedMultiReadingSessions > 0 && (
+                    <div className="import-preview-note warning">
+                      <AlertCircle size={17} />
+                      <span>{t('data.csvSessionLossNotice', {
+                        count: pendingImport.result.reportedMultiReadingSessions,
+                        readings: pendingImport.result.reportedSourceReadings,
+                        discarded: pendingImport.result.reportedDiscardedReadings,
+                      })}</span>
                     </div>
                   )}
                   {pendingImport.result.format === 'mytherapy' && (
@@ -389,9 +506,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <div className="import-preview-actions">
                     <button type="button" className="btn-import-confirm" onClick={confirmCSVImport}>
                       <CheckCircle2 size={18} />
-                      {t('export.confirmImport')}
+                      {pendingImport.result.format === 'native'
+                        ? t('data.recoverCsvResults')
+                        : t('export.confirmImport')}
                     </button>
-                    <button type="button" className="btn-import-reselect" onClick={openFilePicker}>
+                    <button type="button" className="btn-import-reselect" onClick={openCSVFilePicker}>
                       {t('data.selectAnotherFile')}
                     </button>
                   </div>
@@ -458,7 +577,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
               <div className="data-caveat report-caveat">
                 <AlertCircle size={17} />
-                <span>{t('data.reportCsvNotice')}</span>
+                <div className="report-caveat-copy">
+                  <p>{t('data.reportCsvNotice')}</p>
+                  <p>{t('data.reportCsvRecoveryNotice')}</p>
+                </div>
               </div>
               <div className="export-actions-container">
                 <button type="button" className="btn-export-csv" onClick={handleExportCSV}>

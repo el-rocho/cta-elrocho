@@ -31,7 +31,9 @@ Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y 
 Si en algún momento decides pasar de esta app móvil individual al servidor familiar:
 1. Abre **Datos e informes** &rarr; **Informes**, selecciona **Todo** y descarga el informe `.csv`.
 2. Entra en tu cuenta de la [Versión Autoalojada (cta-elrocho-selfhosted)](https://github.com/el-rocho/cta-elrocho-selfhosted).
-3. Ve a **Datos e informes** &rarr; pestaña **Importar / Restaurar** y sube el archivo `.csv`. Todas tus mediciones se asociarán a tu usuario.
+3. Ve a **Datos e informes** &rarr; pestaña **Importar / Restaurar** y sube el archivo `.csv`. Se migrarán los resultados efectivos incluidos en el informe, no las tomas originales que pudieran componer cada sesión.
+
+El CSV sirve para esta migración entre aplicaciones, pero no es una copia de seguridad. Para restaurar esta aplicación conserva además una copia completa `.cta-backup.json`.
 
 ---
 
@@ -73,10 +75,10 @@ Antes de instalar una nueva versión, consulta la **[guía de actualización](UP
 - **Sistema Dual de Entrada**: Elige entre teclado numérico tradicional o **Ruleta Táctil de Selección Rápida**.
 - **Referencias clínicas**: Etiquetas y avisos configurables según las recomendaciones de las guías `ESC 2024`, `AHA/ACC 2025` o `ISH 2020`, sin modificar las mediciones.
 - **Objetivos terapéuticos**: Para usuarios medicados, valores recomendados según guía y edad, editables para poder ajustarlos a las indicaciones de nuestro facultativo.
-- **Evolución y tendencias**: Gráficas de evolución de `1 mes`, `3 meses`, `6 meses` o `1 año`. Tendencias observadas en las medias diarias de las últimas cuatro semanas.
+- **Evolución y tendencias**: Gráficas de `1 mes`, `3 meses`, `6 meses` o `1 año`, estadísticas del periodo, presión de pulso, presión arterial media estimada, carga de presión y tendencias de las medias diarias de las últimas cuatro semanas.
 - **Filtro de bata blanca**: Agrupa tomas consecutivas y calcula un único resultado efectivo tras descartar, cuando corresponde, las tomas iniciales elevadas.
-- **Informes PDF**: Valores estadísticos, gráficos temporales y tabla detallada de las medidas realizadas.
-- **Datos, copias e informes**: Copias completas versionadas, informes CSV/PDF e importación compatible con los CSV históricos de la propia aplicación y con los procedentes de MyTherapy.
+- **Informes PDF**: Valores estadísticos, métricas cardiovasculares, gráficos temporales, diagrama de dispersión PAS/PAD y tabla detallada de las medidas realizadas.
+- **Datos, copias e informes**: copias JSON completas y versionadas, informes CSV/PDF, recuperación parcial compatible con los CSV históricos e importación de MyTherapy.
 
 ---
 
