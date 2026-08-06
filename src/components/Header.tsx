@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="btn-icon"
           title={isDarkMode ? t('header.lightMode') : t('header.darkMode')}
         >
-          {isDarkMode ? <Sun size={22} /> : <Moon size={22} />}
+          {isDarkMode ? <Sun size={25} /> : <Moon size={25} />}
         </button>
 
         <button
@@ -48,12 +48,15 @@ export const Header: React.FC<HeaderProps> = ({
           className="btn-icon"
           title={t('header.settingsTooltip')}
         >
-          <Settings size={22} />
+          <Settings size={25} />
         </button>
 
-        <button onClick={onOpenExportModal} className="btn-primary-gradient" title={t('header.exportTooltip')}>
-          <Download size={18} />
-          <span>{t('header.exportBtn')}</span>
+        <button
+          onClick={onOpenExportModal}
+          className="btn-icon"
+          title={t('header.exportTooltip')}
+        >
+          <Download size={25} />
         </button>
       </div>
     </header>
