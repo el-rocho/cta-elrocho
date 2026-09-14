@@ -7,7 +7,7 @@ Esta guía describe el procedimiento general para actualizar la aplicación indi
 1. Si tu versión muestra **Datos e informes**, abre **Copias y restauración** y selecciona **Crear y descargar copia**. Si todavía muestra la pantalla antigua **Exportar**, crea un CSV reciente y consérvalo: la versión nueva podrá recuperar sus resultados, aunque no reconstruir todas las tomas originales de cada sesión.
 2. Conserva el archivo fuera del almacenamiento privado de la aplicación.
 3. Lee las notas de la versión que vas a instalar:
-   - [Actualización a 1.6.1-beta.1](docs/actualizaciones/v1.6.1-beta.1.md)
+   - [Actualización a 1.6.1](docs/actualizaciones/v1.6.1.md)
    - [Actualización a 1.6.0](docs/actualizaciones/v1.6.0.md)
    - [Versiones publicadas en GitHub](https://github.com/el-rocho/cta-elrocho/releases)
 
