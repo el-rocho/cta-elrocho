@@ -12,6 +12,8 @@ import { exportToCSV } from '../utils/exportCsv';
 import { downloadPDFReport } from '../utils/pdfGenerator';
 import { analyzeCSVDateOverlap, analyzeCSVImport, type CSVImportResult } from '../utils/importCsv';
 import { parseBackupContent, type AppBackupSnapshot } from '../utils/backupService';
+import type { BackupMergePreview } from '../services/storageService';
+import { BackupMergeSummary } from './BackupMergeSummary';
 import {
   AlertCircle,
   Calendar,
@@ -39,7 +41,7 @@ export interface ToastNotification {
 
 type DataTab = 'backup' | 'import' | 'report';
 type PendingImport =
-  | { kind: 'backup'; snapshot: AppBackupSnapshot }
+  | { kind: 'backup'; snapshot: AppBackupSnapshot; preview: BackupMergePreview }
   | { kind: 'csv'; result: CSVImportResult };
 
 interface ExportModalProps {
@@ -49,7 +51,9 @@ interface ExportModalProps {
   readings: BloodPressureReading[];
   settings: AppSettings;
   onImportReadings: (readings: Omit<BloodPressureReading, 'id'>[]) => number | Promise<number>;
-  onRestoreBackup: (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace') => number | Promise<number>;
+  onRestoreBackup: (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace', preview?: BackupMergePreview) =>
+    number | { status: 'stale' } | ({ status: 'applied' } & BackupMergePreview);
+  onPreviewBackupMerge: (readings: BloodPressureReading[]) => BackupMergePreview;
   onUpdateSettings: (settings: AppSettings) => void;
   onTriggerManualBackup: () => void | Promise<void>;
   onNotify?: (toast: string | ToastNotification) => void;
@@ -63,6 +67,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   settings,
   onImportReadings,
   onRestoreBackup,
+  onPreviewBackupMerge,
   onUpdateSettings,
   onTriggerManualBackup,
   onNotify,
@@ -179,7 +184,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (expectedType === 'backup') {
         const backupResult = parseBackupContent(content);
         if (backupResult.status === 'valid') {
-          setPendingImport({ kind: 'backup', snapshot: backupResult.snapshot });
+          setPendingImport({
+            kind: 'backup', snapshot: backupResult.snapshot,
+            preview: onPreviewBackupMerge(backupResult.snapshot.readings),
+          });
         } else {
           setImportStatus({
             kind: 'error',
@@ -219,15 +227,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     setPendingImport(null);
   };
 
-  const confirmBackupRestore = async (mode: 'merge' | 'replace') => {
+  const confirmBackupRestore = (mode: 'merge' | 'replace') => {
     if (!pendingImport || pendingImport.kind !== 'backup') return;
     if (mode === 'replace' && !window.confirm(t('data.replaceConfirm'))) return;
-    const restoredCount = await onRestoreBackup(pendingImport.snapshot, mode);
+    const result = onRestoreBackup(pendingImport.snapshot, mode, pendingImport.preview);
+    if (typeof result !== 'number' && result.status === 'stale') {
+      setPendingImport({ ...pendingImport, preview: onPreviewBackupMerge(pendingImport.snapshot.readings) });
+      setImportStatus({ kind: 'error', message: t('data.mergeChanged') });
+      return;
+    }
     setImportStatus({
       kind: 'success',
-      message: mode === 'replace'
-        ? t('data.restoreReplaceSuccess', { count: restoredCount })
-        : t('data.restoreMergeSuccess', { count: restoredCount }),
+      message: typeof result === 'number'
+        ? t('data.restoreReplaceSuccess', { count: result })
+        : t('data.restoreMergeSuccess', {
+            added: result.addedCount, identical: result.identicalCount, conflicts: result.conflictCount,
+          }),
     });
     setPendingImport(null);
   };
@@ -334,9 +349,18 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       <span>{t('data.backupCreatedAt')}</span>
                     </div>
                   </div>
-                  <div className="import-preview-note">
-                    <CheckCircle2 size={17} />
-                    <span>{t('data.nativeBackupNotice')}</span>
+                  <BackupMergeSummary language={language} counts={pendingImport.preview} />
+                  <div
+                    className={`import-preview-note ${pendingImport.preview.conflictCount > 0 ? 'warning' : 'merge-ready'}`}
+                    role={pendingImport.preview.conflictCount > 0 ? 'alert' : undefined}
+                  >
+                    {pendingImport.preview.conflictCount > 0 ? <AlertCircle size={17} /> : <CheckCircle2 size={17} />}
+                    <span>{pendingImport.preview.conflictCount > 0
+                      ? <strong>{t('data.mergeConflictWarning', { conflicts: pendingImport.preview.conflictCount })}</strong>
+                      : t('data.mergeReadyNotice', {
+                          added: pendingImport.preview.addedCount,
+                          duplicates: pendingImport.preview.identicalCount,
+                        })}</span>
                   </div>
                   <div className="import-preview-actions restore-actions">
                     <button type="button" className="btn-import-confirm" onClick={() => confirmBackupRestore('merge')}>

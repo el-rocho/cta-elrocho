@@ -12,6 +12,8 @@ import {
   saveStoredSettings,
   importReadingsIntoStorage,
   mergeBackupReadingsIntoStorage,
+  previewBackupMerge,
+  type BackupMergePreview,
   replaceStoredData,
   clearAllStoredData,
 } from './services/storageService';
@@ -159,7 +161,7 @@ export function App() {
     }
   };
 
-  const handleRestoreBackup = (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace') => {
+  const handleRestoreBackup = (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace', preview?: BackupMergePreview) => {
     if (mode === 'replace') {
       const restoredSettings = {
         ...snapshot.settings,
@@ -172,9 +174,10 @@ export function App() {
       return snapshot.readings.length;
     }
 
-    const result = mergeBackupReadingsIntoStorage(snapshot.readings);
-    setReadings(result.updated);
-    return result.addedCount;
+    if (!preview) return { status: 'stale' as const };
+    const result = mergeBackupReadingsIntoStorage(snapshot.readings, preview);
+    if (result.status === 'applied') setReadings(result.updated);
+    return result;
   };
 
   const handleResetDemoData = () => {
@@ -372,6 +375,7 @@ export function App() {
           settings={settings}
           onImportReadings={handleImportReadings}
           onRestoreBackup={handleRestoreBackup}
+          onPreviewBackupMerge={previewBackupMerge}
           onUpdateSettings={handleUpdateSettings}
           onTriggerManualBackup={handleTriggerManualBackup}
           onNotify={(msg) => setNotificationMsg(msg)}

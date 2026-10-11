@@ -368,42 +368,83 @@ export function importReadingsIntoStorage(imported: Omit<BloodPressureReading, '
   return { updated, addedCount };
 }
 
-function getExactReadingSignature(reading: Omit<BloodPressureReading, 'id'>): string {
-  return [
-    new Date(reading.timestamp).toISOString(),
-    reading.systolic,
-    reading.diastolic,
-    reading.heartRate,
-    reading.arm,
-    reading.sessionId ?? '',
-  ].join('_');
+function readingContent(reading: BloodPressureReading): string {
+  // The whole instant matters; optional legacy fields have the same empty defaults.
+  return JSON.stringify([
+    new Date(reading.timestamp).toISOString(), reading.systolic, reading.diastolic,
+    reading.heartRate, reading.arm, reading.notes ?? '', reading.sessionId ?? '',
+    reading.pulsePressureWarningConfirmed ?? false,
+    reading.takesAntihypertensiveMedication ?? false,
+  ]);
 }
 
-export function mergeBackupReadingsIntoStorage(imported: BloodPressureReading[]): {
-  updated: BloodPressureReading[];
+export interface BackupMergePreview {
   addedCount: number;
-} {
-  const current = getStoredReadings();
-  const existingIds = new Set(current.map((reading) => reading.id));
-  const existingSignatures = new Set(current.map(getExactReadingSignature));
-  const newItems: BloodPressureReading[] = [];
+  identicalCount: number;
+  conflictCount: number;
+  /** Snapshot of both inputs, used to reject stale confirmations. */
+  currentRevision: string;
+  importRevision: string;
+}
 
-  for (const reading of imported) {
-    const signature = getExactReadingSignature(reading);
-    if (existingSignatures.has(signature)) continue;
-
-    let id = reading.id;
-    if (existingIds.has(id)) {
-      id = `restore-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    }
-    existingIds.add(id);
-    existingSignatures.add(signature);
-    newItems.push({ ...reading, id });
+function planBackupMerge(imported: BloodPressureReading[], current: BloodPressureReading[]) {
+  const byInstant = new Map<string, Set<string>>();
+  for (const reading of current) {
+    const instant = new Date(reading.timestamp).toISOString();
+    if (!byInstant.has(instant)) byInstant.set(instant, new Set());
+    byInstant.get(instant)!.add(readingContent(reading));
   }
+  const newItems: BloodPressureReading[] = [];
+  let addedCount = 0;
+  let identicalCount = 0;
+  let conflictCount = 0;
+  for (const reading of imported) {
+    const instant = new Date(reading.timestamp).toISOString();
+    const content = readingContent(reading);
+    const variants = byInstant.get(instant);
+    if (variants?.has(content)) {
+      identicalCount++;
+      continue;
+    }
+    if (variants?.size) conflictCount++;
+    else addedCount++;
+    newItems.push(reading);
+    if (variants) variants.add(content);
+    else byInstant.set(instant, new Set([content]));
+  }
+  return { newItems, addedCount, identicalCount, conflictCount };
+}
 
+export function previewBackupMerge(imported: BloodPressureReading[]): BackupMergePreview {
+  const current = getStoredReadings();
+  const { addedCount, identicalCount, conflictCount } = planBackupMerge(imported, current);
+  return {
+    addedCount, identicalCount, conflictCount,
+    currentRevision: JSON.stringify(current), importRevision: JSON.stringify(imported),
+  };
+}
+
+export function mergeBackupReadingsIntoStorage(
+  imported: BloodPressureReading[], preview: BackupMergePreview
+): ({ status: 'applied'; updated: BloodPressureReading[] } & BackupMergePreview) | { status: 'stale' } {
+  const current = getStoredReadings();
+  if (JSON.stringify(current) !== preview.currentRevision || JSON.stringify(imported) !== preview.importRevision) {
+    return { status: 'stale' };
+  }
+  const plan = planBackupMerge(imported, current);
+  if (plan.addedCount !== preview.addedCount || plan.identicalCount !== preview.identicalCount || plan.conflictCount !== preview.conflictCount) {
+    return { status: 'stale' };
+  }
+  const existingIds = new Set(current.map((reading) => reading.id));
+  const newItems = plan.newItems.map((reading) => {
+    let id = reading.id;
+    while (existingIds.has(id)) id = `restore-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    existingIds.add(id);
+    return { ...reading, id };
+  });
   const updated = [...newItems, ...current];
-  saveStoredReadings(updated);
-  return { updated, addedCount: newItems.length };
+  if (newItems.length) saveStoredReadings(updated);
+  return { status: 'applied', updated, ...preview };
 }
 
 export function replaceStoredData(readings: BloodPressureReading[], settings: AppSettings): void {
