@@ -113,9 +113,9 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({
         setJustSaved(false);
         setIsSaving(false);
       }, 1100);
-    } catch (error) {
+    } catch {
       setIsSaving(false);
-      throw error;
+      setErrorMsg(t('form.storageError'));
     }
   };
 

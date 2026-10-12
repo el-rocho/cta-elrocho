@@ -52,10 +52,12 @@ interface ExportModalProps {
   settings: AppSettings;
   onImportReadings: (readings: Omit<BloodPressureReading, 'id'>[]) => number | Promise<number>;
   onRestoreBackup: (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace', preview?: BackupMergePreview) =>
-    number | { status: 'stale' } | ({ status: 'applied' } & BackupMergePreview);
+    number | { status: 'stale' } | { status: 'error' } | ({ status: 'applied' } & BackupMergePreview);
   onPreviewBackupMerge: (readings: BloodPressureReading[]) => BackupMergePreview;
   onUpdateSettings: (settings: AppSettings) => void;
   onTriggerManualBackup: () => void | Promise<void>;
+  /** Mientras se muestren datos de ejemplo (fallback demo), crear una copia real no es posible. */
+  isDemoFallback?: boolean;
   onNotify?: (toast: string | ToastNotification) => void;
 }
 
@@ -70,6 +72,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onPreviewBackupMerge,
   onUpdateSettings,
   onTriggerManualBackup,
+  isDemoFallback = false,
   onNotify,
 }) => {
   const { t, language } = useLanguage();
@@ -184,10 +187,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (expectedType === 'backup') {
         const backupResult = parseBackupContent(content);
         if (backupResult.status === 'valid') {
-          setPendingImport({
-            kind: 'backup', snapshot: backupResult.snapshot,
-            preview: onPreviewBackupMerge(backupResult.snapshot.readings),
-          });
+          try {
+            setPendingImport({
+              kind: 'backup', snapshot: backupResult.snapshot,
+              preview: onPreviewBackupMerge(backupResult.snapshot.readings),
+            });
+          } catch {
+            setImportStatus({ kind: 'error', message: t('toast.storageError') });
+          }
         } else {
           setImportStatus({
             kind: 'error',
@@ -222,18 +229,38 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         readings: csvDateOverlap.overlappingReadingCount,
       }))
     ) return;
-    const addedCount = await onImportReadings(pendingImport.result.readings);
-    setImportStatus({ kind: 'success', message: t('toast.importedCount', { count: addedCount }) });
-    setPendingImport(null);
+    try {
+      const addedCount = await onImportReadings(pendingImport.result.readings);
+      setImportStatus({ kind: 'success', message: t('toast.importedCount', { count: addedCount }) });
+      setPendingImport(null);
+    } catch {
+      setImportStatus({ kind: 'error', message: t('toast.storageError') });
+    }
   };
 
   const confirmBackupRestore = (mode: 'merge' | 'replace') => {
     if (!pendingImport || pendingImport.kind !== 'backup') return;
     if (mode === 'replace' && !window.confirm(t('data.replaceConfirm'))) return;
     const result = onRestoreBackup(pendingImport.snapshot, mode, pendingImport.preview);
+    if (typeof result !== 'number' && result.status === 'error') {
+      setImportStatus({ kind: 'error', message: t('toast.storageError') });
+      return;
+    }
     if (typeof result !== 'number' && result.status === 'stale') {
-      setPendingImport({ ...pendingImport, preview: onPreviewBackupMerge(pendingImport.snapshot.readings) });
-      setImportStatus({ kind: 'error', message: t('data.mergeChanged') });
+      let refreshedPreview: BackupMergePreview | null = null;
+      try {
+        refreshedPreview = onPreviewBackupMerge(pendingImport.snapshot.readings);
+      } catch {
+        // El recálculo del preview puede fallar (p. ej. si las mediciones ya no se pueden leer);
+        // en ese caso no se propaga el error: se informa como fallo de almacenamiento.
+        refreshedPreview = null;
+      }
+      if (refreshedPreview) {
+        setPendingImport({ ...pendingImport, preview: refreshedPreview });
+        setImportStatus({ kind: 'error', message: t('data.mergeChanged') });
+      } else {
+        setImportStatus({ kind: 'error', message: t('toast.storageError') });
+      }
       return;
     }
     setImportStatus({
@@ -286,7 +313,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <div className="data-panel">
               <section className="backup-action-card">
                 <div className="backup-create-row">
-                  <button type="button" className="btn-create-backup" onClick={onTriggerManualBackup} disabled={readings.length === 0}>
+                  <button type="button" className="btn-create-backup" onClick={onTriggerManualBackup} disabled={readings.length === 0 || isDemoFallback}>
                     <DatabaseBackup size={20} />
                     {t('data.createBackupNow')}
                   </button>
@@ -295,6 +322,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     <strong>{lastBackup}</strong>
                   </div>
                 </div>
+
+                {isDemoFallback && (
+                  <div className="import-preview-note warning" role="alert" data-testid="backup-demo-blocked">
+                    <AlertCircle size={17} />
+                    <span>{t('toast.demoFallbackBackupBlocked')}</span>
+                  </div>
+                )}
 
                 <div className="modal-field backup-schedule-card">
                   <label className="field-label">

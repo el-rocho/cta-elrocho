@@ -128,4 +128,32 @@ describe('merge applies directly from the already-computed preview', () => {
     expect(onRestoreBackup).toHaveBeenCalledTimes(2);
     expect(onRestoreBackup).toHaveBeenLastCalledWith(snapshot, 'merge', refreshed);
   });
+
+  it('reports a storage error without crashing when the post-stale preview recalculation fails', async () => {
+    const { onRestoreBackup, onPreviewBackupMerge, button, click } = await renderMerge(1);
+    onRestoreBackup.mockReturnValueOnce({ status: 'stale' } as never);
+    onPreviewBackupMerge.mockImplementationOnce(() => { throw new Error('storage boom'); });
+
+    await click('Combinar mediciones');
+
+    // The thrown recomputation is surfaced as a storage error, not as an uncaught exception.
+    expect(onPreviewBackupMerge).toHaveBeenCalledTimes(2);
+    expect(container.textContent).toContain(getTranslation('es', 'toast.storageError'));
+    expect(container.textContent).not.toContain(getTranslation('es', 'data.mergeChanged'));
+    // The pending backup is kept so the user can retry or select another file.
+    expect(button('Combinar mediciones')).toBeTruthy();
+  });
+
+  it('keeps the pending backup and shows no success when storage rejects the merge', async () => {
+    const { onRestoreBackup, button, click } = await renderMerge(1);
+    onRestoreBackup.mockReturnValueOnce({ status: 'error' } as never);
+
+    await click('Combinar mediciones');
+
+    expect(button('Combinar mediciones')).toBeTruthy();
+    expect(container.textContent).toContain(getTranslation('es', 'toast.storageError'));
+    expect(container.textContent).not.toContain(getTranslation('es', 'data.restoreMergeSuccess', {
+      added: 2, identical: 3, conflicts: 1,
+    }));
+  });
 });

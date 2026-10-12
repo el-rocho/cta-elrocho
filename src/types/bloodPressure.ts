@@ -145,6 +145,13 @@ export interface HealthAssessment {
 
 export type DateFilterPreset = 'all' | '7days' | '1month' | '3months' | 'custom';
 
+/**
+ * Resultado de una petición de borrado que pasa por un paso de confirmación.
+ * `cancelled` significa que la persona usuaria descartó la confirmación: quien
+ * consuma el resultado no debe reportarlo como un error de almacenamiento.
+ */
+export type DeleteReadingOutcome = 'deleted' | 'cancelled' | 'failed';
+
 export interface DateRange {
   preset: DateFilterPreset;
   startDate?: string;

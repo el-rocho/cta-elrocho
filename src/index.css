@@ -1281,6 +1281,20 @@ body {
   margin-bottom: 16px;
 }
 
+/* Aviso persistente: la app muestra datos de ejemplo porque no pudo leer los reales.
+   Es el aviso más crítico de la app y se lee como texto normal (13 px, seminegrita), así que su
+   texto necesita contraste AA (4.5:1) sobre el rojo translúcido de .alert-danger en ambos temas. */
+.demo-fallback-banner {
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #b91c1c;
+}
+
+/* En oscuro, #dc2626 se queda en 3.5:1 sobre el rojo translúcido: hace falta un rojo más claro. */
+[data-theme='dark'] .demo-fallback-banner {
+  color: #f87171;
+}
+
 .text-green { color: #10b981; }
 .text-muted { color: var(--text-muted); }
 .text-blue { color: #3b82f6; }

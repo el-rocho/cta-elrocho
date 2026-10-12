@@ -3,6 +3,52 @@ import type { BloodPressureReading, AppSettings } from '../types/bloodPressure';
 const STORAGE_KEY = 'graphene_bp_readings_v1';
 const SETTINGS_KEY = 'graphene_bp_settings_v1';
 
+export type StorageOperation = 'read' | 'write' | 'parse' | 'remove';
+
+export class StorageError extends Error {
+  readonly operation: StorageOperation;
+  readonly key: string;
+
+  constructor(operation: StorageOperation, key: string, options?: ErrorOptions) {
+    super(`localStorage ${operation} failed for ${key}`, options);
+    this.name = 'StorageError';
+    this.operation = operation;
+    this.key = key;
+  }
+}
+
+function readStoredValue(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    throw new StorageError('read', key, { cause: error });
+  }
+}
+
+function parseStoredValue<T>(raw: string, key: string): T {
+  try {
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    throw new StorageError('parse', key, { cause: error });
+  }
+}
+
+function writeStoredValue(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    throw new StorageError('write', key, { cause: error });
+  }
+}
+
+function removeStoredValue(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    throw new StorageError('remove', key, { cause: error });
+  }
+}
+
 export const DEFAULT_SETTINGS: AppSettings = {
   language: 'es', // Por defecto Español
   enableWhiteCoatFilter: false, // Por defecto DESACTIVADO
@@ -72,7 +118,7 @@ const DEMO_READING_NOTES: Record<string, { legacy: string; current: string }> = 
 };
 
 // Mismos diez ejemplos utilizados por las versiones individual, cliente y autoalojada.
-function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
+export function createDemoReadings(referenceMs = Date.now()): BloodPressureReading[] {
   const demoTimestamp = (daysAgo: number) => new Date(referenceMs - DAY_MS * daysAgo).toISOString();
   return [
   {
@@ -214,79 +260,86 @@ function migrateDemoReadingNotes(
   return { readings: migrated, changed };
 }
 
-export function getStoredReadings(): BloodPressureReading[] {
+// Reading the readings must never depend on the settings being readable: when the settings
+// are corrupt we recover the medication context from the defaults instead of letting the
+// failure block the whole readings pipeline.
+function readMedicationFallback(): boolean {
   try {
-    const medicationFallback = getStoredSettings().takesAntihypertensiveMedication;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const initial = migrateMedicationContext(createDemoReadings(), medicationFallback).readings;
-      saveStoredReadings(initial);
-      return initial;
-    }
-    const parsed = JSON.parse(raw) as BloodPressureReading[];
-    const medicationMigration = migrateMedicationContext(parsed, medicationFallback);
-    const notesMigration = migrateDemoReadingNotes(medicationMigration.readings);
-    if (medicationMigration.changed || notesMigration.changed) {
-      saveStoredReadings(notesMigration.readings);
-    }
-    return notesMigration.readings;
-  } catch (error) {
-    console.error('Error al leer de localStorage:', error);
-    return createDemoReadings();
+    return getStoredSettings().takesAntihypertensiveMedication;
+  } catch {
+    return DEFAULT_SETTINGS.takesAntihypertensiveMedication;
   }
+}
+
+// Persisting a migration is an accessory side effect of reading. When the write fails, the
+// readings that were read successfully are still returned; they are never discarded or hidden
+// behind a storage error.
+function persistMigratedReadings(readings: BloodPressureReading[]): void {
+  try {
+    saveStoredReadings(readings);
+  } catch {
+    // Best effort: the read already succeeded and the caller keeps the data in memory.
+  }
+}
+
+export function getStoredReadings(): BloodPressureReading[] {
+  const raw = readStoredValue(STORAGE_KEY);
+  if (raw === null) {
+    const medicationFallback = readMedicationFallback();
+    const initial = migrateMedicationContext(createDemoReadings(), medicationFallback).readings;
+    persistMigratedReadings(initial);
+    return initial;
+  }
+  const parsed = parseStoredValue<BloodPressureReading[]>(raw, STORAGE_KEY);
+  const needsMedicationMigration = parsed.some(
+    (reading) => typeof reading.takesAntihypertensiveMedication !== 'boolean'
+  );
+  const medicationFallback = needsMedicationMigration ? readMedicationFallback() : false;
+  const medicationMigration = migrateMedicationContext(parsed, medicationFallback);
+  const notesMigration = migrateDemoReadingNotes(medicationMigration.readings);
+  if (medicationMigration.changed || notesMigration.changed) {
+    persistMigratedReadings(notesMigration.readings);
+  }
+  return notesMigration.readings;
 }
 
 export function saveStoredReadings(readings: BloodPressureReading[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(readings));
-  } catch (error) {
-    console.error('Error al guardar en localStorage:', error);
-  }
+  writeStoredValue(STORAGE_KEY, readings);
 }
 
 export function clearAllStoredData(): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
-  } catch (error) {
-    console.error('Error al eliminar datos de localStorage:', error);
-  }
+  saveStoredReadings([]);
 }
 
 export function getStoredSettings(): AppSettings {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return DEFAULT_SETTINGS;
-    const stored = JSON.parse(raw);
-    const parsed = {
-      ...DEFAULT_SETTINGS,
-      ...stored,
-      showInformationalLabels: typeof stored.showInformationalLabels === 'boolean'
-        ? stored.showInformationalLabels
-        : true,
-    };
-    if (!['es', 'en'].includes(parsed.language)) {
-      parsed.language = 'es';
-    }
-    parsed.whiteCoatIntervalMinutes = 5;
-    if (!['keyboard', 'wheel'].includes(parsed.preferredInputMode)) {
-      parsed.preferredInputMode = 'keyboard';
-    }
-    if (!['esc-2024', 'aha-acc-2025', 'ish-2020'].includes(parsed.guidelineProfile)) {
-      parsed.guidelineProfile = 'esc-2024';
-    }
-    return parsed;
-  } catch (error) {
-    console.error('Error al leer ajustes:', error);
+  const raw = readStoredValue(SETTINGS_KEY);
+  if (raw === null) {
+    saveStoredSettings(DEFAULT_SETTINGS);
     return DEFAULT_SETTINGS;
   }
+  const stored = parseStoredValue<Partial<AppSettings>>(raw, SETTINGS_KEY);
+  const parsed = {
+    ...DEFAULT_SETTINGS,
+    ...stored,
+    showInformationalLabels: typeof stored.showInformationalLabels === 'boolean'
+      ? stored.showInformationalLabels
+      : true,
+  };
+  if (!['es', 'en'].includes(parsed.language)) {
+    parsed.language = 'es';
+  }
+  parsed.whiteCoatIntervalMinutes = 5;
+  if (!['keyboard', 'wheel'].includes(parsed.preferredInputMode)) {
+    parsed.preferredInputMode = 'keyboard';
+  }
+  if (!['esc-2024', 'aha-acc-2025', 'ish-2020'].includes(parsed.guidelineProfile)) {
+    parsed.guidelineProfile = 'esc-2024';
+  }
+  return parsed;
 }
 
 export function saveStoredSettings(settings: AppSettings): void {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  } catch (error) {
-    console.error('Error al guardar ajustes:', error);
-  }
+  writeStoredValue(SETTINGS_KEY, settings);
 }
 
 export function addReadingToStorage(newReading: Omit<BloodPressureReading, 'id'>): BloodPressureReading {
@@ -303,17 +356,6 @@ export function addReadingToStorage(newReading: Omit<BloodPressureReading, 'id'>
 export function updateReadingInStorage(updatedReading: BloodPressureReading): BloodPressureReading[] {
   const current = getStoredReadings();
   const updated = current.map((r) => (r.id === updatedReading.id ? updatedReading : r));
-  saveStoredReadings(updated);
-  return updated;
-}
-
-export function updateMedicationContextForAllReadings(
-  takesMedication: boolean
-): BloodPressureReading[] {
-  const updated = getStoredReadings().map((reading) => ({
-    ...reading,
-    takesAntihypertensiveMedication: takesMedication,
-  }));
   saveStoredReadings(updated);
   return updated;
 }
@@ -338,7 +380,7 @@ export function importReadingsIntoStorage(imported: Omit<BloodPressureReading, '
   addedCount: number;
 } {
   const current = getStoredReadings();
-  const currentMedicationContext = getStoredSettings().takesAntihypertensiveMedication;
+  const currentMedicationContext = readMedicationFallback();
   const existingSignatures = new Set(
     current.map((r) => `${new Date(r.timestamp).toISOString().slice(0, 16)}_${r.systolic}_${r.diastolic}_${r.heartRate}`)
   );
@@ -448,6 +490,20 @@ export function mergeBackupReadingsIntoStorage(
 }
 
 export function replaceStoredData(readings: BloodPressureReading[], settings: AppSettings): void {
+  const previousReadings = readStoredValue(STORAGE_KEY);
+  const previousSettings = readStoredValue(SETTINGS_KEY);
   saveStoredReadings(readings);
-  saveStoredSettings(settings);
+  try {
+    saveStoredSettings(settings);
+  } catch (error) {
+    try {
+      if (previousReadings === null) removeStoredValue(STORAGE_KEY);
+      else localStorage.setItem(STORAGE_KEY, previousReadings);
+      if (previousSettings === null) removeStoredValue(SETTINGS_KEY);
+      else localStorage.setItem(SETTINGS_KEY, previousSettings);
+    } catch {
+      // localStorage has no transactions; preserve the original write failure.
+    }
+    throw error;
+  }
 }

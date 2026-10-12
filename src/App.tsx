@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import type { BloodPressureReading, ArmPosition, DateRange, AppSettings, InputMode } from './types/bloodPressure';
+import type { BloodPressureReading, ArmPosition, DateRange, AppSettings, InputMode, DeleteReadingOutcome } from './types/bloodPressure';
 import {
   getStoredReadings,
+  createDemoReadings,
+  DEFAULT_SETTINGS,
   saveStoredReadings,
   addReadingToStorage,
   updateReadingInStorage,
-  updateMedicationContextForAllReadings,
   deleteSessionFromStorage,
   deleteReadingFromStorage,
   getStoredSettings,
@@ -33,8 +34,26 @@ import { LanguageProvider } from './i18n/LanguageContext';
 import { getTranslation } from './i18n/translations';
 
 export function App() {
-  const [readings, setReadings] = useState<BloodPressureReading[]>(() => getStoredReadings());
-  const [settings, setSettings] = useState<AppSettings>(() => getStoredSettings());
+  // Marca que la carga inicial falló: el estado en memoria es entonces un conjunto de demos
+  // de reserva y nunca debe escribirse sobre los datos reales almacenados.
+  const readingsLoadFailedRef = useRef(false);
+  const [readings, setReadings] = useState<BloodPressureReading[]>(() => {
+    try {
+      return getStoredReadings();
+    } catch (error) {
+      console.error('Error al cargar las mediciones:', error);
+      readingsLoadFailedRef.current = true;
+      return createDemoReadings();
+    }
+  });
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    try {
+      return getStoredSettings();
+    } catch (error) {
+      console.error('Error al cargar los ajustes:', error);
+      return DEFAULT_SETTINGS;
+    }
+  });
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -43,27 +62,62 @@ export function App() {
   const [readingToEdit, setReadingToEdit] = useState<BloodPressureReading | null>(null);
   const [notificationMsg, setNotificationMsg] = useState<string | ToastNotification | null>(null);
   const backupReminderKeyRef = useRef<string | null>(null);
+  // El fallback demo no es un aviso transitorio: se muestra mientras siga activo, para que
+  // nunca se confunda con mediciones reales (se inicializa desde el fallo de la carga inicial).
+  const [isDemoFallback, setIsDemoFallback] = useState<boolean>(readingsLoadFailedRef.current);
+  const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { sessions } = useMemo(
     () => processReadingsIntoSessions(readings, settings),
     [readings, settings]
   );
 
-  useEffect(() => {
-    saveStoredReadings(readings);
-  }, [readings]);
+  const clearNotificationTimer = () => {
+    if (notificationTimerRef.current !== null) {
+      clearTimeout(notificationTimerRef.current);
+      notificationTimerRef.current = null;
+    }
+  };
 
-  useEffect(() => {
-    saveStoredSettings(settings);
-  }, [settings]);
+  // Punto único de asignación de avisos: asignar uno nuevo cancela el autodescarte pendiente, de
+  // modo que el temporizador de un aviso anterior no pueda borrar el aviso actual.
+  // `delayMs` programa su autodescarte; sin él, el aviso permanece hasta que se atienda o se cierre.
+  const showNotification = (msg: string | ToastNotification, delayMs?: number) => {
+    clearNotificationTimer();
+    setNotificationMsg(msg);
+    if (delayMs === undefined) return;
+    notificationTimerRef.current = setTimeout(() => {
+      notificationTimerRef.current = null;
+      setNotificationMsg(null);
+    }, delayMs);
+  };
+
+  // Cerrar un aviso a mano cancela también su autodescarte pendiente.
+  const dismissNotification = () => {
+    clearNotificationTimer();
+    setNotificationMsg(null);
+  };
+
+  useEffect(() => clearNotificationTimer, []);
+
+  // El fallback demo deja de estar activo en cuanto una operación vuelve a operar sobre los
+  // datos reales del almacenamiento.
+  const clearReadingsFallback = () => {
+    if (!readingsLoadFailedRef.current) return;
+    readingsLoadFailedRef.current = false;
+    setIsDemoFallback(false);
+  };
 
   useEffect(() => {
     const showBackupReminderIfDue = () => {
+      // Mientras el fallback demo esté activo, `readings` son ejemplos: recordar (u ofrecer) una
+      // copia guardaría esos ejemplos como si fueran los registros reales.
+      if (readingsLoadFailedRef.current) return;
       if (!isBackupDue(readings, settings)) return;
       const reminderKey = `${settings.backupFrequency}:${settings.lastFullBackupTimestamp ?? 'never'}:${new Date().toDateString()}`;
       if (backupReminderKeyRef.current === reminderKey) return;
       backupReminderKeyRef.current = reminderKey;
-      setNotificationMsg({
+      showNotification({
         message: getTranslation(settings.language, 'toast.backupDue'),
         actionLabel: getTranslation(settings.language, 'toast.openBackups'),
         variant: 'soft-blue',
@@ -83,19 +137,48 @@ export function App() {
     };
   }, [readings, settings]);
 
-  const handleUpdateSettings = (newSettings: AppSettings) => {
-    setSettings(newSettings);
+  const notifyStorageError = (error: unknown) => {
+    console.error('Error de almacenamiento local:', error);
+    showNotification(getTranslation(settings.language, 'toast.storageError'), 5000);
+  };
+
+  const handleUpdateSettings = (newSettings: AppSettings): boolean => {
+    try {
+      saveStoredSettings(newSettings);
+      setSettings(newSettings);
+      return true;
+    } catch (error) {
+      notifyStorageError(error);
+      return false;
+    }
   };
 
   const handleMedicationContextChange = (
     takesMedication: boolean,
     recalculateHistory: boolean
   ): boolean => {
-    if (recalculateHistory) {
-      setReadings(updateMedicationContextForAllReadings(takesMedication));
+    const updatedSettings = { ...settings, takesAntihypertensiveMedication: takesMedication };
+    try {
+      if (recalculateHistory) {
+        // Si la carga inicial falló, releemos del almacenamiento en lugar de usar el estado en
+        // memoria (que podría ser el conjunto de demos de reserva) para no sobrescribir datos reales.
+        const sourceReadings = readingsLoadFailedRef.current ? getStoredReadings() : readings;
+        const updatedReadings = sourceReadings.map((reading) => ({
+          ...reading,
+          takesAntihypertensiveMedication: takesMedication,
+        }));
+        replaceStoredData(updatedReadings, updatedSettings);
+        clearReadingsFallback();
+        setReadings(updatedReadings);
+      } else {
+        saveStoredSettings(updatedSettings);
+      }
+      setSettings(updatedSettings);
+      return true;
+    } catch (error) {
+      notifyStorageError(error);
+      return false;
     }
-    setSettings({ ...settings, takesAntihypertensiveMedication: takesMedication });
-    return true;
   };
 
   const handleUpdateInputMode = (mode: InputMode) => {
@@ -104,14 +187,28 @@ export function App() {
   };
 
   const handleImportReadings = (imported: Omit<BloodPressureReading, 'id'>[]) => {
-    const result = importReadingsIntoStorage(imported);
-    setReadings(result.updated);
-    setNotificationMsg(getTranslation(settings.language, 'toast.importedCount', { count: result.addedCount }));
-    setTimeout(() => setNotificationMsg(null), 5000);
-    return result.addedCount;
+    try {
+      const result = importReadingsIntoStorage(imported);
+      setReadings(result.updated);
+      clearReadingsFallback();
+      showNotification(
+        getTranslation(settings.language, 'toast.importedCount', { count: result.addedCount }),
+        5000
+      );
+      return result.addedCount;
+    } catch (error) {
+      notifyStorageError(error);
+      throw error;
+    }
   };
 
   const handleTriggerManualBackup = async () => {
+    if (readingsLoadFailedRef.current) {
+      // Con el fallback demo activo, `readings` son datos de ejemplo: guardarlos como copia "real"
+      // (y fijar lastFullBackupTimestamp, silenciando el recordatorio) sería engañoso.
+      showNotification(getTranslation(settings.language, 'toast.demoFallbackBackupBlocked'), 5000);
+      return;
+    }
     if (readings.length === 0) {
       alert(getTranslation(settings.language, 'toast.noDataToExport'));
       return;
@@ -121,8 +218,7 @@ export function App() {
       const result = await saveBackup(readings, settings, now);
       if (result.mode === 'native') {
         if (!result.saved) {
-          setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupCancelled'));
-          setTimeout(() => setNotificationMsg(null), 5000);
+          showNotification(getTranslation(settings.language, 'toast.manualBackupCancelled'), 5000);
           return;
         }
 
@@ -131,9 +227,9 @@ export function App() {
           lastBackupTimestamp: now.toISOString(),
           lastFullBackupTimestamp: now.toISOString(),
         };
-        handleUpdateSettings(updatedSettings);
+        if (!handleUpdateSettings(updatedSettings)) return;
         const downloadsFolder = settings.language === 'en' ? 'Downloads' : 'Descargas';
-        setNotificationMsg({
+        showNotification({
           message: getTranslation(settings.language, 'toast.manualBackupSavedAt', { path: downloadsFolder }),
           detail: result.filename,
           variant: 'soft-blue',
@@ -141,7 +237,7 @@ export function App() {
         return;
       }
 
-      setNotificationMsg({
+      showNotification({
         actionLabel: getTranslation(settings.language, 'toast.confirmBackupSaved'),
         cancelLabel: getTranslation(settings.language, 'toast.backupCancelledAction'),
         variant: 'neutral',
@@ -156,48 +252,66 @@ export function App() {
       });
     } catch (error) {
       console.error('Error al guardar la copia:', error);
-      setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupError'));
-      setTimeout(() => setNotificationMsg(null), 5000);
+      showNotification(getTranslation(settings.language, 'toast.manualBackupError'), 5000);
     }
   };
 
   const handleRestoreBackup = (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace', preview?: BackupMergePreview) => {
-    if (mode === 'replace') {
-      const restoredSettings = {
-        ...snapshot.settings,
-        lastBackupTimestamp: snapshot.createdAt,
-        lastFullBackupTimestamp: snapshot.createdAt,
-      };
-      replaceStoredData(snapshot.readings, restoredSettings);
-      setReadings(snapshot.readings);
-      setSettings(restoredSettings);
-      return snapshot.readings.length;
-    }
+    try {
+      if (mode === 'replace') {
+        const restoredSettings = {
+          ...snapshot.settings,
+          lastBackupTimestamp: snapshot.createdAt,
+          lastFullBackupTimestamp: snapshot.createdAt,
+        };
+        replaceStoredData(snapshot.readings, restoredSettings);
+        setReadings(snapshot.readings);
+        setSettings(restoredSettings);
+        clearReadingsFallback();
+        return snapshot.readings.length;
+      }
 
-    if (!preview) return { status: 'stale' as const };
-    const result = mergeBackupReadingsIntoStorage(snapshot.readings, preview);
-    if (result.status === 'applied') setReadings(result.updated);
-    return result;
+      if (!preview) return { status: 'stale' as const };
+      const result = mergeBackupReadingsIntoStorage(snapshot.readings, preview);
+      if (result.status === 'applied') {
+        setReadings(result.updated);
+        clearReadingsFallback();
+      }
+      return result;
+    } catch (error) {
+      notifyStorageError(error);
+      return { status: 'error' as const };
+    }
   };
 
   const handleResetDemoData = () => {
     if (window.confirm(getTranslation(settings.language, 'toast.resetDemoConfirm'))) {
-      localStorage.removeItem('graphene_bp_readings_v1');
-      const freshReadings = getStoredReadings();
-      setReadings(freshReadings);
-      setIsSettingsModalOpen(false);
-      setNotificationMsg(getTranslation(settings.language, 'toast.resetDemoSuccess'));
-      setTimeout(() => setNotificationMsg(null), 4000);
+      try {
+        const freshReadings = createDemoReadings();
+        saveStoredReadings(freshReadings);
+        setReadings(freshReadings);
+        // El conjunto demo ya es el contenido guardado: el aviso de fallback (que afirma que los
+        // datos originales siguen intactos) dejaría de ser cierto si se mantuviera.
+        clearReadingsFallback();
+        setIsSettingsModalOpen(false);
+        showNotification(getTranslation(settings.language, 'toast.resetDemoSuccess'), 4000);
+      } catch (error) {
+        notifyStorageError(error);
+      }
     }
   };
 
   const handleClearAllData = () => {
     if (window.confirm(getTranslation(settings.language, 'toast.clearAllConfirm'))) {
-      clearAllStoredData();
-      setReadings([]);
-      setIsSettingsModalOpen(false);
-      setNotificationMsg(getTranslation(settings.language, 'toast.clearAllSuccess'));
-      setTimeout(() => setNotificationMsg(null), 4000);
+      try {
+        clearAllStoredData();
+        setReadings([]);
+        clearReadingsFallback();
+        setIsSettingsModalOpen(false);
+        showNotification(getTranslation(settings.language, 'toast.clearAllSuccess'), 4000);
+      } catch (error) {
+        notifyStorageError(error);
+      }
     }
   };
 
@@ -219,36 +333,78 @@ export function App() {
     notes?: string;
     pulsePressureWarningConfirmed?: boolean;
   }) => {
-    const created = addReadingToStorage({
-      timestamp: new Date().toISOString(),
-      systolic: data.systolic,
-      diastolic: data.diastolic,
-      heartRate: data.heartRate,
-      arm: data.arm,
-      notes: data.notes,
-      pulsePressureWarningConfirmed: data.pulsePressureWarningConfirmed,
-      takesAntihypertensiveMedication: settings.takesAntihypertensiveMedication,
-    });
-    setReadings((prev) => [created, ...prev]);
+    try {
+      const created = addReadingToStorage({
+        timestamp: new Date().toISOString(),
+        systolic: data.systolic,
+        diastolic: data.diastolic,
+        heartRate: data.heartRate,
+        arm: data.arm,
+        notes: data.notes,
+        pulsePressureWarningConfirmed: data.pulsePressureWarningConfirmed,
+        takesAntihypertensiveMedication: settings.takesAntihypertensiveMedication,
+      });
+      if (readingsLoadFailedRef.current) {
+        // La carga inicial cayó al conjunto demo. En cuanto el almacenamiento vuelve a ser
+        // legible, se adopta la lista real que se acaba de persistir y se retira el aviso de
+        // fallback, en lugar de mezclar las demos con las mediciones reales.
+        clearReadingsFallback();
+        setReadings(getStoredReadings());
+      } else {
+        setReadings((prev) => [created, ...prev]);
+      }
+    } catch (error) {
+      notifyStorageError(error);
+      throw error;
+    }
   };
 
   const handleDeleteSession = (sessionToDelete: any) => {
     if (window.confirm(getTranslation(settings.language, 'list.deleteSessionConfirm'))) {
-      const updated = deleteSessionFromStorage(sessionToDelete.readings);
+      try {
+        const updated = deleteSessionFromStorage(sessionToDelete.readings);
+        setReadings(updated);
+        clearReadingsFallback();
+        return true;
+      } catch (error) {
+        notifyStorageError(error);
+      }
+    }
+    return false;
+  };
+
+  // Borrado efectivo, sin confirmación: quien lo invoca ya ha confirmado (el modal muestra su
+  // propia confirmación en línea, la lista usa window.confirm mediante handleDeleteSingleReading).
+  const deleteReading = (readingId: string): DeleteReadingOutcome => {
+    try {
+      const updated = deleteReadingFromStorage(readingId);
       setReadings(updated);
+      clearReadingsFallback();
+      return 'deleted';
+    } catch (error) {
+      notifyStorageError(error);
+      return 'failed';
     }
   };
 
-  const handleDeleteSingleReading = (readingId: string) => {
-    if (window.confirm(getTranslation(settings.language, 'list.deleteReadingConfirm'))) {
-      const updated = deleteReadingFromStorage(readingId);
-      setReadings(updated);
+  const handleDeleteSingleReading = (readingId: string): DeleteReadingOutcome => {
+    if (!window.confirm(getTranslation(settings.language, 'list.deleteReadingConfirm'))) {
+      // Cancelar la confirmación no es un fallo de almacenamiento.
+      return 'cancelled';
     }
+    return deleteReading(readingId);
   };
 
   const handleSaveReadingEdit = (updatedReading: BloodPressureReading) => {
-    const updated = updateReadingInStorage(updatedReading);
-    setReadings(updated);
+    try {
+      const updated = updateReadingInStorage(updatedReading);
+      setReadings(updated);
+      clearReadingsFallback();
+      return true;
+    } catch (error) {
+      notifyStorageError(error);
+      return false;
+    }
   };
 
   return (
@@ -257,8 +413,18 @@ export function App() {
       onLanguageChange={(lang) => handleUpdateSettings({ ...settings, language: lang })}
     >
       <div className="app-container">
+        {isDemoFallback && (
+          <div
+            className="alert-danger demo-fallback-banner"
+            role="alert"
+            data-testid="demo-fallback-warning"
+          >
+            {getTranslation(settings.language, 'toast.demoFallbackWarning')}
+          </div>
+        )}
+
         {notificationMsg && (
-          <div className={`toast-modal-overlay ${typeof notificationMsg === 'object' ? notificationMsg.variant ?? '' : ''}`} onClick={() => setNotificationMsg(null)}>
+          <div className={`toast-modal-overlay ${typeof notificationMsg === 'object' ? notificationMsg.variant ?? '' : ''}`} onClick={dismissNotification}>
             <div className={`toast-notification ${typeof notificationMsg === 'object' ? notificationMsg.variant ?? '' : ''}`} onClick={(e) => e.stopPropagation()}>
               <div className="toast-top-row">
                 {(typeof notificationMsg === 'string' || notificationMsg.message) && (
@@ -270,7 +436,7 @@ export function App() {
                   <button
                     type="button"
                     className="toast-close-btn"
-                    onClick={() => setNotificationMsg(null)}
+                    onClick={dismissNotification}
                     aria-label="Cerrar notificación"
                   >
                     ×
@@ -288,7 +454,7 @@ export function App() {
                     type="button"
                     className="toast-action-btn"
                     onClick={() => {
-                      setNotificationMsg(null);
+                      dismissNotification();
                       notificationMsg.onAction?.();
                     }}
                   >
@@ -298,7 +464,7 @@ export function App() {
                     <button
                       type="button"
                       className="toast-cancel-btn"
-                      onClick={() => setNotificationMsg(null)}
+                      onClick={dismissNotification}
                     >
                       {notificationMsg.cancelLabel}
                     </button>
@@ -363,7 +529,7 @@ export function App() {
           onUpdateInputMode={handleUpdateInputMode}
           onClose={() => setReadingToEdit(null)}
           onSaveReading={handleSaveReadingEdit}
-          onDeleteReading={handleDeleteSingleReading}
+          onDeleteReading={deleteReading}
           readings={readings}
         />
 
@@ -378,7 +544,8 @@ export function App() {
           onPreviewBackupMerge={previewBackupMerge}
           onUpdateSettings={handleUpdateSettings}
           onTriggerManualBackup={handleTriggerManualBackup}
-          onNotify={(msg) => setNotificationMsg(msg)}
+          isDemoFallback={isDemoFallback}
+          onNotify={(msg) => showNotification(msg)}
         />
 
         <SettingsModal

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { BloodPressureReading, AppSettings, InputMode } from '../types/bloodPressure';
+import type { BloodPressureReading, AppSettings, InputMode, DeleteReadingOutcome } from '../types/bloodPressure';
 import { Edit3, X, Save, CalendarDays, AlertCircle, Repeat2, Trash2 } from 'lucide-react';
 import { WheelPicker } from './WheelPicker';
 import { useLanguage } from '../i18n/useLanguage';
@@ -48,8 +48,8 @@ interface EditReadingModalProps {
   reading: BloodPressureReading | null;
   settings: AppSettings;
   onUpdateInputMode?: (mode: InputMode) => void;
-  onSaveReading: (updatedReading: BloodPressureReading) => void;
-  onDeleteReading?: (readingId: string) => void;
+  onSaveReading: (updatedReading: BloodPressureReading) => boolean | Promise<boolean>;
+  onDeleteReading?: (readingId: string) => DeleteReadingOutcome | Promise<DeleteReadingOutcome>;
   readings: BloodPressureReading[];
 }
 
@@ -117,10 +117,18 @@ export const EditReadingModal: React.FC<EditReadingModalProps> = ({
     }
   };
 
-  const saveReading = (updated: BloodPressureReading, pulsePressureWarningConfirmed: boolean) => {
-    onSaveReading({ ...updated, pulsePressureWarningConfirmed });
-    setPendingReading(null);
-    onClose();
+  const saveReading = async (updated: BloodPressureReading, pulsePressureWarningConfirmed: boolean) => {
+    try {
+      const saved = await onSaveReading({ ...updated, pulsePressureWarningConfirmed });
+      if (!saved) {
+        setErrorMsg(t('form.storageError'));
+        return;
+      }
+      setPendingReading(null);
+      onClose();
+    } catch {
+      setErrorMsg(t('form.storageError'));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -380,10 +388,20 @@ export const EditReadingModal: React.FC<EditReadingModalProps> = ({
                 <button
                   type="button"
                   className="btn-danger-confirm"
-                  onClick={() => {
+                  onClick={async () => {
                     if (reading && onDeleteReading) {
-                      onDeleteReading(reading.id);
-                      onClose();
+                      try {
+                        const outcome = await onDeleteReading(reading.id);
+                        if (outcome === 'deleted') {
+                          onClose();
+                        } else if (outcome === 'failed') {
+                          setErrorMsg(t('form.storageError'));
+                        }
+                        // 'cancelled': la persona usuaria descartó la confirmación; no es un error
+                        // de almacenamiento, así que el modal permanece abierto sin mensaje de error.
+                      } catch {
+                        setErrorMsg(t('form.storageError'));
+                      }
                     }
                   }}
                 >
