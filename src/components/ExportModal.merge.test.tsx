@@ -96,6 +96,26 @@ describe('backup merge preview is shown as soon as the file is selected', () => 
   });
 });
 
+describe('replace applies directly from the backup preview', () => {
+  it('restores with one click without opening a second confirmation', async () => {
+    const { preview, onRestoreBackup, button, click } = await renderMerge(0);
+    const confirm = vi.spyOn(window, 'confirm');
+    onRestoreBackup.mockReturnValueOnce(snapshot.readings.length as never);
+
+    expect(container.textContent).toContain(getTranslation('es', 'export.importPreviewTitle'));
+    expect(button('Restaurar y reemplazar')).toBeTruthy();
+
+    await click('Restaurar y reemplazar');
+
+    expect(confirm).not.toHaveBeenCalled();
+    expect(onRestoreBackup).toHaveBeenCalledOnce();
+    expect(onRestoreBackup).toHaveBeenCalledWith(snapshot, 'replace', preview);
+    expect(container.textContent).toContain(
+      getTranslation('es', 'data.restoreReplaceSuccess', { count: snapshot.readings.length })
+    );
+  });
+});
+
 describe('merge applies directly from the already-computed preview', () => {
   it('applies with a single click and never changes the button text', async () => {
     const { preview, onRestoreBackup, onPreviewBackupMerge, button, click } = await renderMerge(2);

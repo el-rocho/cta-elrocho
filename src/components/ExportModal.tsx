@@ -240,7 +240,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const confirmBackupRestore = (mode: 'merge' | 'replace') => {
     if (!pendingImport || pendingImport.kind !== 'backup') return;
-    if (mode === 'replace' && !window.confirm(t('data.replaceConfirm'))) return;
     const result = onRestoreBackup(pendingImport.snapshot, mode, pendingImport.preview);
     if (typeof result !== 'number' && result.status === 'error') {
       setImportStatus({ kind: 'error', message: t('toast.storageError') });
