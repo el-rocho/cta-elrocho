@@ -240,6 +240,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const confirmBackupRestore = (mode: 'merge' | 'replace') => {
     if (!pendingImport || pendingImport.kind !== 'backup') return;
+    if (mode === 'replace' && !window.confirm(t('data.replaceConfirm'))) return;
     const result = onRestoreBackup(pendingImport.snapshot, mode, pendingImport.preview);
     if (typeof result !== 'number' && result.status === 'error') {
       setImportStatus({ kind: 'error', message: t('toast.storageError') });
@@ -381,19 +382,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       <strong>{new Date(pendingImport.snapshot.createdAt).toLocaleDateString(locale)}</strong>
                       <span>{t('data.backupCreatedAt')}</span>
                     </div>
-                  </div>
-                  <BackupMergeSummary language={language} counts={pendingImport.preview} />
-                  <div
-                    className={`import-preview-note ${pendingImport.preview.conflictCount > 0 ? 'warning' : 'merge-ready'}`}
-                    role={pendingImport.preview.conflictCount > 0 ? 'alert' : undefined}
-                  >
-                    {pendingImport.preview.conflictCount > 0 ? <AlertCircle size={17} /> : <CheckCircle2 size={17} />}
-                    <span>{pendingImport.preview.conflictCount > 0
-                      ? <strong>{t('data.mergeConflictWarning', { conflicts: pendingImport.preview.conflictCount })}</strong>
-                      : t('data.mergeReadyNotice', {
-                          added: pendingImport.preview.addedCount,
-                          duplicates: pendingImport.preview.identicalCount,
-                        })}</span>
+                    <BackupMergeSummary language={language} counts={pendingImport.preview} />
                   </div>
                   <div className="import-preview-actions restore-actions">
                     <button type="button" className="btn-import-confirm" onClick={() => confirmBackupRestore('merge')}>

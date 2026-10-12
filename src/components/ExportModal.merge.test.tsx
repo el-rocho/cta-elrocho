@@ -60,46 +60,64 @@ async function renderMerge(conflictCount: number) {
     expect(target, `button ${label}`).toBeTruthy();
     await act(async () => target!.click());
   };
-  const note = () => container.querySelector('.backup-restore-preview .import-preview-note');
+  const previewCards = () => container.querySelectorAll('.backup-restore-preview .import-summary-grid.backup-preview-grid');
+  // Every counter card of the single unified grid (both rows).
+  const summaryItems = () => [...container.querySelectorAll<HTMLElement>(
+    '.backup-restore-preview .import-summary-grid.backup-preview-grid > .import-summary-item'
+  )];
+  // The three second-row counters share the merge-count class.
+  const mergeCounters = () => [...container.querySelectorAll<HTMLElement>(
+    '.backup-restore-preview .import-summary-item.merge-count'
+  )];
+  const mergeValues = () => mergeCounters().map((el) => el.querySelector('strong')?.textContent);
   const conflictCounter = () => container.querySelector('.backup-restore-preview .import-summary-item.is-conflict');
-  return { preview, onRestoreBackup, onPreviewBackupMerge, button, click, note, conflictCounter };
+  const note = () => container.querySelector('.backup-restore-preview .import-preview-note');
+  return { preview, onRestoreBackup, onPreviewBackupMerge, button, click, note, previewCards, summaryItems, mergeCounters, mergeValues, conflictCounter };
 }
 
 describe('backup merge preview is shown as soon as the file is selected', () => {
-  it('renders counters and an amber warning without any extra click when there are conflicts', async () => {
-    const { button, note, conflictCounter } = await renderMerge(1);
-    const warning = getTranslation('es', 'data.mergeConflictWarning', { conflicts: 1 });
+  it('renders the five unified counters in a single grid and drops the redundant card', async () => {
+    const { button, note, previewCards, summaryItems, mergeCounters, mergeValues, conflictCounter } = await renderMerge(1);
 
-    // Counters are visible right after selecting the file.
-    expect(container.textContent).toContain(getTranslation('es', 'data.mergeAdded'));
-    expect(container.textContent).toContain(getTranslation('es', 'data.mergeIdentical'));
-    expect(container.textContent).toContain(getTranslation('es', 'data.mergeConflicts'));
+    // The five shared texts are visible right after selecting the file.
+    expect(container.textContent).toContain('mediciones preparadas');
+    expect(container.textContent).toContain('fecha de la copia');
+    expect(container.textContent).toContain('tomas nuevas');
+    expect(container.textContent).toContain('tomas duplicadas');
+    expect(container.textContent).toContain('tomas misma fecha/hora');
 
-    // The emphasized amber note is shown immediately, not after a click.
-    expect(note()?.textContent).toContain(warning);
-    expect(note()?.classList.contains('warning')).toBe(true);
-    expect(note()?.classList.contains('merge-ready')).toBe(false);
+    // A single grid holds all five counters: two on the first row, three on the second.
+    expect(previewCards().length).toBe(1);
+    expect(summaryItems().length).toBe(5);
+    expect(mergeCounters().length).toBe(3);
+    expect(mergeValues()).toEqual(['2', '3', '1']);
+
+    // The conflict counter stays emphasised through the is-conflict class.
     expect(conflictCounter()?.textContent).toContain('1');
+
+    // The redundant informational card is completely gone.
+    expect(note()).toBeNull();
+    expect(container.textContent).not.toContain('ya existentes omitidas');
+    expect(container.textContent).not.toContain('con la misma fecha y hora pero datos distintos');
 
     // No additional confirmation button exists.
     expect(button('Aceptar y combinar')).toBeUndefined();
     expect(button('Cancelar restauración')).toBeUndefined();
   });
 
-  it('shows a neutral notice with added and duplicate counts when there are no conflicts', async () => {
-    const { note, conflictCounter } = await renderMerge(0);
-    expect(note()?.textContent).toContain(
-      getTranslation('es', 'data.mergeReadyNotice', { added: 2, duplicates: 3 })
-    );
-    expect(note()?.classList.contains('warning')).toBe(false);
+  it('shows the same five counters without a conflict emphasis when there are no conflicts', async () => {
+    const { note, summaryItems, mergeCounters, conflictCounter } = await renderMerge(0);
+    expect(summaryItems().length).toBe(5);
+    expect(mergeCounters().length).toBe(3);
     expect(conflictCounter()).toBeNull();
+    expect(note()).toBeNull();
   });
 });
 
-describe('replace applies directly from the backup preview', () => {
-  it('restores with one click without opening a second confirmation', async () => {
+describe('replace asks for confirmation like the other variants', () => {
+  it('confirms once with the shared replace text before restoring', async () => {
     const { preview, onRestoreBackup, button, click } = await renderMerge(0);
-    const confirm = vi.spyOn(window, 'confirm');
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     onRestoreBackup.mockReturnValueOnce(snapshot.readings.length as never);
 
     expect(container.textContent).toContain(getTranslation('es', 'export.importPreviewTitle'));
@@ -107,12 +125,27 @@ describe('replace applies directly from the backup preview', () => {
 
     await click('Restaurar y reemplazar');
 
-    expect(confirm).not.toHaveBeenCalled();
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(confirm).toHaveBeenCalledWith(getTranslation('es', 'data.replaceConfirm'));
     expect(onRestoreBackup).toHaveBeenCalledOnce();
     expect(onRestoreBackup).toHaveBeenCalledWith(snapshot, 'replace', preview);
     expect(container.textContent).toContain(
       getTranslation('es', 'data.restoreReplaceSuccess', { count: snapshot.readings.length })
     );
+  });
+
+  it('cancels the replace without touching storage when the user declines the confirmation', async () => {
+    const { onRestoreBackup, click } = await renderMerge(0);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    await click('Restaurar y reemplazar');
+
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(confirm).toHaveBeenCalledWith(getTranslation('es', 'data.replaceConfirm'));
+    expect(onRestoreBackup).not.toHaveBeenCalled();
+    expect(container.textContent).not.toContain(getTranslation('es', 'data.restoreReplaceSuccess', {
+      count: snapshot.readings.length,
+    }));
   });
 });
 
@@ -131,7 +164,7 @@ describe('merge applies directly from the already-computed preview', () => {
   });
 
   it('rejects a stale preview without writing and recalculates the preview automatically', async () => {
-    const { onRestoreBackup, onPreviewBackupMerge, button, click, note } = await renderMerge(1);
+    const { onRestoreBackup, onPreviewBackupMerge, button, click, mergeValues, conflictCounter } = await renderMerge(1);
     const refreshed = { addedCount: 1, identicalCount: 4, conflictCount: 0, currentRevision: 'new', importRevision: 'backup' };
     onRestoreBackup.mockReturnValueOnce({ status: 'stale' } as never);
     onPreviewBackupMerge.mockReturnValueOnce(refreshed);
@@ -142,7 +175,8 @@ describe('merge applies directly from the already-computed preview', () => {
     expect(onPreviewBackupMerge).toHaveBeenCalledTimes(2);
     // Button text is unchanged and the refreshed counts replace the old ones.
     expect(button('Combinar mediciones')).toBeTruthy();
-    expect(note()?.textContent).toContain(getTranslation('es', 'data.mergeReadyNotice', { added: 1, duplicates: 4 }));
+    expect(mergeValues()).toEqual(['1', '4', '0']);
+    expect(conflictCounter()).toBeNull();
 
     await click('Combinar mediciones');
     expect(onRestoreBackup).toHaveBeenCalledTimes(2);
