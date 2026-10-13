@@ -1,125 +1,110 @@
 <p align="center">
-  <img src="public/logo-day.png" alt="Logo Control Tensión Arterial Offline" width="160" height="160" />
+  <img src="public/logo-day.png" alt="Control Tensión Arterial" width="160" height="160" />
 </p>
 
-# Control Tensión Arterial 🩺
+# Control Tensión Arterial — Edición individual offline
 
-![Built with Vibe Coding](https://img.shields.io/badge/Built%20with-Vibe%20Coding%20%26%20AI-7c3aed?style=for-the-badge&logo=sparkles)
-![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.7.0-3DDC84?style=for-the-badge&logo=android)
-![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.7.0-2563eb?style=for-the-badge&logo=github)
-![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge)
+![Android](https://img.shields.io/badge/Android-APK-3DDC84?style=flat-square&logo=android&logoColor=white)
+![PWA](https://img.shields.io/badge/Web-PWA-0284c7?style=flat-square&logo=pwa&logoColor=white)
+![Privacidad](https://img.shields.io/badge/Datos-100%25%20locales-10b981?style=flat-square)
+![Idiomas](https://img.shields.io/badge/Idiomas-ES%20%7C%20EN-6366f1?style=flat-square)
+![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=flat-square)
 
-Aplicación nativa Android (PWA y APK) para el registro, seguimiento y análisis de la tensión arterial. Diseñada para ofrecer máxima privacidad en dispositivos Android (sin servicios de Google, compatible con GrapheneOS). 
+Aplicación Android y PWA para registrar, consultar y analizar la tensión arterial de una sola persona, sin cuentas ni servidor.
 
-100% control de tus datos: privados, offline y sin comunicación con servidores externos.
+Los datos permanecen en el almacenamiento privado del dispositivo: la aplicación funciona sin conexión y no se comunica con servicios externos. Es compatible con dispositivos sin servicios de Google, incluido GrapheneOS.
 
-> Esta edición **no usa ningún servidor**: guarda todo en el almacenamiento privado del dispositivo. Por eso no le afectan ni la lista de orígenes permitidos (`CORS_ORIGINS`) ni la cabecera de sesión `X-Session-Token` que exige la versión autoalojada; ambas pertenecen a las ediciones cliente y servidor.
-
-> ✨ **Metodología de Desarrollo**: Este proyecto ha sido conceptualizado, diseñado y guiado mediante **Vibe Coding**, utilizando asistencia avanzada de Inteligencia Artificial para la generación de código y arquitectura.
+> [!NOTE]
+> Esta edición es independiente del servidor autoalojado. No utiliza `CORS_ORIGINS` ni sesiones mediante `X-Session-Token`.
 
 ---
 
-## 💡 Ecosistema de Aplicaciones: ¿Qué versión elegir?
+## Ecosistema: elige la edición adecuada
 
-Este repositorio corresponde a la **Versión Individual / Móvil Android (APK y PWA offline)**. El proyecto cuenta con tres aplicaciones según tus necesidades:
-
-| Aplicación | Repositorio GitHub | Descripción y Uso |
+| Edición | Cuándo elegirla | Repositorio |
 | :--- | :--- | :--- |
-| 📱 **Versión Individual Móvil (PWA y APK)** | **[cta-elrocho](https://github.com/el-rocho/cta-elrocho)** *(Este repo)* | Ideal para uso personal en un único teléfono. Funciona **100% offline**, sin cuentas, sin servidor y guardando todos los datos en el almacenamiento interno privado del dispositivo. |
-| 🐳 **Servidor Autoalojado (Docker)** | [**cta-elrocho-selfhosted**](https://github.com/el-rocho/cta-elrocho-selfhosted) | Ideal si deseas desplegar la app en tu servidor privado o NAS para gestionar **varios perfiles familiares (~10 usuarios)** con base de datos SQLite y **2FA TOTP**. |
-| 🚀 **Cliente Servidor (PWA y APK)** | [**cta-elrocho-client-app**](https://github.com/el-rocho/cta-elrocho-client-app) | App cliente para conectar al servidor autoalojado, con las mismas funcionalidades que la versión individual. |
-
-### 🔄 Migración de Datos a la Versión Autoalojada:
-Si en algún momento decides pasar de esta app móvil individual al servidor familiar:
-1. Abre **Datos e informes** &rarr; **Informes**, selecciona **Todo** y descarga el informe `.csv`.
-2. Entra en tu cuenta de la [Versión Autoalojada (cta-elrocho-selfhosted)](https://github.com/el-rocho/cta-elrocho-selfhosted).
-3. Ve a **Datos e informes** &rarr; pestaña **Importar / Restaurar** y sube el archivo `.csv`. Se migrarán los resultados efectivos incluidos en el informe, no las tomas originales que pudieran componer cada sesión.
-
-El CSV sirve para esta migración entre aplicaciones, pero no es una copia de seguridad. Para restaurar esta aplicación conserva además una copia completa `.cta-backup.json`.
+| **Individual offline** *(esta edición)* | Una persona, un dispositivo y funcionamiento sin servidor ni conexión. | [cta-elrocho](https://github.com/el-rocho/cta-elrocho) |
+| **Servidor autoalojado** | Varios usuarios, datos centralizados y administración familiar en un servidor o NAS. | [cta-elrocho-selfhosted](https://github.com/el-rocho/cta-elrocho-selfhosted) |
+| **Cliente para servidor** | Acceso desde Android o PWA a una instalación autoalojada existente. | [cta-elrocho-client-app](https://github.com/el-rocho/cta-elrocho-client-app) |
 
 ---
 
-## 📲 Instalación y Actualizaciones (Obtainium, APK y PWA)
+## Funciones principales
 
-Las compilaciones oficiales del APK y el despliegue de la PWA se generan automáticamente mediante **GitHub Actions**.
+- Registro de presión sistólica, presión diastólica, pulso, brazo y notas.
+- Entrada mediante teclado numérico o ruletas táctiles.
+- Referencias configurables: `ESC 2024`, `AHA/ACC 2025` e `ISH 2020`.
+- Objetivos terapéuticos orientativos y editables según la indicación profesional.
+- Historial, estadísticas y gráficas de evolución de hasta un año.
+- Presión de pulso, presión arterial media estimada, carga de presión y medias diarias.
+- Filtro opcional de acomodación para agrupar tomas consecutivas y obtener un resultado efectivo por sesión.
+- Informes PDF y CSV, copias completas en JSON e importación de datos de MyTherapy.
+- Interfaz en español e inglés, con temas claro y oscuro.
 
-### 1. 📱 Instalación con Obtainium (recomendada en Android)
+Las reglas clínicas y el funcionamiento del filtro se describen en la [matriz clínica](docs/reglas-clinicas-v1.6.0.md).
 
-La aplicación es totalmente compatible con **[Obtainium](https://github.com/ImranR98/Obtainium)**. Escanea este código QR desde Obtainium en tu teléfono Android o añade manualmente la URL del repositorio (`https://github.com/el-rocho/cta-elrocho`):
+> [!IMPORTANT]
+> Las clasificaciones y objetivos son informativos. La aplicación no sustituye el diagnóstico ni las indicaciones de un profesional sanitario.
+
+---
+
+## Instalación y actualizaciones
+
+Las compilaciones oficiales se generan mediante GitHub Actions.
+
+### Obtainium — recomendado en Android
+
+Añade en [Obtainium](https://github.com/ImranR98/Obtainium) la dirección del repositorio:
+
+```text
+https://github.com/el-rocho/cta-elrocho
+```
 
 <p align="center">
-  <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://github.com/el-rocho/cta-elrocho" alt="Código QR para Obtainium - cta-elrocho" width="160" height="160" />
-  <br />
-  <sub><b>Escanea desde Obtainium para instalar y recibir actualizaciones</b></sub>
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://github.com/el-rocho/cta-elrocho" alt="Código QR de cta-elrocho para Obtainium" width="160" height="160" />
 </p>
 
-### 2. 📥 Descarga manual del APK (GitHub Releases)
+### APK
 
-1. Accede a la sección **[Releases del Repositorio](https://github.com/el-rocho/cta-elrocho/releases)**.
-2. Descarga la última versión del archivo `control-tension-arterial.apk`.
-3. Instala el paquete `.apk` en tu dispositivo Android.
+1. Abre [GitHub Releases](https://github.com/el-rocho/cta-elrocho/releases).
+2. Descarga `control-tension-arterial.apk`.
+3. Instala el archivo en el dispositivo Android.
 
-Antes de instalar una nueva versión, consulta la **[guía de actualización](UPGRADING.md)** y las notas de la versión correspondiente.
+Antes de actualizar, consulta [UPGRADING.md](UPGRADING.md) y las notas de la versión.
 
-### 3. 🌐 Uso como PWA (navegador web / pantalla de inicio)
+### PWA
 
-- Accede a la **[PWA de Control Tensión Arterial](https://el-rocho.github.io/cta-elrocho/)** desde el navegador de tu dispositivo.
-- Puedes instalarla en la pantalla de inicio desde las opciones del navegador para utilizarla como una aplicación.
-- Los datos se almacenan exclusivamente en el propio dispositivo y navegador; no se envían a ningún servidor.
+Abre la [PWA de Control Tensión Arterial](https://el-rocho.github.io/cta-elrocho/) y utiliza la opción del navegador para añadirla a la pantalla de inicio.
 
----
-
-## 🚀 Características Principales
-
-- **Soporte Bilingüe Completo (Español / Inglés)**: Selección de idioma desde la pantalla de **Configuración** (🇪🇸 Español / 🇬🇧 English). Interfaz, ruletas, gráficos, notificaciones e informes se adaptan al instante.
-- **Experiencia Nativa Android**: Funciona como una App independiente a pantalla completa.
-- **100% Offline y Privada**: Todos los datos residen exclusivamente en el almacenamiento interno de tu teléfono (`localStorage`). Las fuentes tipográficas están incluidas en la aplicación y no se descargan desde servicios externos.
-- **Sistema Dual de Entrada**: Elige entre teclado numérico tradicional o **Ruleta Táctil de Selección Rápida**.
-- **Referencias clínicas**: Etiquetas y avisos configurables según las recomendaciones de las guías `ESC 2024`, `AHA/ACC 2025` o `ISH 2020`, sin modificar las mediciones.
-- **Objetivos terapéuticos**: Para usuarios medicados, valores recomendados según guía y edad, editables para poder ajustarlos a las indicaciones de nuestro facultativo.
-- **Evolución y tendencias**: Gráficas de `1 mes`, `3 meses`, `6 meses` o `1 año`, estadísticas del periodo, presión de pulso, presión arterial media estimada, carga de presión y tendencias de las medias diarias de las últimas cuatro semanas.
-- **Filtro de bata blanca**: Agrupa tomas consecutivas y calcula un único resultado efectivo tras descartar, cuando corresponde, las tomas iniciales elevadas.
-- **Informes PDF**: Valores estadísticos, métricas cardiovasculares, gráficos temporales, diagrama de dispersión PAS/PAD y tabla detallada de las medidas realizadas.
-- **Datos, copias e informes**: copias JSON completas y versionadas, informes CSV/PDF, recuperación parcial compatible con los CSV históricos e importación de MyTherapy.
+Los datos quedan asociados a ese navegador y dispositivo. El borrado de los datos del sitio puede eliminarlos, por lo que conviene crear copias periódicas.
 
 ---
 
-## 🛡️ Filtro de Síndrome de Bata Blanca
+## Datos, copias y migración
 
-El **Filtro de Síndrome de Bata Blanca** mitiga la distorsión generada por el sesgo de alerta o ansiedad inicial del paciente al utilizar el medidor de tensión.
+- **Copia completa:** usa el formato `.cta-backup.json` para restaurar mediciones y preferencias.
+- **Informes:** exporta PDF o CSV para consulta y tratamiento externo.
+- **Migración al servidor:** importa preferentemente una copia completa `.cta-backup.json` en la cuenta correspondiente de la edición autoalojada.
 
-### 🔬 Cómo funciona el algoritmo:
-1. **Agrupación Consecutiva**: Se agrupan dentro de una misma sesión todas las mediciones donde el intervalo entre las tomas sea menor o igual a **5 minutos**.
-2. **Sesiones de 2 tomas**: Si la 1ª toma es significativamente superior a la 2ª ($\ge 8$ mmHg sistólica / $\ge 4$ mmHg diastólica), se descarta la 1ª toma reteniendo la 2ª. En caso contrario, se promedian ambas.
-3. **Sesiones de 3 tomas**: Se descarta siempre la 1ª toma y se calcula la media con las 2 tomas restantes.
-4. **Sesiones de 4 o más tomas**: Se compara cada toma inicial con la media de todas las posteriores y se descarta mientras sea superior en al menos $8$ mmHg de sistólica o $4$ mmHg de diastólica. El proceso se detiene en la primera toma estable.
-
-La aplicación siempre registra y conserva todas las tomas realizadas, con el filtro activado los datos son agrupados en sesiones. Si se desactiva el filtro la aplicación recalcula la información y muestra todos los registros individualmente.
-
-Con el filtro activado los gráficos, el semáforo de etiquetas de colores, los objetivos, los avisos, las tendencias y las exportaciones utilizan la media de las tomas efectivas. Las medidas descartadas siguen visibles en el desglose de la sesión, pero no determinan esos resultados. Consulta la [matriz clínica de la versión 1.6.0](docs/reglas-clinicas-v1.6.0.md) para conocer las reglas completas y sus fuentes.
+Si no dispones de una copia completa, puedes utilizar un CSV. El CSV traslada los resultados efectivos, pero puede no incluir las tomas originales de cada sesión ni todas las preferencias.
 
 ---
 
-## 🌐 Estructura de Ramas
-
-- **`main`**: Versión estable de producción.
-- **`dev`**: Rama de desarrollo activo para pruebas de características.
-
----
-
-## 🛠️ Desarrollo Local
+## Desarrollo local
 
 ```bash
-# Instalar dependencias
 npm install
-
-# Iniciar servidor de desarrollo web
 npm run dev
-
-# Compilar proyecto web y sincronizar con Android nativo (Capacitor)
 npm run build
 npm run cap:sync
-
-# Abrir el proyecto en Android Studio
 npm run cap:open
 ```
+
+- `main`: versión estable.
+- `dev`: desarrollo activo.
+
+---
+
+## Licencia
+
+Distribuido bajo la Licencia MIT.
