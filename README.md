@@ -5,13 +5,15 @@
 # Control Tensión Arterial 🩺
 
 ![Built with Vibe Coding](https://img.shields.io/badge/Built%20with-Vibe%20Coding%20%26%20AI-7c3aed?style=for-the-badge&logo=sparkles)
-![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.6.1-3DDC84?style=for-the-badge&logo=android)
-![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.6.1-2563eb?style=for-the-badge&logo=github)
+![Android APK](https://img.shields.io/badge/Android-APK%20Nativa%20v1.7.0-3DDC84?style=for-the-badge&logo=android)
+![Obtainium Compatible](https://img.shields.io/badge/Obtainium-Releases%20v1.7.0-2563eb?style=for-the-badge&logo=github)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge)
 
 Aplicación nativa Android (PWA y APK) para el registro, seguimiento y análisis de la tensión arterial. Diseñada para ofrecer máxima privacidad en dispositivos Android (sin servicios de Google, compatible con GrapheneOS). 
 
 100% control de tus datos: privados, offline y sin comunicación con servidores externos.
+
+> Esta edición **no usa ningún servidor**: guarda todo en el almacenamiento privado del dispositivo. Por eso no le afectan ni la lista de orígenes permitidos (`CORS_ORIGINS`) ni la cabecera de sesión `X-Session-Token` que exige la versión autoalojada; ambas pertenecen a las ediciones cliente y servidor.
 
 > ✨ **Metodología de Desarrollo**: Este proyecto ha sido conceptualizado, diseñado y guiado mediante **Vibe Coding**, utilizando asistencia avanzada de Inteligencia Artificial para la generación de código y arquitectura.
 
