@@ -61,11 +61,11 @@ const validationDialog = () => document.body.querySelector<HTMLElement>('.form-a
 const pulsePressureDialog = () => document.body.querySelector<HTMLElement>('.pulse-pressure-dialog');
 
 describe('ReadingForm defensive values', () => {
-  it('labels the primary action as Registrar medición', async () => {
+  it('labels the primary action as Guardar medición', async () => {
     await renderForm();
 
     expect(container.querySelector<HTMLButtonElement>('.btn-submit-reading')?.textContent).toContain(
-      'Registrar medición'
+      'Guardar medición'
     );
   });
 
