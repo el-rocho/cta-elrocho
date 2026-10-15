@@ -33,7 +33,7 @@ Los datos permanecen en el almacenamiento privado del dispositivo: la aplicació
 
 - Registro de presión sistólica, presión diastólica, pulso, brazo y notas.
 - Entrada mediante teclado numérico o ruletas táctiles.
-- Referencias configurables: `ESC 2024`, `AHA/ACC 2025` e `ISH 2020`.
+- Referencias configurables: `Europea ESC 2024`, `USA AHA/ACC 2025` e `Int. ISH 2020`.
 - Objetivos terapéuticos orientativos y editables según la indicación profesional.
 - Historial, estadísticas y gráficas de evolución de hasta un año.
 - Presión de pulso, presión arterial media estimada, carga de presión y medias diarias.
@@ -74,9 +74,9 @@ Antes de actualizar, consulta [UPGRADING.md](UPGRADING.md) y las notas de la ver
 
 ### PWA
 
-Abre la [PWA de Control Tensión Arterial](https://el-rocho.github.io/cta-elrocho/) y utiliza la opción del navegador para añadirla a la pantalla de inicio.
+Abre la [PWA de Control Tensión Arterial](https://offline.cta.elrocho.es/) y utiliza la opción del navegador para añadirla a la pantalla de inicio.
 
-Los datos quedan asociados a ese navegador y dispositivo. El borrado de los datos del sitio puede eliminarlos, por lo que conviene crear copias periódicas.
+Los datos quedan asociados a ese navegador y dispositivo, y también al origen desde el que se abre la aplicación: cambiar de navegador, de perfil o de dirección no traslada el historial. El borrado de los datos del sitio puede eliminarlos, por lo que conviene crear copias periódicas.
 
 ---
 
