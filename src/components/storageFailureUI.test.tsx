@@ -56,6 +56,8 @@ describe('storage failure UI', () => {
       readings={[]}
     />);
     const systolic = setInput('#systolic-input', '135');
+    const diastolic = setInput('#diastolic-input', '85');
+    const pulse = setInput('#pulse-input', '65');
     const notes = setInput('.input-notes', 'keep me');
 
     await act(async () => {
@@ -65,6 +67,8 @@ describe('storage failure UI', () => {
 
     expect(onAddReading).toHaveBeenCalledOnce();
     expect(systolic.value).toBe('135');
+    expect(diastolic.value).toBe('85');
+    expect(pulse.value).toBe('65');
     expect(notes.value).toBe('keep me');
     expect(container.querySelector('.btn-submit-reading')?.classList.contains('is-saved')).toBe(false);
     // El banner muestra el mensaje exacto de fallo de almacenamiento (no cualquier texto).
